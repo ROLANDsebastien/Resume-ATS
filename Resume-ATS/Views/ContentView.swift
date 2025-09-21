@@ -9,7 +9,7 @@ import SwiftData
 import SwiftUI
 
 struct ContentView: View {
-    @State private var selectedSection: String? = "Profile"
+    @State private var selectedSection: String? = "Dashboard"
 
     var body: some View {
         NavigationSplitView {
@@ -23,16 +23,23 @@ struct ContentView: View {
                 NavigationLink(value: "Templates") {
                     Label("Templates", systemImage: "doc")
                 }
+                NavigationLink(value: "Settings") {
+                    Label("Settings", systemImage: "gear")
+                }
             }
             .navigationTitle("Sections")
         } detail: {
             switch selectedSection {
+            case "Dashboard":
+                Text("Dashboard View")
             case "Profile":
                 ProfileView()
             case "Applications":
                 Text("Applications Tracking View")
             case "Templates":
                 Text("CV Templates View")
+            case "Settings":
+                SettingsView()
             default:
                 Text("Select a section")
             }
