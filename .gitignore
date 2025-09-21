@@ -1,0 +1,45 @@
+<file_path>
+Resume-ATS/.gitignore
+</file_path>
+
+<edit_description>
+Create .gitignore file to exclude macOS and Xcode files
+</edit_description>
+
+# Xcode
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+# Build products
+build/
+DerivedData/
+
+# Swift Package Manager
+.build/
+Packages/
+Package.pinned
+Package.resolved
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/
+
+# macOS
+.DS_Store
+
+# Other
+*.swp
+*.lock
+*~
