@@ -213,33 +213,6 @@ struct ProfileView: View {
     }
 }
 
-struct SectionTile<Content: View>: View {
-    let title: String
-    let isExpanded: Bool
-    let action: () -> Void
-    let expandedContent: () -> Content
-
-    var body: some View {
-        VStack {
-            Button(action: action) {
-                HStack {
-                    Text(title)
-                        .font(.headline)
-                    Spacer()
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                }
-                .padding()
-                .cornerRadius(10)
-            }
-            if isExpanded {
-                expandedContent()
-                    .padding(.horizontal)
-                    .transition(.slide)
-            }
-        }
-    }
-}
-
 struct ExperienceForm: View {
     var experience: Experience
     var onUpdate: (Experience) -> Void
