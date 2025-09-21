@@ -9,14 +9,11 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage("isDarkMode") private var isDarkMode = false
-    @State private var expandedSection: String? = nil
 
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                SectionTile(title: "Appearance", isExpanded: expandedSection == "appearance") {
-                    expandedSection = expandedSection == "appearance" ? nil : "appearance"
-                } expandedContent: {
+                Tile(title: "Appearance") {
                     Toggle(isOn: $isDarkMode) {
                         HStack {
                             Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
@@ -24,12 +21,28 @@ struct SettingsView: View {
                             Text("Dark Mode")
                         }
                     }
-                    .padding()
+                    .padding(.horizontal)
                 }
             }
             .padding()
         }
         .navigationTitle("Settings")
+    }
+}
+
+struct Tile<Content: View>: View {
+    let title: String
+    let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(title)
+                .font(.headline)
+            content()
+        }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(10)
     }
 }
 
