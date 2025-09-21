@@ -9,20 +9,54 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage("isDarkMode") private var isDarkMode = false
+    @State private var expandedSection: String? = nil
 
     var body: some View {
-        Form {
-            Section(header: Text("Appearance")) {
-                Toggle(isOn: $isDarkMode) {
-                    HStack {
-                        Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
-                            .foregroundColor(isDarkMode ? .yellow : .orange)
-                        Text("Dark Mode")
+        ScrollView {
+            VStack(spacing: 20) {
+                SectionTile(title: "Appearance", isExpanded: expandedSection == "appearance") {
+                    expandedSection = expandedSection == "appearance" ? nil : "appearance"
+                } expandedContent: {
+                    Toggle(isOn: $isDarkMode) {
+                        HStack {
+                            Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
+                                .foregroundColor(isDarkMode ? .yellow : .orange)
+                            Text("Dark Mode")
+                        }
                     }
+                    .padding()
                 }
             }
+            .padding()
         }
         .navigationTitle("Settings")
+    }
+}
+
+struct SectionTile<Content: View>: View {
+    let title: String
+    let isExpanded: Bool
+    let action: () -> Void
+    let expandedContent: () -> Content
+
+    var body: some View {
+        VStack {
+            Button(action: action) {
+                HStack {
+                    Text(title)
+                        .font(.headline)
+                    Spacer()
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                }
+                .padding()
+                .cornerRadius(10)
+            }
+            if isExpanded {
+                expandedContent()
+                    .padding(.horizontal)
+                    .transition(.slide)
+            }
+        }
     }
 }
 
