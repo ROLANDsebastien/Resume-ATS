@@ -1,0 +1,20 @@
+{
+  "contract": "Build Execution",
+  "input": {
+    "command": "xcodebuild",
+    "args": []
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": ["Success", "Failure"]
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": ["status", "output"]
+  }
+}

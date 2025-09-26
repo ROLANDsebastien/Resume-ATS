@@ -1,9 +1,3 @@
-//
-//  Resume_ATSApp.swift
-//  Resume-ATS
-//
-//  Created by ROLAND Sébastien on 21/09/2025.
-//
 
 import SwiftData
 import SwiftUI
@@ -24,12 +18,12 @@ struct Resume_ATSApp: App {
         }
     }()
 
-    @AppStorage("isDarkMode") private var isDarkMode = false
+    @AppStorage("colorScheme") private var colorScheme: Int = 2 // 0=light, 1=dark, 2=system
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .preferredColorScheme(isDarkMode ? .dark : .light)
+                .preferredColorScheme(colorScheme == 0 ? .light : (colorScheme == 1 ? .dark : nil))
         }
         .modelContainer(sharedModelContainer)
     }
