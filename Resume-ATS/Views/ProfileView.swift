@@ -10,139 +10,130 @@ struct ProfileView: View {
     @State private var newProfileName: String = ""
 
     var body: some View {
-        ZStack {
-            Color.darkBackground.edgesIgnoringSafeArea(.all)
-
-            VStack(alignment: .leading, spacing: 0) {
-                // Header
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
                 Text("Profil")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
-                    .padding(.horizontal)
                     .padding(.top)
 
-                // Profile Selector
                 profileSelector
-                    .padding()
 
                 if let profile = selectedProfile {
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            StyledSection(title: "Informations Personnelles") {
-                                PersonalInfoForm(profile: profile)
-                            }
-
-                            StyledSection(title: "Résumé") {
-                                TextEditor(
-                                    text: Binding(
-                                        get: { profile.summary }, set: { profile.summary = $0 })
-                                )
-                                .modifier(StyledTextEditorModifier())
-                            }
-
-                            StyledSection(title: "Expériences") {
-                                ForEach(profile.experiences.indices, id: \.self) { index in
-                                    ExperienceForm(experience: profile.experiences[index]) {
-                                        updatedExperience in
-                                        profile.experiences[index] = updatedExperience
-                                    }
-                                    .padding(.bottom, 10)
-                                    Button(action: { profile.experiences.remove(at: index) }) {
-                                        Image(systemName: "trash.fill")
-                                            .foregroundColor(.red)
-                                    }
-                                    .buttonStyle(.plain)
-                                    if index < profile.experiences.count - 1 {
-                                        Divider().background(Color.secondary)
-                                    }
-                                }
-                                StyledButton(
-                                    title: "Ajouter une expérience", systemImage: "plus",
-                                    action: {
-                                        profile.experiences.append(
-                                            Experience(
-                                                company: "", startDate: Date(), description: ""))
-                                    })
-                            }
-
-                            StyledSection(title: "Formations") {
-                                ForEach(profile.educations.indices, id: \.self) { index in
-                                    EducationForm(education: profile.educations[index]) {
-                                        updatedEducation in
-                                        profile.educations[index] = updatedEducation
-                                    }
-                                    .padding(.bottom, 10)
-                                    Button(action: { profile.educations.remove(at: index) }) {
-                                        Image(systemName: "trash.fill")
-                                            .foregroundColor(.red)
-                                    }
-                                    .buttonStyle(.plain)
-                                    if index < profile.educations.count - 1 {
-                                        Divider().background(Color.secondary)
-                                    }
-                                }
-                                StyledButton(
-                                    title: "Ajouter une formation", systemImage: "plus",
-                                    action: {
-                                        profile.educations.append(
-                                            Education(
-                                                institution: "", degree: "", startDate: Date(),
-                                                description: ""))
-                                    })
-                            }
-
-                            StyledSection(title: "Références") {
-                                ForEach(profile.references.indices, id: \.self) { index in
-                                    ReferenceForm(reference: profile.references[index]) {
-                                        updatedReference in
-                                        profile.references[index] = updatedReference
-                                    }
-                                    .padding(.bottom, 10)
-                                    Button(action: { profile.references.remove(at: index) }) {
-                                        Image(systemName: "trash.fill")
-                                            .foregroundColor(.red)
-                                    }
-                                    .buttonStyle(.plain)
-                                    if index < profile.references.count - 1 {
-                                        Divider().background(Color.secondary)
-                                    }
-                                }
-                                StyledButton(
-                                    title: "Ajouter une référence", systemImage: "plus",
-                                    action: {
-                                        profile.references.append(
-                                            Reference(
-                                                name: "", position: "", company: "", email: "",
-                                                phone: ""))
-                                    })
-                            }
-
-                            StyledSection(title: "Compétences") {
-                                ForEach(profile.skills.indices, id: \.self) { index in
-                                    HStack {
-                                        TextField(
-                                            "Compétence",
-                                            text: Binding(
-                                                get: { profile.skills[index] },
-                                                set: { profile.skills[index] = $0 })
-                                        )
-                                        .textFieldStyle(StyledTextField())
-                                        Button(action: { profile.skills.remove(at: index) }) {
-                                            Image(systemName: "trash.fill")
-                                                .foregroundColor(.red)
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
-                                StyledButton(
-                                    title: "Ajouter une compétence", systemImage: "plus",
-                                    action: {
-                                        profile.skills.append("")
-                                    })
-                            }
+                    VStack(spacing: 20) {
+                        StyledSection(title: "Informations Personnelles") {
+                            PersonalInfoForm(profile: profile)
                         }
-                        .padding()
+
+                        StyledSection(title: "Résumé") {
+                            TextEditor(
+                                text: Binding(
+                                    get: { profile.summary }, set: { profile.summary = $0 })
+                            )
+                            .modifier(StyledTextEditorModifier())
+                        }
+
+                        StyledSection(title: "Expériences") {
+                            ForEach(profile.experiences.indices, id: \.self) { index in
+                                ExperienceForm(experience: profile.experiences[index]) {
+                                    updatedExperience in
+                                    profile.experiences[index] = updatedExperience
+                                }
+                                .padding(.bottom, 10)
+                                Button(action: { profile.experiences.remove(at: index) }) {
+                                    Image(systemName: "trash.fill")
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.plain)
+                                if index < profile.experiences.count - 1 {
+                                    Divider().background(Color.secondary)
+                                }
+                            }
+                            StyledButton(
+                                title: "Ajouter une expérience", systemImage: "plus",
+                                action: {
+                                    profile.experiences.append(
+                                        Experience(
+                                            company: "", startDate: Date(), description: ""))
+                                })
+                        }
+
+                        StyledSection(title: "Formations") {
+                            ForEach(profile.educations.indices, id: \.self) { index in
+                                EducationForm(education: profile.educations[index]) {
+                                    updatedEducation in
+                                    profile.educations[index] = updatedEducation
+                                }
+                                .padding(.bottom, 10)
+                                Button(action: { profile.educations.remove(at: index) }) {
+                                    Image(systemName: "trash.fill")
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.plain)
+                                if index < profile.educations.count - 1 {
+                                    Divider().background(Color.secondary)
+                                }
+                            }
+                            StyledButton(
+                                title: "Ajouter une formation", systemImage: "plus",
+                                action: {
+                                    profile.educations.append(
+                                        Education(
+                                            institution: "", degree: "", startDate: Date(),
+                                            description: ""))
+                                })
+                        }
+
+                        StyledSection(title: "Références") {
+                            ForEach(profile.references.indices, id: \.self) { index in
+                                ReferenceForm(reference: profile.references[index]) {
+                                    updatedReference in
+                                    profile.references[index] = updatedReference
+                                }
+                                .padding(.bottom, 10)
+                                Button(action: { profile.references.remove(at: index) }) {
+                                    Image(systemName: "trash.fill")
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.plain)
+                                if index < profile.references.count - 1 {
+                                    Divider().background(Color.secondary)
+                                }
+                            }
+                            StyledButton(
+                                title: "Ajouter une référence", systemImage: "plus",
+                                action: {
+                                    profile.references.append(
+                                        Reference(
+                                            name: "", position: "", company: "", email: "",
+                                            phone: ""))
+                                })
+                        }
+
+                        StyledSection(title: "Compétences") {
+                            ForEach(profile.skills.indices, id: \.self) { index in
+                                HStack {
+                                    TextField(
+                                        "Compétence",
+                                        text: Binding(
+                                            get: { profile.skills[index] },
+                                            set: { profile.skills[index] = $0 })
+                                    )
+                                    .textFieldStyle(StyledTextField())
+                                    Button(action: { profile.skills.remove(at: index) }) {
+                                        Image(systemName: "trash.fill")
+                                            .foregroundColor(.red)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            StyledButton(
+                                title: "Ajouter une compétence", systemImage: "plus",
+                                action: {
+                                    profile.skills.append("")
+                                })
+                        }
                     }
                 } else {
                     VStack {
@@ -153,8 +144,10 @@ struct ProfileView: View {
                     }
                 }
             }
+            .padding(.horizontal)
         }
         .navigationTitle("Profil")
+        .toolbarBackground(.hidden, for: .windowToolbar)
     }
 
     private var profileSelector: some View {
@@ -490,14 +483,14 @@ struct PersonalInfoForm: View {
                 text: Binding(get: { linkedin ?? "" }, set: { linkedin = $0.isEmpty ? nil : $0 }))
         }
         .textFieldStyle(StyledTextField())
-        .onChange(of: firstName) { profile.firstName = $0 }
-        .onChange(of: lastName) { profile.lastName = $0 }
-        .onChange(of: email) { profile.email = $0 }
-        .onChange(of: phone) { profile.phone = $0 }
-        .onChange(of: location) { profile.location = $0 }
-        .onChange(of: github) { profile.github = $0 }
-        .onChange(of: gitlab) { profile.gitlab = $0 }
-        .onChange(of: linkedin) { profile.linkedin = $0 }
+        .onChange(of: firstName) { oldValue, newValue in profile.firstName = newValue }
+        .onChange(of: lastName) { oldValue, newValue in profile.lastName = newValue }
+        .onChange(of: email) { oldValue, newValue in profile.email = newValue }
+        .onChange(of: phone) { oldValue, newValue in profile.phone = newValue }
+        .onChange(of: location) { oldValue, newValue in profile.location = newValue }
+        .onChange(of: github) { oldValue, newValue in profile.github = newValue }
+        .onChange(of: gitlab) { oldValue, newValue in profile.gitlab = newValue }
+        .onChange(of: linkedin) { oldValue, newValue in profile.linkedin = newValue }
     }
 }
 

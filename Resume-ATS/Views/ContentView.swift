@@ -8,6 +8,88 @@
 import SwiftData
 import SwiftUI
 
+struct ApplicationsView: View {
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                Text("Suivi des Candidatures")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .padding(.top)
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
+                    DashboardTile(
+                        title: "Nouvelle Candidature",
+                        subtitle: "Ajouter une nouvelle candidature",
+                        systemImage: "plus"
+                    ) {
+                        // Action to add new application
+                    }
+
+                    DashboardTile(
+                        title: "Candidatures en Cours",
+                        subtitle: "Voir les candidatures actives",
+                        systemImage: "briefcase"
+                    ) {
+                        // Action to view active applications
+                    }
+
+                    DashboardTile(
+                        title: "Candidatures Archivée",
+                        subtitle: "Historique des candidatures",
+                        systemImage: "archivebox"
+                    ) {
+                        // Action to view archived applications
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+        .toolbarBackground(.hidden, for: .windowToolbar)
+    }
+}
+
+struct TemplatesView: View {
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                Text("Modèles de CV")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .padding(.top)
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
+                    DashboardTile(
+                        title: "Modèle Classique",
+                        subtitle: "CV traditionnel",
+                        systemImage: "doc"
+                    ) {
+                        // Action to select classic template
+                    }
+
+                    DashboardTile(
+                        title: "Modèle Moderne",
+                        subtitle: "Design contemporain",
+                        systemImage: "doc.fill"
+                    ) {
+                        // Action to select modern template
+                    }
+
+                    DashboardTile(
+                        title: "Modèle Créatif",
+                        subtitle: "Pour postes créatifs",
+                        systemImage: "paintbrush"
+                    ) {
+                        // Action to select creative template
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+        .toolbarBackground(.hidden, for: .windowToolbar)
+    }
+}
+
 struct ContentView: View {
     @State private var selectedSection: String? = "Dashboard"
 
@@ -38,9 +120,9 @@ struct ContentView: View {
             case "Profile":
                 ProfileView()
             case "Applications":
-                Text("Applications Tracking View")
+                ApplicationsView()
             case "Templates":
-                Text("CV Templates View")
+                TemplatesView()
             case "Settings":
                 SettingsView()
             default:
@@ -52,5 +134,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: [Item.self, Profile.self], inMemory: true)
+        .modelContainer(for: Profile.self, inMemory: true)
 }

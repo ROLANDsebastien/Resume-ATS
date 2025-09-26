@@ -18,15 +18,12 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        ZStack {
-            backgroundColor.edgesIgnoringSafeArea(.all)
-
+        ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Réglages")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
-                    .padding(.horizontal)
                     .padding(.top)
 
                 // Apparence Section
@@ -72,7 +69,6 @@ struct SettingsView: View {
                     .background(sectionBackground)
                     .cornerRadius(10)
                 }
-                .padding(.horizontal)
 
                 // Préférences Section
                 VStack(alignment: .leading, spacing: 15) {
@@ -103,11 +99,12 @@ struct SettingsView: View {
                     .background(sectionBackground)
                     .cornerRadius(10)
                 }
-                .padding(.horizontal)
 
                 Spacer()
             }
+            .padding(.horizontal)
         }
+        .toolbarBackground(.hidden, for: .windowToolbar)
     }
 }
 
