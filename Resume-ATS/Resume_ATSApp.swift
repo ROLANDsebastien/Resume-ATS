@@ -1,4 +1,3 @@
-
 import SwiftData
 import SwiftUI
 
@@ -6,8 +5,7 @@ import SwiftUI
 struct Resume_ATSApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
-            Profile.self,
+            Profile.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -18,7 +16,7 @@ struct Resume_ATSApp: App {
         }
     }()
 
-    @AppStorage("colorScheme") private var colorScheme: Int = 2 // 0=light, 1=dark, 2=system
+    @AppStorage("colorScheme") private var colorScheme: Int = 2  // 0=light, 1=dark, 2=system
 
     var body: some Scene {
         WindowGroup {

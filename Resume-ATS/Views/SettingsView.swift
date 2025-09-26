@@ -1,18 +1,31 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.colorScheme) private var systemColorScheme
     @AppStorage("colorScheme") private var colorScheme: Int = 2  // 0: Light, 1: Dark, 2: System
     @AppStorage("autoSave") private var autoSave = true
 
+    private var backgroundColor: Color {
+        systemColorScheme == .dark
+            ? Color(red: 24 / 255, green: 24 / 255, blue: 38 / 255)
+            : Color(NSColor.windowBackgroundColor)
+    }
+
+    private var sectionBackground: Color {
+        systemColorScheme == .dark
+            ? Color(red: 44 / 255, green: 44 / 255, blue: 60 / 255)
+            : Color(NSColor.controlBackgroundColor)
+    }
+
     var body: some View {
         ZStack {
-            Color(red: 24 / 255, green: 24 / 255, blue: 38 / 255).edgesIgnoringSafeArea(.all)
+            backgroundColor.edgesIgnoringSafeArea(.all)
 
             VStack(alignment: .leading, spacing: 20) {
                 Text("Réglages")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(.primary)
                     .padding(.horizontal)
                     .padding(.top)
 
@@ -24,17 +37,17 @@ struct SettingsView: View {
                         Text("Apparence")
                             .font(.title2)
                             .fontWeight(.semibold)
-                            .foregroundColor(.white)
+                            .foregroundColor(.primary)
                     }
 
                     VStack(spacing: 10) {
                         HStack {
                             VStack(alignment: .leading) {
                                 Text("Thème")
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.primary)
                                 Text("Mode clair ou sombre")
                                     .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.secondary)
                             }
                             Spacer()
                             Menu {
@@ -50,13 +63,13 @@ struct SettingsView: View {
                                 }
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
-                                .background(Color.gray.opacity(0.2))
+                                .background(Color(NSColor.controlBackgroundColor))
                                 .cornerRadius(8)
                             }
                         }
                     }
                     .padding()
-                    .background(Color(red: 44 / 255, green: 44 / 255, blue: 60 / 255))
+                    .background(sectionBackground)
                     .cornerRadius(10)
                 }
                 .padding(.horizontal)
@@ -69,17 +82,17 @@ struct SettingsView: View {
                         Text("Préférences")
                             .font(.title2)
                             .fontWeight(.semibold)
-                            .foregroundColor(.white)
+                            .foregroundColor(.primary)
                     }
 
                     VStack(spacing: 10) {
                         HStack {
                             VStack(alignment: .leading) {
                                 Text("Sauvegarde automatique")
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.primary)
                                 Text("Sauvegarder automatiquement les modifications")
                                     .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.secondary)
                             }
                             Spacer()
                             Toggle("", isOn: $autoSave)
@@ -87,7 +100,7 @@ struct SettingsView: View {
                         }
                     }
                     .padding()
-                    .background(Color(red: 44 / 255, green: 44 / 255, blue: 60 / 255))
+                    .background(sectionBackground)
                     .cornerRadius(10)
                 }
                 .padding(.horizontal)

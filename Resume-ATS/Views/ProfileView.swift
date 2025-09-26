@@ -18,7 +18,7 @@ struct ProfileView: View {
                 Text("Profil")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(.primary)
                     .padding(.horizontal)
                     .padding(.top)
 
@@ -54,7 +54,7 @@ struct ProfileView: View {
                                     }
                                     .buttonStyle(.plain)
                                     if index < profile.experiences.count - 1 {
-                                        Divider().background(Color.gray)
+                                        Divider().background(Color.secondary)
                                     }
                                 }
                                 StyledButton(
@@ -79,7 +79,7 @@ struct ProfileView: View {
                                     }
                                     .buttonStyle(.plain)
                                     if index < profile.educations.count - 1 {
-                                        Divider().background(Color.gray)
+                                        Divider().background(Color.secondary)
                                     }
                                 }
                                 StyledButton(
@@ -105,7 +105,7 @@ struct ProfileView: View {
                                     }
                                     .buttonStyle(.plain)
                                     if index < profile.references.count - 1 {
-                                        Divider().background(Color.gray)
+                                        Divider().background(Color.secondary)
                                     }
                                 }
                                 StyledButton(
@@ -148,7 +148,7 @@ struct ProfileView: View {
                     VStack {
                         Spacer()
                         Text("Veuillez sélectionner ou créer un profil.")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                         Spacer()
                     }
                 }
@@ -163,6 +163,7 @@ struct ProfileView: View {
                 HStack {
                     TextField("Nom du nouveau profil", text: $newProfileName)
                         .textFieldStyle(StyledTextField())
+                        .foregroundColor(.primary)
                     StyledButton(title: "Créer", action: createProfile)
                 }
             }
@@ -190,8 +191,13 @@ struct ProfileView: View {
 
 // MARK: - Reusable Styled Components
 extension Color {
-    fileprivate static let darkBackground = Color(red: 24 / 255, green: 24 / 255, blue: 38 / 255)
-    fileprivate static let sectionBackground = Color(red: 44 / 255, green: 44 / 255, blue: 60 / 255)
+    fileprivate static var darkBackground: Color {
+        Color(NSColor.windowBackgroundColor)
+    }
+
+    fileprivate static var sectionBackground: Color {
+        Color(NSColor.controlBackgroundColor)
+    }
 }
 
 private struct StyledSection<Content: View>: View {
@@ -206,10 +212,10 @@ private struct StyledSection<Content: View>: View {
                     Text(title)
                         .font(.title2)
                         .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                     Spacer()
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(.primary)
                 }
             }
             .buttonStyle(.plain)
@@ -241,7 +247,7 @@ private struct StyledButton: View {
                 }
                 Text(title)
             }
-            .foregroundColor(.white)
+            .foregroundColor(.primary)
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
             .background(Color.accentColor)
@@ -257,7 +263,7 @@ private struct StyledTextField: TextFieldStyle {
             .padding(10)
             .background(Color.darkBackground)
             .cornerRadius(8)
-            .foregroundColor(.white)
+            .foregroundColor(.primary)
     }
 }
 
@@ -268,7 +274,7 @@ private struct StyledTextEditorModifier: ViewModifier {
             .scrollContentBackground(.hidden)
             .background(Color.darkBackground)
             .cornerRadius(8)
-            .foregroundColor(.white)
+            .foregroundColor(.primary)
             .frame(minHeight: 100)
     }
 }
@@ -279,7 +285,7 @@ private struct StyledPickerModifier: ViewModifier {
             .padding(10)
             .background(Color.sectionBackground)
             .cornerRadius(8)
-            .foregroundColor(.white)
+            .foregroundColor(.primary)
     }
 }
 
@@ -305,16 +311,16 @@ struct ExperienceForm: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             TextField("Entreprise", text: $company)
+                .foregroundColor(.primary)
+                .foregroundColor(.primary)
             DatePicker("Date de début", selection: $startDate, displayedComponents: .date)
                 .datePickerStyle(.compact)
-                .colorScheme(.dark)
             DatePicker(
                 "Date de fin",
                 selection: Binding(get: { endDate ?? Date() }, set: { endDate = $0 }),
                 displayedComponents: .date
             )
             .datePickerStyle(.compact)
-            .colorScheme(.dark)
             TextEditor(text: $description)
                 .modifier(StyledTextEditorModifier())
         }
@@ -355,10 +361,11 @@ struct EducationForm: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             TextField("Institution", text: $institution)
+                .foregroundColor(.primary)
             TextField("Diplôme", text: $degree)
+                .foregroundColor(.primary)
             DatePicker("Date de début", selection: $startDate, displayedComponents: .date)
                 .datePickerStyle(.compact)
-                .colorScheme(.dark)
             DatePicker(
                 "Date de fin",
                 selection: Binding(get: { endDate ?? Date() }, set: { endDate = $0 }),
@@ -407,10 +414,14 @@ struct ReferenceForm: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             TextField("Nom", text: $name)
+                .foregroundColor(.primary)
             TextField("Poste", text: $position)
+                .foregroundColor(.primary)
             TextField("Entreprise", text: $company)
             TextField("Email", text: $email)
+                .foregroundColor(.primary)
             TextField("Téléphone", text: $phone)
+                .foregroundColor(.primary)
         }
         .textFieldStyle(StyledTextField())
         .onChange(of: name) { updateReference() }
@@ -460,8 +471,8 @@ struct PersonalInfoForm: View {
                 "Nom",
                 text: Binding(get: { lastName ?? "" }, set: { lastName = $0.isEmpty ? nil : $0 }))
             TextField(
-                "Email", text: Binding(get: { email ?? "" }, set: { email = $0.isEmpty ? nil : $0 })
-            )
+                "Email",
+                text: Binding(get: { email ?? "" }, set: { email = $0.isEmpty ? nil : $0 }))
             TextField(
                 "Téléphone",
                 text: Binding(get: { phone ?? "" }, set: { phone = $0.isEmpty ? nil : $0 }))
