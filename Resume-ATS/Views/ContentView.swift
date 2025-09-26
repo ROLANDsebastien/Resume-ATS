@@ -14,6 +14,9 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             List(selection: $selectedSection) {
+                NavigationLink(value: "Dashboard") {
+                    Label("Dashboard", systemImage: "house")
+                }
                 NavigationLink(value: "Profile") {
                     Label("Profile", systemImage: "person")
                 }
@@ -31,7 +34,7 @@ struct ContentView: View {
         } detail: {
             switch selectedSection {
             case "Dashboard":
-                Text("Dashboard View")
+                DashboardView(selectedSection: $selectedSection)
             case "Profile":
                 ProfileView()
             case "Applications":
