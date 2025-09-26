@@ -29,6 +29,10 @@ struct ProfileView: View {
                 if let profile = selectedProfile {
                     ScrollView {
                         VStack(spacing: 20) {
+                            StyledSection(title: "Informations Personnelles") {
+                                PersonalInfoForm(profile: profile)
+                            }
+
                             StyledSection(title: "Résumé") {
                                 TextEditor(
                                     text: Binding(
@@ -420,6 +424,69 @@ struct ReferenceForm: View {
         let updated = Reference(
             name: name, position: position, company: company, email: email, phone: phone)
         onUpdate(updated)
+    }
+}
+
+struct PersonalInfoForm: View {
+    var profile: Profile
+
+    @State private var firstName: String?
+    @State private var lastName: String?
+    @State private var email: String?
+    @State private var phone: String?
+    @State private var location: String?
+    @State private var github: String?
+    @State private var gitlab: String?
+    @State private var linkedin: String?
+
+    init(profile: Profile) {
+        self.profile = profile
+        _firstName = State(initialValue: profile.firstName)
+        _lastName = State(initialValue: profile.lastName)
+        _email = State(initialValue: profile.email)
+        _phone = State(initialValue: profile.phone)
+        _location = State(initialValue: profile.location)
+        _github = State(initialValue: profile.github)
+        _gitlab = State(initialValue: profile.gitlab)
+        _linkedin = State(initialValue: profile.linkedin)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            TextField(
+                "Prénom",
+                text: Binding(get: { firstName ?? "" }, set: { firstName = $0.isEmpty ? nil : $0 }))
+            TextField(
+                "Nom",
+                text: Binding(get: { lastName ?? "" }, set: { lastName = $0.isEmpty ? nil : $0 }))
+            TextField(
+                "Email", text: Binding(get: { email ?? "" }, set: { email = $0.isEmpty ? nil : $0 })
+            )
+            TextField(
+                "Téléphone",
+                text: Binding(get: { phone ?? "" }, set: { phone = $0.isEmpty ? nil : $0 }))
+            TextField(
+                "Localisation",
+                text: Binding(get: { location ?? "" }, set: { location = $0.isEmpty ? nil : $0 }))
+            TextField(
+                "GitHub",
+                text: Binding(get: { github ?? "" }, set: { github = $0.isEmpty ? nil : $0 }))
+            TextField(
+                "GitLab",
+                text: Binding(get: { gitlab ?? "" }, set: { gitlab = $0.isEmpty ? nil : $0 }))
+            TextField(
+                "LinkedIn",
+                text: Binding(get: { linkedin ?? "" }, set: { linkedin = $0.isEmpty ? nil : $0 }))
+        }
+        .textFieldStyle(StyledTextField())
+        .onChange(of: firstName) { profile.firstName = $0 }
+        .onChange(of: lastName) { profile.lastName = $0 }
+        .onChange(of: email) { profile.email = $0 }
+        .onChange(of: phone) { profile.phone = $0 }
+        .onChange(of: location) { profile.location = $0 }
+        .onChange(of: github) { profile.github = $0 }
+        .onChange(of: gitlab) { profile.gitlab = $0 }
+        .onChange(of: linkedin) { profile.linkedin = $0 }
     }
 }
 

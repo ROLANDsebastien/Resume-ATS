@@ -11,6 +11,14 @@ import SwiftData
 @Model
 final class Profile {
     var name: String
+    var firstName: String?
+    var lastName: String?
+    var email: String?
+    var phone: String?
+    var location: String?
+    var github: String?
+    var gitlab: String?
+    var linkedin: String?
     var summary: String
     var experiences: [Experience]
     var educations: [Education]
@@ -18,10 +26,20 @@ final class Profile {
     var skills: [String]
 
     init(
-        name: String, summary: String = "", experiences: [Experience] = [],
+        name: String, firstName: String? = nil, lastName: String? = nil, email: String? = nil,
+        phone: String? = nil, location: String? = nil, github: String? = nil, gitlab: String? = nil,
+        linkedin: String? = nil, summary: String = "", experiences: [Experience] = [],
         educations: [Education] = [], references: [Reference] = [], skills: [String] = []
     ) {
         self.name = name
+        self.firstName = firstName
+        self.lastName = lastName
+        self.email = email
+        self.phone = phone
+        self.location = location
+        self.github = github
+        self.gitlab = gitlab
+        self.linkedin = linkedin
         self.summary = summary
         self.experiences = experiences
         self.educations = educations
