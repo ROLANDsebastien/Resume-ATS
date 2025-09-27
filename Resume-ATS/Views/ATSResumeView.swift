@@ -1,6 +1,8 @@
 import SwiftData
 import SwiftUI
 
+// No additional import needed for RoundedImageView as it's in the same module
+
 //
 //  ATSResumeView.swift
 //  Resume-ATS
@@ -14,63 +16,92 @@ struct ATSResumeView: View {
 
     var body: some View {
         let content = VStack(alignment: .leading, spacing: 20) {
-                 // Header with photo, name, and contact
-                 HStack(alignment: .top, spacing: 20) {
-                     VStack(alignment: .leading, spacing: 10) {
-                         if let first = profile.firstName, let last = profile.lastName {
-                             Text("\(first) \(last)")
-                                 .font(.custom("Arial", size: 16))
-                                 .fontWeight(.bold)
-                                 .foregroundColor(.black)
-                         }
-                         Text(profile.name)
-                             .font(.custom("Arial", size: 14))
-                             .fontWeight(.semibold)
-                             .foregroundColor(.black)
-                         if profile.showPhotoInPDF, let photoData = profile.photo, let cgImage = NSImage(data: photoData)?.cgImage(forProposedRect: nil, context: nil, hints: nil) {
-                             let nsImage = NSImage(cgImage: cgImage, size: NSSize(width: 100, height: 100))
-                             Image(nsImage: nsImage)
-                                 .resizable()
-                                 .scaledToFill()
-                                 .frame(width: 100, height: 100)
-                                 .cornerRadius(50)
-                                 .overlay(Circle().stroke(Color.gray, lineWidth: 1))
-                         }
-                     }
-                    Spacer()
-                    contactInfo
+            // Header with photo, name, and contact
+            HStack(alignment: .top, spacing: 20) {
+                VStack(alignment: .leading, spacing: 10) {
+                    if let first = profile.firstName, let last = profile.lastName {
+                        Text("\(first) \(last)")
+                            .font(.custom("Arial", size: 16))
+                            .fontWeight(.bold)
+                            .foregroundColor(.black)
+                    }
+                    Text(profile.name)
+                        .font(.custom("Arial", size: 14))
+                        .fontWeight(.semibold)
+                        .foregroundColor(.black)
+                    if profile.showPhotoInPDF, let photoData = profile.photo {
+                        RoundedImageView(
+                            imageData: photoData,
+                            size: CGSize(width: 100, height: 100),
+                            cornerRadius: 50
+                        )
+                        .frame(width: 100, height: 100)
+                        .overlay(Circle().stroke(Color.gray, lineWidth: 1))
+                    }
                 }
+                Spacer()
+                contactInfo
+            }
 
-                // Professional Summary
-                 if !profile.summary.isEmpty {
-                     SectionView(title: "Professional Summary") {
-                         Text(profile.summary)
-                             .font(.custom("Arial", size: 11))
-                             .lineSpacing(4)
-                             .foregroundColor(.black)
-                     }
-                 }
+            // Professional Summary
+            if !profile.summary.isEmpty {
+                SectionView(title: "Professional Summary") {
+                    Text(profile.summary)
+                        .font(.custom("Arial", size: 11))
+                        .lineSpacing(4)
+                        .foregroundColor(.black)
+                }
+            }
 
-                // Professional Experience
-                if !profile.experiences.isEmpty {
-                    SectionView(title: "Professional Experience") {
-                        VStack(alignment: .leading, spacing: 15) {
-                            ForEach(profile.experiences) { experience in
-                                VStack(alignment: .leading, spacing: 5) {
-                                     HStack {
-                                         Text(experience.company)
-                                             .font(.custom("Arial", size: 12))
-                                             .foregroundColor(.black)
-                                         Spacer()
-                                         Text(
-                                             dateRange(
-                                                 start: experience.startDate, end: experience.endDate
-                                             )
-                                         )
-                                         .font(.custom("Arial", size: 10))
-                                         .foregroundColor(.black)
-                                     }
-                                    Text(experience.details)
+            // Professional Experience
+            if !profile.experiences.isEmpty {
+                SectionView(title: "Professional Experience") {
+                    VStack(alignment: .leading, spacing: 15) {
+                        ForEach(profile.experiences) { experience in
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack {
+                                    Text(experience.company)
+                                        .font(.custom("Arial", size: 12))
+                                        .foregroundColor(.black)
+                                    Spacer()
+                                    Text(
+                                        dateRange(
+                                            start: experience.startDate, end: experience.endDate
+                                        )
+                                    )
+                                    .font(.custom("Arial", size: 10))
+                                    .foregroundColor(.black)
+                                }
+                                Text(experience.details)
+                                    .font(.custom("Arial", size: 11))
+                                    .lineSpacing(4)
+                                    .foregroundColor(.black)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Education
+            if !profile.educations.isEmpty {
+                SectionView(title: "Education") {
+                    VStack(alignment: .leading, spacing: 15) {
+                        ForEach(profile.educations) { education in
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack {
+                                    Text("\(education.institution) - \(education.degree)")
+                                        .font(.custom("Arial", size: 12))
+                                        .foregroundColor(.black)
+                                    Spacer()
+                                    Text(
+                                        dateRange(
+                                            start: education.startDate, end: education.endDate)
+                                    )
+                                    .font(.custom("Arial", size: 10))
+                                    .foregroundColor(.black)
+                                }
+                                if !education.details.isEmpty {
+                                    Text(education.details)
                                         .font(.custom("Arial", size: 11))
                                         .lineSpacing(4)
                                         .foregroundColor(.black)
@@ -79,69 +110,40 @@ struct ATSResumeView: View {
                         }
                     }
                 }
-
-                // Education
-                if !profile.educations.isEmpty {
-                    SectionView(title: "Education") {
-                        VStack(alignment: .leading, spacing: 15) {
-                            ForEach(profile.educations) { education in
-                                VStack(alignment: .leading, spacing: 5) {
-                                     HStack {
-                                         Text("\(education.institution) - \(education.degree)")
-                                             .font(.custom("Arial", size: 12))
-                                             .foregroundColor(.black)
-                                         Spacer()
-                                         Text(
-                                             dateRange(
-                                                 start: education.startDate, end: education.endDate)
-                                         )
-                                         .font(.custom("Arial", size: 10))
-                                         .foregroundColor(.black)
-                                     }
-                                     if !education.details.isEmpty {
-                                         Text(education.details)
-                                             .font(.custom("Arial", size: 11))
-                                             .lineSpacing(4)
-                                             .foregroundColor(.black)
-                                     }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // References
-                if !profile.references.isEmpty {
-                    SectionView(title: "References") {
-                        VStack(alignment: .leading, spacing: 15) {
-                            ForEach(profile.references) { reference in
-                                 VStack(alignment: .leading, spacing: 5) {
-                                     Text(
-                                         "\(reference.name) - \(reference.position) at \(reference.company)"
-                                     )
-                                     .font(.custom("Arial", size: 12))
-                                     .foregroundColor(.black)
-                                     Text("Email: \(reference.email) | Phone: \(reference.phone)")
-                                         .font(.custom("Arial", size: 11))
-                                         .foregroundColor(.black)
-                                 }
-                            }
-                        }
-                    }
-                }
-
-                 // Skills
-                 if !profile.skills.isEmpty {
-                     SectionView(title: "Skills") {
-                         Text(profile.skills.joined(separator: ", "))
-                             .font(.custom("Arial", size: 11))
-                             .foregroundColor(.black)
-                     }
-                 }
             }
-            .padding()
-            .frame(maxWidth: 595, minHeight: 842, alignment: .top)  // A4 size, align to top
-            .background(Color.white)
+
+            // References
+            if !profile.references.isEmpty {
+                SectionView(title: "References") {
+                    VStack(alignment: .leading, spacing: 15) {
+                        ForEach(profile.references) { reference in
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(
+                                    "\(reference.name) - \(reference.position) at \(reference.company)"
+                                )
+                                .font(.custom("Arial", size: 12))
+                                .foregroundColor(.black)
+                                Text("Email: \(reference.email) | Phone: \(reference.phone)")
+                                    .font(.custom("Arial", size: 11))
+                                    .foregroundColor(.black)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Skills
+            if !profile.skills.isEmpty {
+                SectionView(title: "Skills") {
+                    Text(profile.skills.joined(separator: ", "))
+                        .font(.custom("Arial", size: 11))
+                        .foregroundColor(.black)
+                }
+            }
+        }
+        .padding()
+        .frame(maxWidth: 595, minHeight: 842, alignment: .top)  // A4 size, align to top
+        .background(Color.white)
 
         if isForPDF {
             content
