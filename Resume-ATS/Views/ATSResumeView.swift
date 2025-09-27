@@ -27,7 +27,8 @@ struct ATSResumeView: View {
                              .font(.custom("Arial", size: 14))
                              .fontWeight(.semibold)
                              .foregroundColor(.black)
-                         if profile.showPhotoInPDF, let photoData = profile.photo, let nsImage = NSImage(data: photoData) {
+                         if profile.showPhotoInPDF, let photoData = profile.photo, let cgImage = NSImage(data: photoData)?.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+                             let nsImage = NSImage(cgImage: cgImage, size: NSSize(width: 100, height: 100))
                              Image(nsImage: nsImage)
                                  .resizable()
                                  .scaledToFill()

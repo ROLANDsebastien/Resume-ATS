@@ -4,7 +4,7 @@ import PDFKit
 import SwiftUI
 
 class PDFService {
-    static func generateATSResumePDF(for profile: Profile) -> URL? {
+    static func generateATSResumePDF(for profile: Profile, completion: @escaping (URL?) -> Void) {
         print("Generating PDF for profile: \(profile.name)")
         print("Experiences: \(profile.experiences.count)")
         print("Educations: \(profile.educations.count)")
@@ -32,7 +32,7 @@ class PDFService {
         pdfDocument?.write(to: tempURL)
 
         print("PDF generated successfully")
-        return tempURL
+        completion(tempURL)
     }
 
 

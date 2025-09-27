@@ -79,13 +79,19 @@ struct TemplatesView: View {
                 .padding(.horizontal)
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
-                    DashboardTile(
-                        title: "Modèle ATS",
-                        subtitle: "Optimisé pour les filtres ATS",
-                        systemImage: "doc"
-                    ) {
-                        generateATSPDF()
-                    }
+                     DashboardTile(
+                         title: "Modèle ATS",
+                         subtitle: "Optimisé pour les filtres ATS",
+                         systemImage: "doc"
+                     ) {
+                         PDFService.generateATSResumePDF(for: selectedProfile!) { pdfURL in
+                             if let pdfURL = pdfURL {
+                                 DispatchQueue.main.async {
+                                     NSWorkspace.shared.open(pdfURL)
+                                 }
+                             }
+                         }
+                     }
 
                     DashboardTile(
                         title: "Modèle Moderne",
@@ -109,26 +115,7 @@ struct TemplatesView: View {
         .toolbarBackground(.hidden, for: .windowToolbar)
     }
 
-    private func generateATSPDF() {
-        guard let selectedProfileID = selectedProfile?.persistentModelID else {
-            // Show alert or notification that no profile is selected
-            return
-        }
 
-        var descriptor = FetchDescriptor<Profile>()
-        descriptor.predicate = #Predicate { $0.persistentModelID == selectedProfileID }
-        descriptor.relationshipKeyPathsForPrefetching = [\Profile.experiences, \Profile.educations, \Profile.references]
-
-        guard let profile = try? modelContext.fetch(descriptor).first else {
-            return
-        }
-
-        // Generate PDF - now non-blocking
-        if let pdfURL = PDFService.generateATSResumePDF(for: profile) {
-            // Open the PDF in default viewer
-            NSWorkspace.shared.open(pdfURL)
-        }
-    }
 }
 
 struct ContentView: View {
