@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ApplicationsView: View {
     var body: some View {
@@ -50,6 +51,10 @@ struct ApplicationsView: View {
 }
 
 struct TemplatesView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var profiles: [Profile]
+    @State private var selectedProfile: Profile?
+
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -58,13 +63,28 @@ struct TemplatesView: View {
                     .fontWeight(.bold)
                     .padding(.top)
 
+                // Profile selector
+                VStack(alignment: .leading) {
+                    Text("Sélectionner un profil:")
+                        .font(.headline)
+                    Picker("Profil", selection: $selectedProfile) {
+                        Text("Choisir un profil").tag(nil as Profile?)
+                        ForEach(profiles) { profile in
+                            Text(profile.name).tag(profile as Profile?)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    .frame(maxWidth: 300)
+                }
+                .padding(.horizontal)
+
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
                     DashboardTile(
-                        title: "Modèle Classique",
-                        subtitle: "CV traditionnel",
+                        title: "Modèle ATS",
+                        subtitle: "Optimisé pour les filtres ATS",
                         systemImage: "doc"
                     ) {
-                        // Action to select classic template
+                        generateATSPDF()
                     }
 
                     DashboardTile(
@@ -87,6 +107,18 @@ struct TemplatesView: View {
             }
         }
         .toolbarBackground(.hidden, for: .windowToolbar)
+    }
+
+    private func generateATSPDF() {
+        guard let profile = selectedProfile else {
+            // Show alert or notification that no profile is selected
+            return
+        }
+
+        if let pdfURL = PDFService.generateATSResumePDF(for: profile) {
+            // Open the PDF in default viewer
+            NSWorkspace.shared.open(pdfURL)
+        }
     }
 }
 
