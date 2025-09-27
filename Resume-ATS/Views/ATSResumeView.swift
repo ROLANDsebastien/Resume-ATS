@@ -33,10 +33,11 @@ struct ATSResumeView: View {
                         RoundedImageView(
                             imageData: photoData,
                             size: CGSize(width: 100, height: 100),
-                            cornerRadius: 50
+                            cornerRadius: 10
                         )
                         .frame(width: 100, height: 100)
-                        .overlay(Circle().stroke(Color.gray, lineWidth: 1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
                     }
                 }
                 Spacer()
