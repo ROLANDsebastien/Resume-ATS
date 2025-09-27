@@ -185,11 +185,11 @@ struct ProfileView: View {
 // MARK: - Reusable Styled Components
 extension Color {
     fileprivate static var darkBackground: Color {
-        Color(NSColor.windowBackgroundColor)
+        Color.gray.opacity(0.1)
     }
 
     fileprivate static var sectionBackground: Color {
-        Color(NSColor.controlBackgroundColor)
+        Color.gray.opacity(0.1)
     }
 }
 
@@ -306,14 +306,17 @@ struct ExperienceForm: View {
             TextField("Entreprise", text: $company)
                 .foregroundColor(.primary)
                 .foregroundColor(.primary)
-            DatePicker("Date de début", selection: $startDate, displayedComponents: .date)
+            HStack {
+                DatePicker("Date de début", selection: $startDate, displayedComponents: .date)
+                    .datePickerStyle(.compact)
+                Spacer()
+                DatePicker(
+                    "Date de fin",
+                    selection: Binding(get: { endDate ?? Date() }, set: { endDate = $0 }),
+                    displayedComponents: .date
+                )
                 .datePickerStyle(.compact)
-            DatePicker(
-                "Date de fin",
-                selection: Binding(get: { endDate ?? Date() }, set: { endDate = $0 }),
-                displayedComponents: .date
-            )
-            .datePickerStyle(.compact)
+            }
             TextEditor(text: $description)
                 .modifier(StyledTextEditorModifier())
         }
@@ -357,14 +360,17 @@ struct EducationForm: View {
                 .foregroundColor(.primary)
             TextField("Diplôme", text: $degree)
                 .foregroundColor(.primary)
-            DatePicker("Date de début", selection: $startDate, displayedComponents: .date)
+            HStack {
+                DatePicker("Date de début", selection: $startDate, displayedComponents: .date)
+                    .datePickerStyle(.compact)
+                Spacer()
+                DatePicker(
+                    "Date de fin",
+                    selection: Binding(get: { endDate ?? Date() }, set: { endDate = $0 }),
+                    displayedComponents: .date
+                )
                 .datePickerStyle(.compact)
-            DatePicker(
-                "Date de fin",
-                selection: Binding(get: { endDate ?? Date() }, set: { endDate = $0 }),
-                displayedComponents: .date
-            )
-            .datePickerStyle(.compact)
+            }
             TextEditor(text: $description)
                 .modifier(StyledTextEditorModifier())
         }
