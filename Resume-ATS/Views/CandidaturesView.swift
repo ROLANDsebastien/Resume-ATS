@@ -47,7 +47,7 @@ struct CandidaturesView: View {
                     .pickerStyle(MenuPickerStyle())
                 }
                 .padding(.horizontal)
-                .padding(.bottom)
+                .padding(.bottom, 20)
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
                     DashboardTile(
@@ -83,12 +83,13 @@ struct CandidaturesView: View {
                     }
                 }
                 .padding(.horizontal)
+                .padding(.bottom, 20)
             }
             .listRowInsets(EdgeInsets())
             .listRowSeparator(.hidden)
 
             if !filteredApplications.isEmpty {
-                Section(header: Text("Candidatures").font(.title2).fontWeight(.semibold)) {
+                Section(header: Text("Candidatures").font(.title2).fontWeight(.semibold).padding(.top, 20)) {
                     ForEach(filteredApplications) { application in
                         ApplicationRow(
                             application: application,
@@ -98,6 +99,7 @@ struct CandidaturesView: View {
                                 modelContext.delete(application)
                             }
                         )
+                        .listRowSeparator(.hidden)
                     }
                 }
             } else {
