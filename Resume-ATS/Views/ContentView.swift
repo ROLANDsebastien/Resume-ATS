@@ -123,6 +123,7 @@ struct TemplatesView: View {
             return
         }
 
+        // Generate PDF - now non-blocking
         if let pdfURL = PDFService.generateATSResumePDF(for: profile) {
             // Open the PDF in default viewer
             NSWorkspace.shared.open(pdfURL)

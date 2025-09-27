@@ -20,18 +20,8 @@ class PDFService {
         let hostingView = NSHostingView(rootView: resumeView)
         hostingView.frame = CGRect(x: 0, y: 0, width: 612, height: 792)  // US Letter size
 
-        // Create a temporary window for rendering
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 612, height: 792), styleMask: [], backing: .buffered, defer: false)
-        window.contentView = hostingView
-        window.orderFront(nil)
-
-        // Allow time for rendering
-        usleep(100000) // 0.1 seconds
-
-        // Generate PDF data
+        // Generate PDF data directly from the hosting view
         let pdfData = hostingView.dataWithPDF(inside: hostingView.bounds)
-
-        window.close()
 
         print("PDF data size: \(pdfData.count)")
 
@@ -44,5 +34,7 @@ class PDFService {
         print("PDF generated successfully")
         return tempURL
     }
+
+
 
 }

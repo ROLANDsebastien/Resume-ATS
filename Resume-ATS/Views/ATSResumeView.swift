@@ -113,14 +113,14 @@ struct ATSResumeView: View {
                     }
                 }
 
-                // Skills
-                if !profile.skills.isEmpty {
-                    SectionView(title: "Skills") {
-                        Text(profile.skills.joined(separator: ", "))
-                            .font(.custom("Arial", size: 11))
-                            .foregroundColor(.black)
-                    }
-                }
+                 // Skills
+                 if !profile.skills.isEmpty {
+                     SectionView(title: "Skills") {
+                         Text(profile.skills.joined(separator: ", "))
+                             .font(.custom("Arial", size: 11))
+                             .foregroundColor(.black)
+                     }
+                 }
             }
             .padding()
             .frame(maxWidth: 612)  // US Letter width equivalent

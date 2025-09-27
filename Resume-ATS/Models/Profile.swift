@@ -24,7 +24,7 @@ final class Profile {
     @Relationship(deleteRule: .cascade) var experiences: [Experience]
     @Relationship(deleteRule: .cascade) var educations: [Education]
     @Relationship(deleteRule: .cascade) var references: [Reference]
-    var skills: [String]
+     var skills: [String]
 
     init(
         name: String, firstName: String? = nil, lastName: String? = nil, email: String? = nil,

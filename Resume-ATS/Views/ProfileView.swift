@@ -115,29 +115,29 @@ struct ProfileView: View {
                                 })
                         }
 
-                        StyledSection(title: "Compétences") {
-                            ForEach(profile.skills.indices, id: \.self) { index in
-                                HStack {
-                                    TextField(
-                                        "Compétence",
-                                        text: Binding(
-                                            get: { profile.skills[index] },
-                                            set: { profile.skills[index] = $0 })
-                                    )
-                                    .textFieldStyle(StyledTextField())
-                                    Button(action: { profile.skills.remove(at: index) }) {
-                                        Image(systemName: "trash.fill")
-                                            .foregroundColor(.red)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                            StyledButton(
-                                title: "Ajouter une compétence", systemImage: "plus",
-                                action: {
-                                    profile.skills.append("")
-                                })
-                        }
+                         StyledSection(title: "Compétences") {
+                             ForEach(profile.skills.indices, id: \.self) { index in
+                                 HStack {
+                                     TextField(
+                                         "Compétence",
+                                         text: Binding(
+                                             get: { profile.skills[index] },
+                                             set: { profile.skills[index] = $0 })
+                                     )
+                                     .textFieldStyle(StyledTextField())
+                                     Button(action: { profile.skills.remove(at: index) }) {
+                                         Image(systemName: "trash.fill")
+                                             .foregroundColor(.red)
+                                     }
+                                     .buttonStyle(.plain)
+                                 }
+                             }
+                             StyledButton(
+                                 title: "Ajouter une compétence", systemImage: "plus",
+                                 action: {
+                                     profile.skills.append("")
+                                 })
+                         }
                     }
                 } else {
                     VStack {
