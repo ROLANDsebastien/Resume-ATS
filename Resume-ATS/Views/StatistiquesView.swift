@@ -82,6 +82,14 @@ struct StatistiquesView: View {
                     )
                     .foregroundStyle(by: .value("Statut", stat.status.rawValue))
                 }
+                .chartForegroundStyleScale([
+                    "Acceptée": .green,
+                    "Refusée": .red,
+                    "Candidature envoyée": .blue,
+                    "En attente": .orange,
+                    "Retirée": .gray,
+                    "Entretien": .cyan
+                ])
                 .chartXAxis {
                     AxisMarks { value in
                         AxisGridLine()
