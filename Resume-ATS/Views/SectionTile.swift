@@ -12,6 +12,7 @@ struct DashboardTile: View {
     let subtitle: String
     let systemImage: String
     let action: () -> Void
+    var isEnabled: Bool = true
 
     @State private var isHovered = false
 
@@ -20,7 +21,7 @@ struct DashboardTile: View {
             VStack {
                 Image(systemName: systemImage)
                     .font(.largeTitle)
-                    .foregroundColor(.blue)
+                    .foregroundColor(isEnabled ? .blue : .gray)
                 Text(title)
                     .font(.headline)
                 Text(subtitle)
@@ -30,13 +31,16 @@ struct DashboardTile: View {
             .frame(maxWidth: .infinity, minHeight: 120)
             .background(Color.gray.opacity(0.1))
             .cornerRadius(12)
-            .shadow(radius: isHovered ? 8 : 4)
-            .scaleEffect(isHovered ? 1.05 : 1.0)
+            .shadow(radius: isHovered && isEnabled ? 8 : 4)
+            .scaleEffect(isHovered && isEnabled ? 1.05 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: isHovered)
         }
         .buttonStyle(PlainButtonStyle())
+        .disabled(!isEnabled)
         .onHover { hovering in
-            isHovered = hovering
+            if isEnabled {
+                isHovered = hovering
+            }
         }
     }
 }

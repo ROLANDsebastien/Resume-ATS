@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import AppKit
 
 @Model
 final class Profile {
@@ -21,7 +22,7 @@ final class Profile {
     var linkedin: String?
     var photo: Data?
     var showPhotoInPDF: Bool = false
-    var summary: String
+    var summary: Data
     @Relationship(deleteRule: .cascade) var experiences: [Experience]
     @Relationship(deleteRule: .cascade) var educations: [Education]
     @Relationship(deleteRule: .cascade) var references: [Reference]
@@ -30,7 +31,7 @@ final class Profile {
     init(
         name: String, firstName: String? = nil, lastName: String? = nil, email: String? = nil,
         phone: String? = nil, location: String? = nil, github: String? = nil, gitlab: String? = nil,
-        linkedin: String? = nil, photo: Data? = nil, showPhotoInPDF: Bool = false, summary: String = "",
+        linkedin: String? = nil, photo: Data? = nil, showPhotoInPDF: Bool = false, summary: Data = Data(),
         experiences: [Experience] = [],
         educations: [Education] = [], references: [Reference] = [], skills: [String] = []
     ) {
@@ -51,6 +52,22 @@ final class Profile {
         self.references = references
         self.skills = skills
     }
+
+    var summaryAttributedString: NSAttributedString {
+        get {
+            if summary.isEmpty {
+                return NSAttributedString(string: "")
+            }
+            return NSAttributedString(rtf: summary, documentAttributes: nil) ?? NSAttributedString(string: "")
+        }
+        set {
+            summary = newValue.rtf(from: NSRange(location: 0, length: newValue.length)) ?? Data()
+        }
+    }
+
+    var summaryString: String {
+        summaryAttributedString.string
+    }
 }
 
 @Model
@@ -58,14 +75,30 @@ final class Experience {
     var company: String
     var startDate: Date
     var endDate: Date?
-    var details: String
+    var details: Data
     var profile: Profile?
 
-    init(company: String, startDate: Date, endDate: Date? = nil, details: String) {
+    init(company: String, startDate: Date, endDate: Date? = nil, details: Data = Data()) {
         self.company = company
         self.startDate = startDate
         self.endDate = endDate
         self.details = details
+    }
+
+    var detailsAttributedString: NSAttributedString {
+        get {
+            if details.isEmpty {
+                return NSAttributedString(string: "")
+            }
+            return NSAttributedString(rtf: details, documentAttributes: nil) ?? NSAttributedString(string: "")
+        }
+        set {
+            details = newValue.rtf(from: NSRange(location: 0, length: newValue.length)) ?? Data()
+        }
+    }
+
+    var detailsString: String {
+        detailsAttributedString.string
     }
 }
 
@@ -75,18 +108,34 @@ final class Education {
     var degree: String
     var startDate: Date
     var endDate: Date?
-    var details: String
+    var details: Data
     var profile: Profile?
 
     init(
         institution: String, degree: String, startDate: Date, endDate: Date? = nil,
-        details: String
+        details: Data = Data()
     ) {
         self.institution = institution
         self.degree = degree
         self.startDate = startDate
         self.endDate = endDate
         self.details = details
+    }
+
+    var detailsAttributedString: NSAttributedString {
+        get {
+            if details.isEmpty {
+                return NSAttributedString(string: "")
+            }
+            return NSAttributedString(rtf: details, documentAttributes: nil) ?? NSAttributedString(string: "")
+        }
+        set {
+            details = newValue.rtf(from: NSRange(location: 0, length: newValue.length)) ?? Data()
+        }
+    }
+
+    var detailsString: String {
+        detailsAttributedString.string
     }
 }
 

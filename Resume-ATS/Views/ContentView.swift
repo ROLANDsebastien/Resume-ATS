@@ -46,7 +46,7 @@ struct ApplicationsView: View {
                 .padding(.horizontal)
             }
         }
-        .toolbarBackground(.hidden, for: .windowToolbar)
+
     }
 }
 
@@ -79,19 +79,21 @@ struct TemplatesView: View {
                 .padding(.horizontal)
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
-                     DashboardTile(
-                         title: "Modèle ATS",
-                         subtitle: "Optimisé pour les filtres ATS",
-                         systemImage: "doc"
-                     ) {
-                         PDFService.generateATSResumePDF(for: selectedProfile!) { pdfURL in
-                             if let pdfURL = pdfURL {
-                                 DispatchQueue.main.async {
-                                     NSWorkspace.shared.open(pdfURL)
-                                 }
-                             }
-                         }
-                     }
+                      DashboardTile(
+                          title: "Modèle ATS",
+                          subtitle: "Optimisé pour les filtres ATS",
+                          systemImage: "doc",
+                          isEnabled: selectedProfile != nil
+                      ) {
+                          guard let profile = selectedProfile else { return }
+                          PDFService.generateATSResumePDF(for: profile) { pdfURL in
+                              if let pdfURL = pdfURL {
+                                  DispatchQueue.main.async {
+                                      NSWorkspace.shared.open(pdfURL)
+                                  }
+                              }
+                          }
+                      }
 
                     DashboardTile(
                         title: "Modèle Moderne",
@@ -112,7 +114,7 @@ struct TemplatesView: View {
                 .padding(.horizontal)
             }
         }
-        .toolbarBackground(.hidden, for: .windowToolbar)
+
     }
 
 

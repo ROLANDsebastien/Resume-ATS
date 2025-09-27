@@ -45,10 +45,10 @@ struct ATSResumeView: View {
             }
 
             // Professional Summary
-            if !profile.summary.isEmpty {
+            if !profile.summaryString.isEmpty {
                 SectionView(title: "Professional Summary") {
                     VStack(alignment: .leading, spacing: 8) {
-                        ForEach(profile.summary.components(separatedBy: "\n\n"), id: \.self) {
+                        ForEach(profile.summaryString.components(separatedBy: "\n\n"), id: \.self) {
                             paragraph in
                             Text(paragraph.replacingOccurrences(of: "\n", with: " "))
                                 .font(.custom("Arial", size: 11))
@@ -78,7 +78,7 @@ struct ATSResumeView: View {
                                     .font(.custom("Arial", size: 10))
                                     .foregroundColor(.black)
                                 }
-                                Text(experience.details.replacingOccurrences(of: "\n", with: " "))
+                                Text(experience.detailsString.replacingOccurrences(of: "\n", with: " "))
                                     .font(.custom("Arial", size: 11))
                                     .lineSpacing(4)
                                     .foregroundColor(.black)
@@ -106,9 +106,9 @@ struct ATSResumeView: View {
                                     .font(.custom("Arial", size: 10))
                                     .foregroundColor(.black)
                                 }
-                                if !education.details.isEmpty {
+                                if !education.detailsString.isEmpty {
                                     Text(
-                                        education.details.replacingOccurrences(of: "\n", with: " ")
+                                        education.detailsString.replacingOccurrences(of: "\n", with: " ")
                                     )
                                     .font(.custom("Arial", size: 11))
                                     .lineSpacing(4)
@@ -276,8 +276,8 @@ struct SectionView<Content: View>: View {
     ATSResumeView(
         profile: Profile(
             name: "John Doe", firstName: "John", lastName: "Doe", email: "john@example.com",
-            showPhotoInPDF: true, summary: "Experienced developer",
+            showPhotoInPDF: true, summary: NSAttributedString(string: "Experienced developer").rtf(from: NSRange(location: 0, length: 21)) ?? Data(),
             experiences: [
-                Experience(company: "Tech Corp", startDate: Date(), details: "Developed apps")
+                Experience(company: "Tech Corp", startDate: Date(), details: NSAttributedString(string: "Developed apps").rtf(from: NSRange(location: 0, length: 14)) ?? Data())
             ], skills: ["Swift", "iOS"]), isForPDF: false)
 }

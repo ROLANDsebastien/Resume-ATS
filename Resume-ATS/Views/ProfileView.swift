@@ -29,24 +29,25 @@ struct ProfileView: View {
                         }
 
                         StyledSection(title: "Résumé") {
-                            TextEditor(
-                                text: Binding(
-                                    get: { profile.summary }, set: { profile.summary = $0 })
-                            )
-                            .modifier(StyledTextEditorModifier())
-                        }
+                             RichTextEditorWithToolbar(attributedString: Binding(
+                                 get: { profile.summaryAttributedString },
+                                 set: { profile.summaryAttributedString = $0 }
+                             ))
+                         }
 
                         StyledSection(title: "Expériences") {
                             ForEach(profile.experiences) { experience in
                                 ExperienceForm(experience: experience)
                                     .padding(.bottom, 10)
-                                Button(action: {
-                                    if let index = profile.experiences.firstIndex(where: {
-                                        $0.id == experience.id
-                                    }) {
-                                        profile.experiences.remove(at: index)
-                                    }
-                                }) {
+                                 Button(action: {
+                                     DispatchQueue.main.async {
+                                         if let index = profile.experiences.firstIndex(where: {
+                                             $0.id == experience.id
+                                         }) {
+                                             profile.experiences.remove(at: index)
+                                         }
+                                     }
+                                 }) {
                                     Image(systemName: "trash.fill")
                                         .foregroundColor(.red)
                                 }
@@ -55,26 +56,30 @@ struct ProfileView: View {
                                     Divider().background(Color.secondary)
                                 }
                             }
-                            StyledButton(
-                                title: "Ajouter une expérience", systemImage: "plus",
-                                action: {
-                                    profile.experiences.append(
-                                        Experience(
-                                            company: "", startDate: Date(), details: ""))
-                                })
+                             StyledButton(
+                                 title: "Ajouter une expérience", systemImage: "plus",
+                                 action: {
+                                     DispatchQueue.main.async {
+                                         profile.experiences.append(
+                                             Experience(
+                                                 company: "", startDate: Date(), details: Data()))
+                                     }
+                                 })
                         }
 
                         StyledSection(title: "Formations") {
                             ForEach(profile.educations) { education in
                                 EducationForm(education: education)
                                     .padding(.bottom, 10)
-                                Button(action: {
-                                    if let index = profile.educations.firstIndex(where: {
-                                        $0.id == education.id
-                                    }) {
-                                        profile.educations.remove(at: index)
-                                    }
-                                }) {
+                                 Button(action: {
+                                     DispatchQueue.main.async {
+                                         if let index = profile.educations.firstIndex(where: {
+                                             $0.id == education.id
+                                         }) {
+                                             profile.educations.remove(at: index)
+                                         }
+                                     }
+                                 }) {
                                     Image(systemName: "trash.fill")
                                         .foregroundColor(.red)
                                 }
@@ -83,27 +88,31 @@ struct ProfileView: View {
                                     Divider().background(Color.secondary)
                                 }
                             }
-                            StyledButton(
-                                title: "Ajouter une formation", systemImage: "plus",
-                                action: {
-                                    profile.educations.append(
-                                        Education(
-                                            institution: "", degree: "", startDate: Date(),
-                                            details: ""))
-                                })
+                             StyledButton(
+                                 title: "Ajouter une formation", systemImage: "plus",
+                                 action: {
+                                     DispatchQueue.main.async {
+                                         profile.educations.append(
+                                             Education(
+                                                 institution: "", degree: "", startDate: Date(),
+                                                 details: Data()))
+                                     }
+                                 })
                         }
 
                         StyledSection(title: "Références") {
                             ForEach(profile.references) { reference in
                                 ReferenceForm(reference: reference)
                                     .padding(.bottom, 10)
-                                Button(action: {
-                                    if let index = profile.references.firstIndex(where: {
-                                        $0.id == reference.id
-                                    }) {
-                                        profile.references.remove(at: index)
-                                    }
-                                }) {
+                                 Button(action: {
+                                     DispatchQueue.main.async {
+                                         if let index = profile.references.firstIndex(where: {
+                                             $0.id == reference.id
+                                         }) {
+                                             profile.references.remove(at: index)
+                                         }
+                                     }
+                                 }) {
                                     Image(systemName: "trash.fill")
                                         .foregroundColor(.red)
                                 }
@@ -112,39 +121,41 @@ struct ProfileView: View {
                                     Divider().background(Color.secondary)
                                 }
                             }
-                            StyledButton(
-                                title: "Ajouter une référence", systemImage: "plus",
-                                action: {
-                                    profile.references.append(
-                                        Reference(
-                                            name: "", position: "", company: "", email: "",
-                                            phone: ""))
-                                })
+                             StyledButton(
+                                 title: "Ajouter une référence", systemImage: "plus",
+                                 action: {
+                                     DispatchQueue.main.async {
+                                         profile.references.append(
+                                             Reference(
+                                                 name: "", position: "", company: "", email: "",
+                                                 phone: ""))
+                                     }
+                                 })
                         }
 
                         StyledSection(title: "Compétences") {
-                            ForEach(profile.skills.indices, id: \.self) { index in
-                                HStack {
-                                    TextField(
-                                        "Compétence",
-                                        text: Binding(
-                                            get: { profile.skills[index] },
-                                            set: { profile.skills[index] = $0 })
-                                    )
-                                    .textFieldStyle(StyledTextField())
-                                    Button(action: { profile.skills.remove(at: index) }) {
-                                        Image(systemName: "trash.fill")
-                                            .foregroundColor(.red)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                            StyledButton(
-                                title: "Ajouter une compétence", systemImage: "plus",
-                                action: {
-                                    profile.skills.append("")
-                                })
-                        }
+                             ForEach(profile.skills.indices, id: \.self) { index in
+                                 HStack {
+                                     TextField(
+                                         "Compétence",
+                                         text: Binding(
+                                             get: { profile.skills[index] },
+                                             set: { profile.skills[index] = $0 })
+                                     )
+                                     .textFieldStyle(StyledTextField())
+                                     Button(action: { DispatchQueue.main.async { profile.skills.remove(at: index) } }) {
+                                         Image(systemName: "trash.fill")
+                                             .foregroundColor(.red)
+                                     }
+                                     .buttonStyle(.plain)
+                                 }
+                             }
+                             StyledButton(
+                                 title: "Ajouter une compétence", systemImage: "plus",
+                                 action: {
+                                     DispatchQueue.main.async { profile.skills.append("") }
+                                 })
+                         }
                     }
                 } else {
                     VStack {
@@ -157,8 +168,7 @@ struct ProfileView: View {
             }
             .padding(.horizontal)
         }
-        .navigationTitle("Profil")
-        .toolbarBackground(.hidden, for: .windowToolbar)
+        .navigationTitle("Resume-ATS")
     }
 
     private var profileSelector: some View {
@@ -315,8 +325,10 @@ struct ExperienceForm: View {
                 )
                 .datePickerStyle(.compact)
             }
-            TextEditor(text: $experience.details)
-                .modifier(StyledTextEditorModifier())
+            RichTextEditorWithToolbar(attributedString: Binding(
+                get: { experience.detailsAttributedString },
+                set: { experience.detailsAttributedString = $0 }
+            ))
         }
         .textFieldStyle(StyledTextField())
     }
@@ -345,8 +357,10 @@ struct EducationForm: View {
                 )
                 .datePickerStyle(.compact)
             }
-            TextEditor(text: $education.details)
-                .modifier(StyledTextEditorModifier())
+            RichTextEditorWithToolbar(attributedString: Binding(
+                get: { education.detailsAttributedString },
+                set: { education.detailsAttributedString = $0 }
+            ))
         }
         .textFieldStyle(StyledTextField())
     }
@@ -500,6 +514,193 @@ struct PersonalInfoForm: View {
             } catch {
                 print("Error loading image: \(error)")
             }
+        }
+    }
+}
+
+// MARK: - Rich Text Editor
+struct RichTextEditor: NSViewRepresentable {
+    @Binding var attributedString: NSAttributedString
+    @Binding var selectedRange: NSRange
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSScrollView()
+        let textView = NSTextView()
+        textView.isRichText = true
+        textView.allowsUndo = true
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        textView.usesRuler = false
+        textView.usesInspectorBar = false
+        textView.delegate = context.coordinator
+
+        scrollView.documentView = textView
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+
+        return scrollView
+    }
+
+    func updateNSView(_ nsView: NSScrollView, context: Context) {
+        if let textView = nsView.documentView as? NSTextView {
+            if textView.attributedString() != attributedString {
+                textView.textStorage?.setAttributedString(attributedString)
+            }
+            let clampedRange = NSRange(location: min(selectedRange.location, attributedString.length), length: min(selectedRange.length, attributedString.length - min(selectedRange.location, attributedString.length)))
+            if textView.selectedRange() != clampedRange {
+                textView.setSelectedRange(clampedRange)
+            }
+        }
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, NSTextViewDelegate {
+        var parent: RichTextEditor
+
+        init(_ parent: RichTextEditor) {
+            self.parent = parent
+        }
+
+        func textDidChange(_ notification: Notification) {
+            if let textView = notification.object as? NSTextView {
+                let newString = textView.attributedString()
+                DispatchQueue.main.async {
+                    self.parent.attributedString = newString
+                }
+            }
+        }
+
+        func textViewDidChangeSelection(_ notification: Notification) {
+            if let textView = notification.object as? NSTextView {
+                let newRange = textView.selectedRange()
+                DispatchQueue.main.async {
+                    self.parent.selectedRange = newRange
+                }
+            }
+        }
+    }
+}
+
+struct RichTextToolbar: View {
+    @Binding var attributedString: NSAttributedString
+    @Binding var selectedRange: NSRange
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Button(action: { toggleBold() }) {
+                Image(systemName: "bold")
+            }
+            .buttonStyle(.bordered)
+
+            Button(action: { toggleItalic() }) {
+                Image(systemName: "italic")
+            }
+            .buttonStyle(.bordered)
+
+            Button(action: { insertBullet() }) {
+                Image(systemName: "list.bullet")
+            }
+            .buttonStyle(.bordered)
+
+            Button(action: { insertLineBreak() }) {
+                Image(systemName: "arrow.right.to.line")
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(4)
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(6)
+    }
+
+    private func toggleBold() {
+        let mutableString = NSMutableAttributedString(attributedString: attributedString)
+        let fontManager = NSFontManager.shared
+        let validRange = NSRange(location: min(selectedRange.location, attributedString.length), length: min(selectedRange.length, attributedString.length - min(selectedRange.location, attributedString.length)))
+        if validRange.length > 0 {
+            mutableString.enumerateAttribute(.font, in: validRange, options: []) { value, range, _ in
+                if let font = value as? NSFont {
+                    let newFont = fontManager.convert(font, toHaveTrait: .boldFontMask)
+                    mutableString.addAttribute(.font, value: newFont, range: range)
+                }
+            }
+        } else {
+            // Apply to current position or whole text if no selection
+            let range = validRange.length > 0 ? validRange : NSRange(location: 0, length: mutableString.length)
+            mutableString.enumerateAttribute(.font, in: range, options: []) { value, range, _ in
+                if let font = value as? NSFont {
+                    let newFont = fontManager.convert(font, toHaveTrait: .boldFontMask)
+                    mutableString.addAttribute(.font, value: newFont, range: range)
+                }
+            }
+        }
+        DispatchQueue.main.async {
+            attributedString = mutableString
+        }
+    }
+
+    private func toggleItalic() {
+        let mutableString = NSMutableAttributedString(attributedString: attributedString)
+        let fontManager = NSFontManager.shared
+        let validRange = NSRange(location: min(selectedRange.location, attributedString.length), length: min(selectedRange.length, attributedString.length - min(selectedRange.location, attributedString.length)))
+        if validRange.length > 0 {
+            mutableString.enumerateAttribute(.font, in: validRange, options: []) { value, range, _ in
+                if let font = value as? NSFont {
+                    let newFont = fontManager.convert(font, toHaveTrait: .italicFontMask)
+                    mutableString.addAttribute(.font, value: newFont, range: range)
+                }
+            }
+        } else {
+            let range = NSRange(location: 0, length: mutableString.length)
+            mutableString.enumerateAttribute(.font, in: range, options: []) { value, range, _ in
+                if let font = value as? NSFont {
+                    let newFont = fontManager.convert(font, toHaveTrait: .italicFontMask)
+                    mutableString.addAttribute(.font, value: newFont, range: range)
+                }
+            }
+        }
+        DispatchQueue.main.async {
+            attributedString = mutableString
+        }
+    }
+
+    private func insertBullet() {
+        let bullet = "• "
+        let mutableString = NSMutableAttributedString(attributedString: attributedString)
+        let location = min(selectedRange.location, attributedString.length)
+        mutableString.insert(NSAttributedString(string: bullet), at: location)
+        DispatchQueue.main.async {
+            attributedString = mutableString
+        }
+    }
+
+    private func insertLineBreak() {
+        let lineBreak = "\n"
+        let mutableString = NSMutableAttributedString(attributedString: attributedString)
+        let location = min(selectedRange.location, attributedString.length)
+        mutableString.insert(NSAttributedString(string: lineBreak), at: location)
+        DispatchQueue.main.async {
+            attributedString = mutableString
+        }
+    }
+}
+
+struct RichTextEditorWithToolbar: View {
+    @Binding var attributedString: NSAttributedString
+
+    @State private var selectedRange: NSRange = NSRange(location: 0, length: 0)
+
+    var body: some View {
+        VStack(spacing: 0) {
+            RichTextToolbar(attributedString: $attributedString, selectedRange: $selectedRange)
+            RichTextEditor(attributedString: $attributedString, selectedRange: $selectedRange)
+                .frame(minHeight: 100)
+                .background(Color.darkBackground)
+                .cornerRadius(8)
         }
     }
 }

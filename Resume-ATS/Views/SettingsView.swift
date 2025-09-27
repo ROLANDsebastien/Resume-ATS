@@ -104,7 +104,7 @@ struct SettingsView: View {
             }
             .padding(.horizontal)
         }
-        .toolbarBackground(.hidden, for: .windowToolbar)
+
     }
 }
 

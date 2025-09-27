@@ -111,7 +111,6 @@ struct CandidaturesView: View {
             }
         }
         .listStyle(.plain)
-        .toolbarBackground(.hidden, for: .windowToolbar)
         .sheet(isPresented: $showingAddApplication) {
             AddApplicationView()
         }
