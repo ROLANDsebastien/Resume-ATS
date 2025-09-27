@@ -1,3 +1,4 @@
+import AppKit
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
@@ -38,9 +39,11 @@ struct ProfileView: View {
                         StyledSection(title: "Expériences") {
                             ForEach(profile.experiences) { experience in
                                 ExperienceForm(experience: experience)
-                                .padding(.bottom, 10)
-                                Button(action: { 
-                                    if let index = profile.experiences.firstIndex(where: { $0.id == experience.id }) {
+                                    .padding(.bottom, 10)
+                                Button(action: {
+                                    if let index = profile.experiences.firstIndex(where: {
+                                        $0.id == experience.id
+                                    }) {
                                         profile.experiences.remove(at: index)
                                     }
                                 }) {
@@ -64,9 +67,11 @@ struct ProfileView: View {
                         StyledSection(title: "Formations") {
                             ForEach(profile.educations) { education in
                                 EducationForm(education: education)
-                                .padding(.bottom, 10)
-                                Button(action: { 
-                                    if let index = profile.educations.firstIndex(where: { $0.id == education.id }) {
+                                    .padding(.bottom, 10)
+                                Button(action: {
+                                    if let index = profile.educations.firstIndex(where: {
+                                        $0.id == education.id
+                                    }) {
                                         profile.educations.remove(at: index)
                                     }
                                 }) {
@@ -91,9 +96,11 @@ struct ProfileView: View {
                         StyledSection(title: "Références") {
                             ForEach(profile.references) { reference in
                                 ReferenceForm(reference: reference)
-                                .padding(.bottom, 10)
-                                Button(action: { 
-                                    if let index = profile.references.firstIndex(where: { $0.id == reference.id }) {
+                                    .padding(.bottom, 10)
+                                Button(action: {
+                                    if let index = profile.references.firstIndex(where: {
+                                        $0.id == reference.id
+                                    }) {
                                         profile.references.remove(at: index)
                                     }
                                 }) {
@@ -115,29 +122,29 @@ struct ProfileView: View {
                                 })
                         }
 
-                         StyledSection(title: "Compétences") {
-                             ForEach(profile.skills.indices, id: \.self) { index in
-                                 HStack {
-                                     TextField(
-                                         "Compétence",
-                                         text: Binding(
-                                             get: { profile.skills[index] },
-                                             set: { profile.skills[index] = $0 })
-                                     )
-                                     .textFieldStyle(StyledTextField())
-                                     Button(action: { profile.skills.remove(at: index) }) {
-                                         Image(systemName: "trash.fill")
-                                             .foregroundColor(.red)
-                                     }
-                                     .buttonStyle(.plain)
-                                 }
-                             }
-                             StyledButton(
-                                 title: "Ajouter une compétence", systemImage: "plus",
-                                 action: {
-                                     profile.skills.append("")
-                                 })
-                         }
+                        StyledSection(title: "Compétences") {
+                            ForEach(profile.skills.indices, id: \.self) { index in
+                                HStack {
+                                    TextField(
+                                        "Compétence",
+                                        text: Binding(
+                                            get: { profile.skills[index] },
+                                            set: { profile.skills[index] = $0 })
+                                    )
+                                    .textFieldStyle(StyledTextField())
+                                    Button(action: { profile.skills.remove(at: index) }) {
+                                        Image(systemName: "trash.fill")
+                                            .foregroundColor(.red)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            StyledButton(
+                                title: "Ajouter une compétence", systemImage: "plus",
+                                action: {
+                                    profile.skills.append("")
+                                })
+                        }
                     }
                 } else {
                     VStack {
@@ -295,12 +302,15 @@ struct ExperienceForm: View {
             TextField("Entreprise", text: $experience.company)
                 .foregroundColor(.primary)
             HStack {
-                DatePicker("Date de début", selection: $experience.startDate, displayedComponents: .date)
-                    .datePickerStyle(.compact)
+                DatePicker(
+                    "Date de début", selection: $experience.startDate, displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
                 Spacer()
                 DatePicker(
                     "Date de fin",
-                    selection: Binding(get: { experience.endDate ?? Date() }, set: { experience.endDate = $0 }),
+                    selection: Binding(
+                        get: { experience.endDate ?? Date() }, set: { experience.endDate = $0 }),
                     displayedComponents: .date
                 )
                 .datePickerStyle(.compact)
@@ -322,12 +332,15 @@ struct EducationForm: View {
             TextField("Diplôme", text: $education.degree)
                 .foregroundColor(.primary)
             HStack {
-                DatePicker("Date de début", selection: $education.startDate, displayedComponents: .date)
-                    .datePickerStyle(.compact)
+                DatePicker(
+                    "Date de début", selection: $education.startDate, displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
                 Spacer()
                 DatePicker(
                     "Date de fin",
-                    selection: Binding(get: { education.endDate ?? Date() }, set: { education.endDate = $0 }),
+                    selection: Binding(
+                        get: { education.endDate ?? Date() }, set: { education.endDate = $0 }),
                     displayedComponents: .date
                 )
                 .datePickerStyle(.compact)
@@ -360,6 +373,8 @@ struct ReferenceForm: View {
 
 struct PersonalInfoForm: View {
     @Bindable var profile: Profile
+    @State private var tempPhotoData: Data?
+    @State private var showCropView = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -384,61 +399,108 @@ struct PersonalInfoForm: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
             } else {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray, lineWidth: 2)
-                        .frame(width: 100, height: 100)
-                    Text("Glissez une photo ici")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(4)
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                .onDrop(of: [.image], isTargeted: nil) { providers in
-                    for provider in providers {
-                        provider.loadDataRepresentation(forTypeIdentifier: "public.image") {
-                            data, error in
-                            if let data = data {
-                                DispatchQueue.main.async {
-                                    profile.photo = data
+                VStack(spacing: 8) {
+                    Button("Sélectionner une photo") {
+                        selectPhoto()
+                    }
+                    .buttonStyle(.bordered)
+
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.gray, lineWidth: 2)
+                            .frame(width: 100, height: 100)
+                        Text("Glissez une photo ici")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(4)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .onDrop(of: [.image], isTargeted: nil) { providers in
+                        for provider in providers {
+                            provider.loadDataRepresentation(forTypeIdentifier: "public.image") {
+                                data, error in
+                                if let data = data {
+                                    DispatchQueue.main.async {
+                                        tempPhotoData = data
+                                        showCropView = true
+                                    }
                                 }
                             }
                         }
+                        return true
                     }
-                    return true
                 }
-             }
+            }
 
-             Toggle("Afficher la photo dans le PDF", isOn: $profile.showPhotoInPDF)
-                 .toggleStyle(.switch)
+            Toggle("Afficher la photo dans le PDF", isOn: $profile.showPhotoInPDF)
+                .toggleStyle(.switch)
 
-             TextField(
-                 "Prénom",
-                 text: Binding(get: { profile.firstName ?? "" }, set: { profile.firstName = $0.isEmpty ? nil : $0 }))
+            TextField(
+                "Prénom",
+                text: Binding(
+                    get: { profile.firstName ?? "" },
+                    set: { profile.firstName = $0.isEmpty ? nil : $0 }))
             TextField(
                 "Nom",
-                text: Binding(get: { profile.lastName ?? "" }, set: { profile.lastName = $0.isEmpty ? nil : $0 }))
+                text: Binding(
+                    get: { profile.lastName ?? "" },
+                    set: { profile.lastName = $0.isEmpty ? nil : $0 }))
             TextField(
                 "Email",
-                text: Binding(get: { profile.email ?? "" }, set: { profile.email = $0.isEmpty ? nil : $0 }))
+                text: Binding(
+                    get: { profile.email ?? "" }, set: { profile.email = $0.isEmpty ? nil : $0 }))
             TextField(
                 "Téléphone",
-                text: Binding(get: { profile.phone ?? "" }, set: { profile.phone = $0.isEmpty ? nil : $0 }))
+                text: Binding(
+                    get: { profile.phone ?? "" }, set: { profile.phone = $0.isEmpty ? nil : $0 }))
             TextField(
                 "Localisation",
-                text: Binding(get: { profile.location ?? "" }, set: { profile.location = $0.isEmpty ? nil : $0 }))
+                text: Binding(
+                    get: { profile.location ?? "" },
+                    set: { profile.location = $0.isEmpty ? nil : $0 }))
             TextField(
                 "GitHub",
-                text: Binding(get: { profile.github ?? "" }, set: { profile.github = $0.isEmpty ? nil : $0 }))
+                text: Binding(
+                    get: { profile.github ?? "" }, set: { profile.github = $0.isEmpty ? nil : $0 }))
             TextField(
                 "GitLab",
-                text: Binding(get: { profile.gitlab ?? "" }, set: { profile.gitlab = $0.isEmpty ? nil : $0 }))
+                text: Binding(
+                    get: { profile.gitlab ?? "" }, set: { profile.gitlab = $0.isEmpty ? nil : $0 }))
             TextField(
                 "LinkedIn",
-                text: Binding(get: { profile.linkedin ?? "" }, set: { profile.linkedin = $0.isEmpty ? nil : $0 }))
+                text: Binding(
+                    get: { profile.linkedin ?? "" },
+                    set: { profile.linkedin = $0.isEmpty ? nil : $0 }))
         }
         .textFieldStyle(StyledTextField())
+        .sheet(isPresented: $showCropView) {
+            PhotoCropView(croppedData: $tempPhotoData)
+                .onDisappear {
+                    if let croppedData = tempPhotoData {
+                        profile.photo = croppedData
+                    }
+                    tempPhotoData = nil
+                }
+        }
+    }
+
+    private func selectPhoto() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image]
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+
+        if panel.runModal() == .OK, let url = panel.url {
+            do {
+                let data = try Data(contentsOf: url)
+                tempPhotoData = data
+                showCropView = true
+            } catch {
+                print("Error loading image: \(error)")
+            }
+        }
     }
 }
 
