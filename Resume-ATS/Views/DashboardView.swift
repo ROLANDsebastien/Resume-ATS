@@ -44,6 +44,14 @@ struct DashboardView: View {
                     }
 
                     DashboardTile(
+                        title: "Statistiques",
+                        subtitle: "Voir les statistiques",
+                        systemImage: "chart.bar"
+                    ) {
+                        selectedSection = "Statistiques"
+                    }
+
+                    DashboardTile(
                         title: "Settings",
                         subtitle: "Préférences de l'app",
                         systemImage: "gear"

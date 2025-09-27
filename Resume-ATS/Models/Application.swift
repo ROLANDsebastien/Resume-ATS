@@ -29,6 +29,7 @@ final class Application {
 
     enum Status: String, Codable, CaseIterable {
         case applied = "Candidature envoyée"
+        case pending = "En attente"
         case interviewing = "Entretien"
         case rejected = "Refusée"
         case accepted = "Acceptée"

@@ -149,6 +149,9 @@ struct ContentView: View {
                 NavigationLink(value: "Templates") {
                     Label("Templates", systemImage: "doc")
                 }
+                NavigationLink(value: "Statistiques") {
+                    Label("Statistiques", systemImage: "chart.bar")
+                }
                 NavigationLink(value: "Settings") {
                     Label("Settings", systemImage: "gear")
                 }
@@ -164,6 +167,8 @@ struct ContentView: View {
                 CandidaturesView()
             case "Templates":
                 TemplatesView()
+            case "Statistiques":
+                StatistiquesView()
             case "Settings":
                 SettingsView()
             default:
