@@ -19,6 +19,7 @@ final class Profile {
     var github: String?
     var gitlab: String?
     var linkedin: String?
+    var photo: Data?
     var summary: String
     var experiences: [Experience]
     var educations: [Education]
@@ -28,7 +29,8 @@ final class Profile {
     init(
         name: String, firstName: String? = nil, lastName: String? = nil, email: String? = nil,
         phone: String? = nil, location: String? = nil, github: String? = nil, gitlab: String? = nil,
-        linkedin: String? = nil, summary: String = "", experiences: [Experience] = [],
+        linkedin: String? = nil, photo: Data? = nil, summary: String = "",
+        experiences: [Experience] = [],
         educations: [Education] = [], references: [Reference] = [], skills: [String] = []
     ) {
         self.name = name
@@ -40,6 +42,7 @@ final class Profile {
         self.github = github
         self.gitlab = gitlab
         self.linkedin = linkedin
+        self.photo = photo
         self.summary = summary
         self.experiences = experiences
         self.educations = educations

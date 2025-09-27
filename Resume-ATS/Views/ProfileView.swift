@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - Main Profile View
 struct ProfileView: View {
@@ -448,6 +449,7 @@ struct PersonalInfoForm: View {
     @State private var github: String?
     @State private var gitlab: String?
     @State private var linkedin: String?
+    @State private var photo: Data?
 
     init(profile: Profile) {
         self.profile = profile
@@ -459,10 +461,60 @@ struct PersonalInfoForm: View {
         _github = State(initialValue: profile.github)
         _gitlab = State(initialValue: profile.gitlab)
         _linkedin = State(initialValue: profile.linkedin)
+        _photo = State(initialValue: profile.photo)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Photo section
+            if let photoData = photo, let nsImage = NSImage(data: photoData) {
+                VStack(spacing: 8) {
+                    Image(nsImage: nsImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 100, height: 100)
+                        .cornerRadius(8)
+                        .clipped()
+                    Button(action: {
+                        self.photo = nil
+                        profile.photo = nil
+                    }) {
+                        HStack {
+                            Image(systemName: "trash.fill")
+                            Text("Supprimer")
+                        }
+                        .foregroundColor(.red)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+            } else {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray, lineWidth: 2)
+                        .frame(width: 100, height: 100)
+                    Text("Glissez une photo ici")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(4)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .onDrop(of: [.image], isTargeted: nil) { providers in
+                    for provider in providers {
+                        provider.loadDataRepresentation(forTypeIdentifier: "public.image") {
+                            data, error in
+                            if let data = data {
+                                DispatchQueue.main.async {
+                                    self.photo = data
+                                    profile.photo = data
+                                }
+                            }
+                        }
+                    }
+                    return true
+                }
+            }
+
             TextField(
                 "Prénom",
                 text: Binding(get: { firstName ?? "" }, set: { firstName = $0.isEmpty ? nil : $0 }))
@@ -497,6 +549,7 @@ struct PersonalInfoForm: View {
         .onChange(of: github) { oldValue, newValue in profile.github = newValue }
         .onChange(of: gitlab) { oldValue, newValue in profile.gitlab = newValue }
         .onChange(of: linkedin) { oldValue, newValue in profile.linkedin = newValue }
+        .onChange(of: photo) { oldValue, newValue in profile.photo = newValue }
     }
 }
 
