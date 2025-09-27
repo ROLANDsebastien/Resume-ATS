@@ -12,13 +12,13 @@ struct DashboardView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 30) {
                 Text("Dashboard")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.top)
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 50) {
                      DashboardTile(
                         title: "Profile",
                         subtitle: "Gérer votre profil",
@@ -51,15 +51,15 @@ struct DashboardView: View {
                         selectedSection = "Statistiques"
                     }
 
-                    DashboardTile(
-                        title: "Settings",
-                        subtitle: "Préférences de l'app",
-                        systemImage: "gear"
-                    ) {
+                     DashboardTile(
+                         title: "Réglages",
+                         subtitle: "Préférences de l'app",
+                         systemImage: "gear"
+                     ) {
                         selectedSection = "Settings"
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 40)
             }
         }
     }

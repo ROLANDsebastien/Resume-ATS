@@ -142,7 +142,7 @@ struct ContentView: View {
                     Label("Statistiques", systemImage: "chart.bar")
                 }
                 NavigationLink(value: "Settings") {
-                    Label("Settings", systemImage: "gear")
+                    Label("Réglages", systemImage: "gear")
                 }
             }
             .navigationTitle("Sections")

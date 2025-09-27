@@ -32,7 +32,7 @@ struct DashboardTile: View {
             .background(Color.gray.opacity(0.1))
             .cornerRadius(12)
             .shadow(radius: isHovered && isEnabled ? 8 : 4)
-            .scaleEffect(isHovered && isEnabled ? 1.05 : 1.0)
+            .scaleEffect(isHovered && isEnabled ? 1.02 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: isHovered)
         }
         .buttonStyle(PlainButtonStyle())
