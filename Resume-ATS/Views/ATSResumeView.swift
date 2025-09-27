@@ -47,10 +47,15 @@ struct ATSResumeView: View {
             // Professional Summary
             if !profile.summary.isEmpty {
                 SectionView(title: "Professional Summary") {
-                    Text(profile.summary)
-                        .font(.custom("Arial", size: 11))
-                        .lineSpacing(4)
-                        .foregroundColor(.black)
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(profile.summary.components(separatedBy: "\n\n"), id: \.self) {
+                            paragraph in
+                            Text(paragraph.replacingOccurrences(of: "\n", with: " "))
+                                .font(.custom("Arial", size: 11))
+                                .lineSpacing(4)
+                                .foregroundColor(.black)
+                        }
+                    }
                 }
             }
 
@@ -73,7 +78,7 @@ struct ATSResumeView: View {
                                     .font(.custom("Arial", size: 10))
                                     .foregroundColor(.black)
                                 }
-                                Text(experience.details)
+                                Text(experience.details.replacingOccurrences(of: "\n", with: " "))
                                     .font(.custom("Arial", size: 11))
                                     .lineSpacing(4)
                                     .foregroundColor(.black)
@@ -102,10 +107,12 @@ struct ATSResumeView: View {
                                     .foregroundColor(.black)
                                 }
                                 if !education.details.isEmpty {
-                                    Text(education.details)
-                                        .font(.custom("Arial", size: 11))
-                                        .lineSpacing(4)
-                                        .foregroundColor(.black)
+                                    Text(
+                                        education.details.replacingOccurrences(of: "\n", with: " ")
+                                    )
+                                    .font(.custom("Arial", size: 11))
+                                    .lineSpacing(4)
+                                    .foregroundColor(.black)
                                 }
                             }
                         }
