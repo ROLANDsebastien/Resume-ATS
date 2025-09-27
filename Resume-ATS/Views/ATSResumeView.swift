@@ -240,6 +240,18 @@ struct ATSResumeView: View {
                         .foregroundColor(.black)
                 }
             }
+            if let website = profile.website, let url = URL(string: website) {
+                let displayValue = url.host != nil ? "\(url.host!)\(url.path)" : website
+                HStack(spacing: 0) {
+                    Text("Website:")
+                        .font(.custom("Arial", size: 10))
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                    Text(" \(displayValue)")
+                        .font(.custom("Arial", size: 10))
+                        .foregroundColor(.black)
+                }
+            }
         }
     }
 

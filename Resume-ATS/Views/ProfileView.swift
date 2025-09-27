@@ -486,6 +486,11 @@ struct PersonalInfoForm: View {
                 text: Binding(
                     get: { profile.linkedin ?? "" },
                     set: { profile.linkedin = $0.isEmpty ? nil : $0 }))
+            TextField(
+                "Site Web",
+                text: Binding(
+                    get: { profile.website ?? "" },
+                    set: { profile.website = $0.isEmpty ? nil : $0 }))
         }
         .textFieldStyle(StyledTextField())
         .sheet(isPresented: $showCropView) {
@@ -534,21 +539,29 @@ struct RichTextEditor: NSViewRepresentable {
         textView.usesRuler = false
         textView.usesInspectorBar = false
         textView.delegate = context.coordinator
+        textView.textColor = NSColor.labelColor
+        textView.drawsBackground = false
+        textView.backgroundColor = NSColor.clear
 
         scrollView.documentView = textView
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = false
         scrollView.autohidesScrollers = true
+        scrollView.drawsBackground = false
+        scrollView.backgroundColor = NSColor.clear
 
         return scrollView
     }
 
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         if let textView = nsView.documentView as? NSTextView {
-            if textView.attributedString() != attributedString {
-                textView.textStorage?.setAttributedString(attributedString)
+            textView.textColor = NSColor.labelColor
+            let mutableString = NSMutableAttributedString(attributedString: attributedString)
+            mutableString.addAttribute(.foregroundColor, value: NSColor.labelColor, range: NSRange(location: 0, length: mutableString.length))
+            if textView.attributedString() != mutableString {
+                textView.textStorage?.setAttributedString(mutableString)
             }
-            let clampedRange = NSRange(location: min(selectedRange.location, attributedString.length), length: min(selectedRange.length, attributedString.length - min(selectedRange.location, attributedString.length)))
+            let clampedRange = NSRange(location: min(selectedRange.location, mutableString.length), length: min(selectedRange.length, mutableString.length - min(selectedRange.location, mutableString.length)))
             if textView.selectedRange() != clampedRange {
                 textView.setSelectedRange(clampedRange)
             }

@@ -21,6 +21,7 @@ class DataService {
         let github: String?
         let gitlab: String?
         let linkedin: String?
+        let website: String?
         let photo: Data?
         let showPhotoInPDF: Bool
         let summary: Data
@@ -92,6 +93,7 @@ class DataService {
                 github: profile.github,
                 gitlab: profile.gitlab,
                 linkedin: profile.linkedin,
+                website: profile.website,
                 photo: profile.photo,
                 showPhotoInPDF: profile.showPhotoInPDF,
                 summary: profile.summary,
@@ -239,6 +241,7 @@ class DataService {
                 github: serializableProfile.github,
                 gitlab: serializableProfile.gitlab,
                 linkedin: serializableProfile.linkedin,
+                website: serializableProfile.website,
                 photo: serializableProfile.photo,
                 showPhotoInPDF: serializableProfile.showPhotoInPDF,
                 summary: serializableProfile.summary
