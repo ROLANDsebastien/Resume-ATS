@@ -15,14 +15,16 @@ final class Application {
     var dateApplied: Date
     var status: Status
     var notes: String
+    var documentBookmarks: [Data]?
     var profile: Profile?
 
-    init(company: String, position: String, dateApplied: Date = Date(), status: Status = .applied, notes: String = "") {
+    init(company: String, position: String, dateApplied: Date = Date(), status: Status = .applied, notes: String = "", documentBookmarks: [Data]? = nil) {
         self.company = company
         self.position = position
         self.dateApplied = dateApplied
         self.status = status
         self.notes = notes
+        self.documentBookmarks = documentBookmarks
     }
 
     enum Status: String, Codable, CaseIterable {

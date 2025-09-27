@@ -19,9 +19,9 @@ struct DashboardView: View {
                     .padding(.top)
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
-                    DashboardTile(
+                     DashboardTile(
                         title: "Profile",
-                        subtitle: "Manage your profile",
+                        subtitle: "Gérer votre profil",
                         systemImage: "person"
                     ) {
                         selectedSection = "Profile"
@@ -29,7 +29,7 @@ struct DashboardView: View {
 
                     DashboardTile(
                         title: "Candidatures",
-                        subtitle: "Track your applications",
+                        subtitle: "Suivre vos candidatures",
                         systemImage: "briefcase"
                     ) {
                         selectedSection = "Candidatures"
@@ -37,7 +37,7 @@ struct DashboardView: View {
 
                     DashboardTile(
                         title: "Templates",
-                        subtitle: "Choose CV templates",
+                        subtitle: "Choisir des modèles de CV",
                         systemImage: "doc"
                     ) {
                         selectedSection = "Templates"
@@ -45,7 +45,7 @@ struct DashboardView: View {
 
                     DashboardTile(
                         title: "Settings",
-                        subtitle: "App preferences",
+                        subtitle: "Préférences de l'app",
                         systemImage: "gear"
                     ) {
                         selectedSection = "Settings"
