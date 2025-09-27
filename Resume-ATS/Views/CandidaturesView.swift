@@ -26,8 +26,8 @@ struct CandidaturesView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
+        List {
+            Section {
                 Text("Gestion des Candidatures")
                     .font(.largeTitle)
                     .fontWeight(.bold)
@@ -81,32 +81,32 @@ struct CandidaturesView: View {
                     }
                 }
                 .padding(.horizontal)
+            }
+            .listRowInsets(EdgeInsets())
+            .listRowSeparator(.hidden)
 
-                // List of applications
-                if !filteredApplications.isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Candidatures")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                        ForEach(filteredApplications) { application in
-                            ApplicationRow(
-                                application: application,
-                                onEdit: { editingApplication = application },
-                                onDocuments: { showingDocumentsFor = application },
-                                onDelete: {
-                                    modelContext.delete(application)
-                                }
-                            )
-                        }
+            if !filteredApplications.isEmpty {
+                Section(header: Text("Candidatures").font(.title2).fontWeight(.semibold)) {
+                    ForEach(filteredApplications) { application in
+                        ApplicationRow(
+                            application: application,
+                            onEdit: { editingApplication = application },
+                            onDocuments: { showingDocumentsFor = application },
+                            onDelete: {
+                                modelContext.delete(application)
+                            }
+                        )
                     }
-                    .padding(.horizontal)
-                } else {
+                }
+            } else {
+                Section {
                     Text("Aucune candidature trouvée.")
                         .foregroundColor(.secondary)
                         .padding()
                 }
             }
         }
+        .listStyle(.plain)
         .toolbarBackground(.hidden, for: .windowToolbar)
         .sheet(isPresented: $showingAddApplication) {
             AddApplicationView()
@@ -139,27 +139,23 @@ struct ApplicationRow: View {
                     .foregroundColor(.secondary)
             }
             Spacer()
-            HStack(spacing: 10) {
-                Button(action: onEdit) {
-                    Image(systemName: "pencil")
-                        .foregroundColor(.blue)
-                }
-                .buttonStyle(.plain)
-                Button(action: onDocuments) {
-                    Image(systemName: "doc")
-                        .foregroundColor(.green)
-                }
-                .buttonStyle(.plain)
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .foregroundColor(.red)
-                }
-                .buttonStyle(.plain)
-            }
         }
-        .padding()
+        .padding(EdgeInsets(top: 10, leading: 20, bottom: 10, trailing: 20))
         .background(Color.gray.opacity(0.1))
         .cornerRadius(8)
+        .swipeActions {
+            Button(role: .destructive, action: onDelete) {
+                Label("Supprimer", systemImage: "trash")
+            }
+            Button(action: onEdit) {
+                Label("Editer", systemImage: "pencil")
+            }
+            .tint(.blue)
+            Button(action: onDocuments) {
+                Label("Document", systemImage: "doc")
+            }
+            .tint(.green)
+        }
     }
 }
 
