@@ -5,7 +5,8 @@ import SwiftUI
 struct Resume_ATSApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Profile.self
+            Profile.self,
+            Application.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

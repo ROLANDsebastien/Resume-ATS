@@ -28,11 +28,11 @@ struct DashboardView: View {
                     }
 
                     DashboardTile(
-                        title: "Applications",
+                        title: "Candidatures",
                         subtitle: "Track your applications",
                         systemImage: "briefcase"
                     ) {
-                        selectedSection = "Applications"
+                        selectedSection = "Candidatures"
                     }
 
                     DashboardTile(

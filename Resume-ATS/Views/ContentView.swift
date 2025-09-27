@@ -143,8 +143,8 @@ struct ContentView: View {
                 NavigationLink(value: "Profile") {
                     Label("Profile", systemImage: "person")
                 }
-                NavigationLink(value: "Applications") {
-                    Label("Applications", systemImage: "briefcase")
+                NavigationLink(value: "Candidatures") {
+                    Label("Candidatures", systemImage: "briefcase")
                 }
                 NavigationLink(value: "Templates") {
                     Label("Templates", systemImage: "doc")
@@ -160,8 +160,8 @@ struct ContentView: View {
                 DashboardView(selectedSection: $selectedSection)
             case "Profile":
                 ProfileView()
-            case "Applications":
-                ApplicationsView()
+            case "Candidatures":
+                CandidaturesView()
             case "Templates":
                 TemplatesView()
             case "Settings":
