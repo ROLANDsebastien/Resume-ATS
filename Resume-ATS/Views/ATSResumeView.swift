@@ -17,11 +17,11 @@ struct ATSResumeView: View {
     var body: some View {
         let content = VStack(alignment: .leading, spacing: 20) {
             // Header with photo, name, and contact
-            HStack(alignment: .top, spacing: 20) {
+            HStack(alignment: .center, spacing: 20) {
                 VStack(alignment: .leading, spacing: 10) {
                     if let first = profile.firstName, let last = profile.lastName {
                         Text("\(first) \(last)")
-                            .font(.custom("Arial", size: 16))
+                            .font(.custom("Arial", size: 24))
                             .fontWeight(.bold)
                             .foregroundColor(.black)
                     }
@@ -29,19 +29,19 @@ struct ATSResumeView: View {
                         .font(.custom("Arial", size: 14))
                         .fontWeight(.semibold)
                         .foregroundColor(.black)
-                    if profile.showPhotoInPDF, let photoData = profile.photo {
-                        RoundedImageView(
-                            imageData: photoData,
-                            size: CGSize(width: 100, height: 100),
-                            cornerRadius: 10
-                        )
-                        .frame(width: 100, height: 100)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
-                    }
+                    contactInfo
                 }
                 Spacer()
-                contactInfo
+                if profile.showPhotoInPDF, let photoData = profile.photo {
+                    RoundedImageView(
+                        imageData: photoData,
+                        size: CGSize(width: 120, height: 120),
+                        cornerRadius: 10
+                    )
+                    .frame(width: 120, height: 120)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
+                }
             }
 
             // Professional Summary
@@ -171,31 +171,76 @@ struct ATSResumeView: View {
     private var contactInfo: some View {
         VStack(alignment: .leading, spacing: 2) {
             if let email = profile.email {
-                Text("Email: \(email)")
-                    .foregroundColor(.black)
+                HStack(spacing: 0) {
+                    Text("Email:")
+                        .font(.custom("Arial", size: 10))
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                    Text(" \(email)")
+                        .font(.custom("Arial", size: 10))
+                        .foregroundColor(.black)
+                }
             }
             if let phone = profile.phone {
-                Text("Phone: \(phone)")
-                    .foregroundColor(.black)
+                HStack(spacing: 0) {
+                    Text("Phone:")
+                        .font(.custom("Arial", size: 10))
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                    Text(" \(phone)")
+                        .font(.custom("Arial", size: 10))
+                        .foregroundColor(.black)
+                }
             }
             if let location = profile.location {
-                Text("Location: \(location)")
-                    .foregroundColor(.black)
+                HStack(spacing: 0) {
+                    Text("Location:")
+                        .font(.custom("Arial", size: 10))
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                    Text(" \(location)")
+                        .font(.custom("Arial", size: 10))
+                        .foregroundColor(.black)
+                }
+                .padding(.bottom, 5)
             }
-            if let github = profile.github {
-                Text("GitHub: \(github)")
-                    .foregroundColor(.black)
+            if let github = profile.github, let url = URL(string: github) {
+                let displayValue = url.host != nil ? "\(url.host!)\(url.path)" : github
+                HStack(spacing: 0) {
+                    Text("GitHub:")
+                        .font(.custom("Arial", size: 10))
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                    Text(" \(displayValue)")
+                        .font(.custom("Arial", size: 10))
+                        .foregroundColor(.black)
+                }
             }
-            if let gitlab = profile.gitlab {
-                Text("GitLab: \(gitlab)")
-                    .foregroundColor(.black)
+            if let gitlab = profile.gitlab, let url = URL(string: gitlab) {
+                let displayValue = url.host != nil ? "\(url.host!)\(url.path)" : gitlab
+                HStack(spacing: 0) {
+                    Text("GitLab:")
+                        .font(.custom("Arial", size: 10))
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                    Text(" \(displayValue)")
+                        .font(.custom("Arial", size: 10))
+                        .foregroundColor(.black)
+                }
             }
-            if let linkedin = profile.linkedin {
-                Text("LinkedIn: \(linkedin)")
-                    .foregroundColor(.black)
+            if let linkedin = profile.linkedin, let url = URL(string: linkedin) {
+                let displayValue = url.host != nil ? "\(url.host!)\(url.path)" : linkedin
+                HStack(spacing: 0) {
+                    Text("LinkedIn:")
+                        .font(.custom("Arial", size: 10))
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                    Text(" \(displayValue)")
+                        .font(.custom("Arial", size: 10))
+                        .foregroundColor(.black)
+                }
             }
         }
-        .font(.custom("Arial", size: 10))
     }
 
     private func dateRange(start: Date, end: Date?) -> String {
