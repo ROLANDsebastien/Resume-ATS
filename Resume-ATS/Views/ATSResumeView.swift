@@ -17,7 +17,7 @@ struct ATSResumeView: View {
                 // Header with name and contact
                 VStack(alignment: .leading, spacing: 5) {
                      Text(fullName)
-                         .font(.title)
+                         .font(.custom("Arial", size: 16))
                          .fontWeight(.bold)
                          .foregroundColor(.black)
 
@@ -28,7 +28,7 @@ struct ATSResumeView: View {
                  if !profile.summary.isEmpty {
                      SectionView(title: "Professional Summary") {
                          Text(profile.summary)
-                             .font(.body)
+                             .font(.custom("Arial", size: 11))
                              .lineSpacing(4)
                              .foregroundColor(.black)
                      }
@@ -42,7 +42,7 @@ struct ATSResumeView: View {
                                 VStack(alignment: .leading, spacing: 5) {
                                      HStack {
                                          Text(experience.company)
-                                             .font(.headline)
+                                             .font(.custom("Arial", size: 12))
                                              .foregroundColor(.black)
                                          Spacer()
                                          Text(
@@ -50,12 +50,13 @@ struct ATSResumeView: View {
                                                  start: experience.startDate, end: experience.endDate
                                              )
                                          )
-                                         .font(.subheadline)
+                                         .font(.custom("Arial", size: 10))
                                          .foregroundColor(.black)
                                      }
                                     Text(experience.details)
-                                        .font(.body)
+                                        .font(.custom("Arial", size: 11))
                                         .lineSpacing(4)
+                                        .foregroundColor(.black)
                                 }
                             }
                         }
@@ -70,19 +71,19 @@ struct ATSResumeView: View {
                                 VStack(alignment: .leading, spacing: 5) {
                                      HStack {
                                          Text("\(education.institution) - \(education.degree)")
-                                             .font(.headline)
+                                             .font(.custom("Arial", size: 12))
                                              .foregroundColor(.black)
                                          Spacer()
                                          Text(
                                              dateRange(
                                                  start: education.startDate, end: education.endDate)
                                          )
-                                         .font(.subheadline)
+                                         .font(.custom("Arial", size: 10))
                                          .foregroundColor(.black)
                                      }
                                      if !education.details.isEmpty {
                                          Text(education.details)
-                                             .font(.body)
+                                             .font(.custom("Arial", size: 11))
                                              .lineSpacing(4)
                                              .foregroundColor(.black)
                                      }
@@ -97,14 +98,16 @@ struct ATSResumeView: View {
                     SectionView(title: "References") {
                         VStack(alignment: .leading, spacing: 15) {
                             ForEach(profile.references) { reference in
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text(
-                                        "\(reference.name) - \(reference.position) at \(reference.company)"
-                                    )
-                                    .font(.headline)
-                                    Text("Email: \(reference.email) | Phone: \(reference.phone)")
-                                        .font(.body)
-                                }
+                                 VStack(alignment: .leading, spacing: 5) {
+                                     Text(
+                                         "\(reference.name) - \(reference.position) at \(reference.company)"
+                                     )
+                                     .font(.custom("Arial", size: 12))
+                                     .foregroundColor(.black)
+                                     Text("Email: \(reference.email) | Phone: \(reference.phone)")
+                                         .font(.custom("Arial", size: 11))
+                                         .foregroundColor(.black)
+                                 }
                             }
                         }
                     }
@@ -114,7 +117,8 @@ struct ATSResumeView: View {
                 if !profile.skills.isEmpty {
                     SectionView(title: "Skills") {
                         Text(profile.skills.joined(separator: ", "))
-                            .font(.body)
+                            .font(.custom("Arial", size: 11))
+                            .foregroundColor(.black)
                     }
                 }
             }
@@ -164,13 +168,12 @@ struct ATSResumeView: View {
                     .foregroundColor(.black)
             }
         }
-        .font(.subheadline)
-        .foregroundColor(.secondary)
+        .font(.custom("Arial", size: 10))
     }
 
     private func dateRange(start: Date, end: Date?) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMM yyyy"
+        formatter.dateFormat = "MM/yyyy"
 
         let startStr = formatter.string(from: start)
         if let endDate = end {
@@ -189,8 +192,9 @@ struct SectionView<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(.custom("Arial", size: 14))
+                .fontWeight(.bold)
+                .foregroundColor(.black)
             content
         }
     }
