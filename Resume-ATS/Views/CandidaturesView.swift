@@ -34,7 +34,8 @@ struct CandidaturesView: View {
                     .padding(.top)
 
                 // Status filter
-                VStack(alignment: .leading) {
+                HStack {
+                    Spacer()
                     Text("Filtrer par statut:")
                         .font(.headline)
                     Picker("Statut", selection: $selectedStatus) {
@@ -46,6 +47,7 @@ struct CandidaturesView: View {
                     .pickerStyle(MenuPickerStyle())
                 }
                 .padding(.horizontal)
+                .padding(.bottom)
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
                     DashboardTile(
