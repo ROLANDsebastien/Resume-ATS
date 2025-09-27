@@ -110,8 +110,16 @@ struct TemplatesView: View {
     }
 
     private func generateATSPDF() {
-        guard let profile = selectedProfile else {
+        guard let selectedProfileID = selectedProfile?.persistentModelID else {
             // Show alert or notification that no profile is selected
+            return
+        }
+
+        var descriptor = FetchDescriptor<Profile>()
+        descriptor.predicate = #Predicate { $0.persistentModelID == selectedProfileID }
+        descriptor.relationshipKeyPathsForPrefetching = [\Profile.experiences, \Profile.educations, \Profile.references]
+
+        guard let profile = try? modelContext.fetch(descriptor).first else {
             return
         }
 

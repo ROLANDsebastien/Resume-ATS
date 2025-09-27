@@ -10,47 +10,50 @@ import SwiftUI
 
 struct ATSResumeView: View {
     var profile: Profile
+    var isForPDF: Bool = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+        let content = VStack(alignment: .leading, spacing: 20) {
                 // Header with name and contact
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(fullName)
-                        .font(.title)
-                        .fontWeight(.bold)
+                     Text(fullName)
+                         .font(.title)
+                         .fontWeight(.bold)
+                         .foregroundColor(.black)
 
                     contactInfo
                 }
 
                 // Professional Summary
-                if !profile.summary.isEmpty {
-                    SectionView(title: "Professional Summary") {
-                        Text(profile.summary)
-                            .font(.body)
-                            .lineSpacing(4)
-                    }
-                }
+                 if !profile.summary.isEmpty {
+                     SectionView(title: "Professional Summary") {
+                         Text(profile.summary)
+                             .font(.body)
+                             .lineSpacing(4)
+                             .foregroundColor(.black)
+                     }
+                 }
 
                 // Professional Experience
                 if !profile.experiences.isEmpty {
                     SectionView(title: "Professional Experience") {
                         VStack(alignment: .leading, spacing: 15) {
-                            ForEach(profile.experiences, id: \.self) { experience in
+                            ForEach(profile.experiences) { experience in
                                 VStack(alignment: .leading, spacing: 5) {
-                                    HStack {
-                                        Text(experience.company)
-                                            .font(.headline)
-                                        Spacer()
-                                        Text(
-                                            dateRange(
-                                                start: experience.startDate, end: experience.endDate
-                                            )
-                                        )
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                    }
-                                    Text(experience.description)
+                                     HStack {
+                                         Text(experience.company)
+                                             .font(.headline)
+                                             .foregroundColor(.black)
+                                         Spacer()
+                                         Text(
+                                             dateRange(
+                                                 start: experience.startDate, end: experience.endDate
+                                             )
+                                         )
+                                         .font(.subheadline)
+                                         .foregroundColor(.black)
+                                     }
+                                    Text(experience.details)
                                         .font(.body)
                                         .lineSpacing(4)
                                 }
@@ -63,24 +66,26 @@ struct ATSResumeView: View {
                 if !profile.educations.isEmpty {
                     SectionView(title: "Education") {
                         VStack(alignment: .leading, spacing: 15) {
-                            ForEach(profile.educations, id: \.self) { education in
+                            ForEach(profile.educations) { education in
                                 VStack(alignment: .leading, spacing: 5) {
-                                    HStack {
-                                        Text("\(education.institution) - \(education.degree)")
-                                            .font(.headline)
-                                        Spacer()
-                                        Text(
-                                            dateRange(
-                                                start: education.startDate, end: education.endDate)
-                                        )
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                    }
-                                    if !education.description.isEmpty {
-                                        Text(education.description)
-                                            .font(.body)
-                                            .lineSpacing(4)
-                                    }
+                                     HStack {
+                                         Text("\(education.institution) - \(education.degree)")
+                                             .font(.headline)
+                                             .foregroundColor(.black)
+                                         Spacer()
+                                         Text(
+                                             dateRange(
+                                                 start: education.startDate, end: education.endDate)
+                                         )
+                                         .font(.subheadline)
+                                         .foregroundColor(.black)
+                                     }
+                                     if !education.details.isEmpty {
+                                         Text(education.details)
+                                             .font(.body)
+                                             .lineSpacing(4)
+                                             .foregroundColor(.black)
+                                     }
                                 }
                             }
                         }
@@ -91,7 +96,7 @@ struct ATSResumeView: View {
                 if !profile.references.isEmpty {
                     SectionView(title: "References") {
                         VStack(alignment: .leading, spacing: 15) {
-                            ForEach(profile.references, id: \.self) { reference in
+                            ForEach(profile.references) { reference in
                                 VStack(alignment: .leading, spacing: 5) {
                                     Text(
                                         "\(reference.name) - \(reference.position) at \(reference.company)"
@@ -115,8 +120,15 @@ struct ATSResumeView: View {
             }
             .padding()
             .frame(maxWidth: 612)  // US Letter width equivalent
+            .background(Color.white)
+
+        if isForPDF {
+            content
+        } else {
+            ScrollView {
+                content
+            }
         }
-        .background(Color.white)
     }
 
     private var fullName: String {
@@ -129,21 +141,27 @@ struct ATSResumeView: View {
         VStack(alignment: .leading, spacing: 2) {
             if let email = profile.email {
                 Text("Email: \(email)")
+                    .foregroundColor(.black)
             }
             if let phone = profile.phone {
                 Text("Phone: \(phone)")
+                    .foregroundColor(.black)
             }
             if let location = profile.location {
                 Text("Location: \(location)")
+                    .foregroundColor(.black)
             }
             if let github = profile.github {
                 Text("GitHub: \(github)")
+                    .foregroundColor(.black)
             }
             if let gitlab = profile.gitlab {
                 Text("GitLab: \(gitlab)")
+                    .foregroundColor(.black)
             }
             if let linkedin = profile.linkedin {
                 Text("LinkedIn: \(linkedin)")
+                    .foregroundColor(.black)
             }
         }
         .font(.subheadline)
@@ -184,6 +202,6 @@ struct SectionView<Content: View>: View {
             name: "John Doe", firstName: "John", lastName: "Doe", email: "john@example.com",
             summary: "Experienced developer",
             experiences: [
-                Experience(company: "Tech Corp", startDate: Date(), description: "Developed apps")
-            ], skills: ["Swift", "iOS"]))
+                Experience(company: "Tech Corp", startDate: Date(), details: "Developed apps")
+            ], skills: ["Swift", "iOS"]), isForPDF: false)
 }

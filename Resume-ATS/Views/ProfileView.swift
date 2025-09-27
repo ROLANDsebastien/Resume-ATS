@@ -36,18 +36,19 @@ struct ProfileView: View {
                         }
 
                         StyledSection(title: "Expériences") {
-                            ForEach(profile.experiences.indices, id: \.self) { index in
-                                ExperienceForm(experience: profile.experiences[index]) {
-                                    updatedExperience in
-                                    profile.experiences[index] = updatedExperience
-                                }
+                            ForEach(profile.experiences) { experience in
+                                ExperienceForm(experience: experience)
                                 .padding(.bottom, 10)
-                                Button(action: { profile.experiences.remove(at: index) }) {
+                                Button(action: { 
+                                    if let index = profile.experiences.firstIndex(where: { $0.id == experience.id }) {
+                                        profile.experiences.remove(at: index)
+                                    }
+                                }) {
                                     Image(systemName: "trash.fill")
                                         .foregroundColor(.red)
                                 }
                                 .buttonStyle(.plain)
-                                if index < profile.experiences.count - 1 {
+                                if experience.id != profile.experiences.last?.id {
                                     Divider().background(Color.secondary)
                                 }
                             }
@@ -56,23 +57,24 @@ struct ProfileView: View {
                                 action: {
                                     profile.experiences.append(
                                         Experience(
-                                            company: "", startDate: Date(), description: ""))
+                                            company: "", startDate: Date(), details: ""))
                                 })
                         }
 
                         StyledSection(title: "Formations") {
-                            ForEach(profile.educations.indices, id: \.self) { index in
-                                EducationForm(education: profile.educations[index]) {
-                                    updatedEducation in
-                                    profile.educations[index] = updatedEducation
-                                }
+                            ForEach(profile.educations) { education in
+                                EducationForm(education: education)
                                 .padding(.bottom, 10)
-                                Button(action: { profile.educations.remove(at: index) }) {
+                                Button(action: { 
+                                    if let index = profile.educations.firstIndex(where: { $0.id == education.id }) {
+                                        profile.educations.remove(at: index)
+                                    }
+                                }) {
                                     Image(systemName: "trash.fill")
                                         .foregroundColor(.red)
                                 }
                                 .buttonStyle(.plain)
-                                if index < profile.educations.count - 1 {
+                                if education.id != profile.educations.last?.id {
                                     Divider().background(Color.secondary)
                                 }
                             }
@@ -82,23 +84,24 @@ struct ProfileView: View {
                                     profile.educations.append(
                                         Education(
                                             institution: "", degree: "", startDate: Date(),
-                                            description: ""))
+                                            details: ""))
                                 })
                         }
 
                         StyledSection(title: "Références") {
-                            ForEach(profile.references.indices, id: \.self) { index in
-                                ReferenceForm(reference: profile.references[index]) {
-                                    updatedReference in
-                                    profile.references[index] = updatedReference
-                                }
+                            ForEach(profile.references) { reference in
+                                ReferenceForm(reference: reference)
                                 .padding(.bottom, 10)
-                                Button(action: { profile.references.remove(at: index) }) {
+                                Button(action: { 
+                                    if let index = profile.references.firstIndex(where: { $0.id == reference.id }) {
+                                        profile.references.remove(at: index)
+                                    }
+                                }) {
                                     Image(systemName: "trash.fill")
                                         .foregroundColor(.red)
                                 }
                                 .buttonStyle(.plain)
-                                if index < profile.references.count - 1 {
+                                if reference.id != profile.references.last?.id {
                                     Divider().background(Color.secondary)
                                 }
                             }
@@ -285,189 +288,83 @@ private struct StyledPickerModifier: ViewModifier {
 
 // MARK: - Form Views (to be restyled)
 struct ExperienceForm: View {
-    var experience: Experience
-    var onUpdate: (Experience) -> Void
-
-    @State private var company: String
-    @State private var startDate: Date
-    @State private var endDate: Date?
-    @State private var description: String
-
-    init(experience: Experience, onUpdate: @escaping (Experience) -> Void) {
-        self.experience = experience
-        self.onUpdate = onUpdate
-        _company = State(initialValue: experience.company)
-        _startDate = State(initialValue: experience.startDate)
-        _endDate = State(initialValue: experience.endDate)
-        _description = State(initialValue: experience.description)
-    }
+    @Bindable var experience: Experience
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            TextField("Entreprise", text: $company)
-                .foregroundColor(.primary)
+            TextField("Entreprise", text: $experience.company)
                 .foregroundColor(.primary)
             HStack {
-                DatePicker("Date de début", selection: $startDate, displayedComponents: .date)
+                DatePicker("Date de début", selection: $experience.startDate, displayedComponents: .date)
                     .datePickerStyle(.compact)
                 Spacer()
                 DatePicker(
                     "Date de fin",
-                    selection: Binding(get: { endDate ?? Date() }, set: { endDate = $0 }),
+                    selection: Binding(get: { experience.endDate ?? Date() }, set: { experience.endDate = $0 }),
                     displayedComponents: .date
                 )
                 .datePickerStyle(.compact)
             }
-            TextEditor(text: $description)
+            TextEditor(text: $experience.details)
                 .modifier(StyledTextEditorModifier())
         }
         .textFieldStyle(StyledTextField())
-        .onChange(of: company) { updateExperience() }
-        .onChange(of: startDate) { updateExperience() }
-        .onChange(of: endDate) { updateExperience() }
-        .onChange(of: description) { updateExperience() }
-    }
-
-    private func updateExperience() {
-        let updated = Experience(
-            company: company, startDate: startDate, endDate: endDate, description: description)
-        onUpdate(updated)
     }
 }
 
 struct EducationForm: View {
-    var education: Education
-    var onUpdate: (Education) -> Void
-
-    @State private var institution: String
-    @State private var degree: String
-    @State private var startDate: Date
-    @State private var endDate: Date?
-    @State private var description: String
-
-    init(education: Education, onUpdate: @escaping (Education) -> Void) {
-        self.education = education
-        self.onUpdate = onUpdate
-        _institution = State(initialValue: education.institution)
-        _degree = State(initialValue: education.degree)
-        _startDate = State(initialValue: education.startDate)
-        _endDate = State(initialValue: education.endDate)
-        _description = State(initialValue: education.description)
-    }
+    @Bindable var education: Education
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            TextField("Institution", text: $institution)
+            TextField("Institution", text: $education.institution)
                 .foregroundColor(.primary)
-            TextField("Diplôme", text: $degree)
+            TextField("Diplôme", text: $education.degree)
                 .foregroundColor(.primary)
             HStack {
-                DatePicker("Date de début", selection: $startDate, displayedComponents: .date)
+                DatePicker("Date de début", selection: $education.startDate, displayedComponents: .date)
                     .datePickerStyle(.compact)
                 Spacer()
                 DatePicker(
                     "Date de fin",
-                    selection: Binding(get: { endDate ?? Date() }, set: { endDate = $0 }),
+                    selection: Binding(get: { education.endDate ?? Date() }, set: { education.endDate = $0 }),
                     displayedComponents: .date
                 )
                 .datePickerStyle(.compact)
             }
-            TextEditor(text: $description)
+            TextEditor(text: $education.details)
                 .modifier(StyledTextEditorModifier())
         }
         .textFieldStyle(StyledTextField())
-        .onChange(of: institution) { updateEducation() }
-        .onChange(of: degree) { updateEducation() }
-        .onChange(of: startDate) { updateEducation() }
-        .onChange(of: endDate) { updateEducation() }
-        .onChange(of: description) { updateEducation() }
-    }
-
-    private func updateEducation() {
-        let updated = Education(
-            institution: institution, degree: degree, startDate: startDate, endDate: endDate,
-            description: description)
-        onUpdate(updated)
     }
 }
 
 struct ReferenceForm: View {
-    var reference: Reference
-    var onUpdate: (Reference) -> Void
-
-    @State private var name: String
-    @State private var position: String
-    @State private var company: String
-    @State private var email: String
-    @State private var phone: String
-
-    init(reference: Reference, onUpdate: @escaping (Reference) -> Void) {
-        self.reference = reference
-        self.onUpdate = onUpdate
-        _name = State(initialValue: reference.name)
-        _position = State(initialValue: reference.position)
-        _company = State(initialValue: reference.company)
-        _email = State(initialValue: reference.email)
-        _phone = State(initialValue: reference.phone)
-    }
+    @Bindable var reference: Reference
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            TextField("Nom", text: $name)
+            TextField("Nom", text: $reference.name)
                 .foregroundColor(.primary)
-            TextField("Poste", text: $position)
+            TextField("Poste", text: $reference.position)
                 .foregroundColor(.primary)
-            TextField("Entreprise", text: $company)
-            TextField("Email", text: $email)
+            TextField("Entreprise", text: $reference.company)
+            TextField("Email", text: $reference.email)
                 .foregroundColor(.primary)
-            TextField("Téléphone", text: $phone)
+            TextField("Téléphone", text: $reference.phone)
                 .foregroundColor(.primary)
         }
         .textFieldStyle(StyledTextField())
-        .onChange(of: name) { updateReference() }
-        .onChange(of: position) { updateReference() }
-        .onChange(of: company) { updateReference() }
-        .onChange(of: email) { updateReference() }
-        .onChange(of: phone) { updateReference() }
-    }
-
-    private func updateReference() {
-        let updated = Reference(
-            name: name, position: position, company: company, email: email, phone: phone)
-        onUpdate(updated)
     }
 }
 
 struct PersonalInfoForm: View {
-    var profile: Profile
-
-    @State private var firstName: String?
-    @State private var lastName: String?
-    @State private var email: String?
-    @State private var phone: String?
-    @State private var location: String?
-    @State private var github: String?
-    @State private var gitlab: String?
-    @State private var linkedin: String?
-    @State private var photo: Data?
-
-    init(profile: Profile) {
-        self.profile = profile
-        _firstName = State(initialValue: profile.firstName)
-        _lastName = State(initialValue: profile.lastName)
-        _email = State(initialValue: profile.email)
-        _phone = State(initialValue: profile.phone)
-        _location = State(initialValue: profile.location)
-        _github = State(initialValue: profile.github)
-        _gitlab = State(initialValue: profile.gitlab)
-        _linkedin = State(initialValue: profile.linkedin)
-        _photo = State(initialValue: profile.photo)
-    }
+    @Bindable var profile: Profile
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Photo section
-            if let photoData = photo, let nsImage = NSImage(data: photoData) {
+            if let photoData = profile.photo, let nsImage = NSImage(data: photoData) {
                 VStack(spacing: 8) {
                     Image(nsImage: nsImage)
                         .resizable()
@@ -476,7 +373,6 @@ struct PersonalInfoForm: View {
                         .cornerRadius(8)
                         .clipped()
                     Button(action: {
-                        self.photo = nil
                         profile.photo = nil
                     }) {
                         HStack {
@@ -505,7 +401,6 @@ struct PersonalInfoForm: View {
                             data, error in
                             if let data = data {
                                 DispatchQueue.main.async {
-                                    self.photo = data
                                     profile.photo = data
                                 }
                             }
@@ -517,39 +412,30 @@ struct PersonalInfoForm: View {
 
             TextField(
                 "Prénom",
-                text: Binding(get: { firstName ?? "" }, set: { firstName = $0.isEmpty ? nil : $0 }))
+                text: Binding(get: { profile.firstName ?? "" }, set: { profile.firstName = $0.isEmpty ? nil : $0 }))
             TextField(
                 "Nom",
-                text: Binding(get: { lastName ?? "" }, set: { lastName = $0.isEmpty ? nil : $0 }))
+                text: Binding(get: { profile.lastName ?? "" }, set: { profile.lastName = $0.isEmpty ? nil : $0 }))
             TextField(
                 "Email",
-                text: Binding(get: { email ?? "" }, set: { email = $0.isEmpty ? nil : $0 }))
+                text: Binding(get: { profile.email ?? "" }, set: { profile.email = $0.isEmpty ? nil : $0 }))
             TextField(
                 "Téléphone",
-                text: Binding(get: { phone ?? "" }, set: { phone = $0.isEmpty ? nil : $0 }))
+                text: Binding(get: { profile.phone ?? "" }, set: { profile.phone = $0.isEmpty ? nil : $0 }))
             TextField(
                 "Localisation",
-                text: Binding(get: { location ?? "" }, set: { location = $0.isEmpty ? nil : $0 }))
+                text: Binding(get: { profile.location ?? "" }, set: { profile.location = $0.isEmpty ? nil : $0 }))
             TextField(
                 "GitHub",
-                text: Binding(get: { github ?? "" }, set: { github = $0.isEmpty ? nil : $0 }))
+                text: Binding(get: { profile.github ?? "" }, set: { profile.github = $0.isEmpty ? nil : $0 }))
             TextField(
                 "GitLab",
-                text: Binding(get: { gitlab ?? "" }, set: { gitlab = $0.isEmpty ? nil : $0 }))
+                text: Binding(get: { profile.gitlab ?? "" }, set: { profile.gitlab = $0.isEmpty ? nil : $0 }))
             TextField(
                 "LinkedIn",
-                text: Binding(get: { linkedin ?? "" }, set: { linkedin = $0.isEmpty ? nil : $0 }))
+                text: Binding(get: { profile.linkedin ?? "" }, set: { profile.linkedin = $0.isEmpty ? nil : $0 }))
         }
         .textFieldStyle(StyledTextField())
-        .onChange(of: firstName) { oldValue, newValue in profile.firstName = newValue }
-        .onChange(of: lastName) { oldValue, newValue in profile.lastName = newValue }
-        .onChange(of: email) { oldValue, newValue in profile.email = newValue }
-        .onChange(of: phone) { oldValue, newValue in profile.phone = newValue }
-        .onChange(of: location) { oldValue, newValue in profile.location = newValue }
-        .onChange(of: github) { oldValue, newValue in profile.github = newValue }
-        .onChange(of: gitlab) { oldValue, newValue in profile.gitlab = newValue }
-        .onChange(of: linkedin) { oldValue, newValue in profile.linkedin = newValue }
-        .onChange(of: photo) { oldValue, newValue in profile.photo = newValue }
     }
 }
 

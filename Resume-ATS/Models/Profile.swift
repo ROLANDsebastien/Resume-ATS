@@ -21,9 +21,9 @@ final class Profile {
     var linkedin: String?
     var photo: Data?
     var summary: String
-    var experiences: [Experience]
-    var educations: [Education]
-    var references: [Reference]
+    @Relationship(deleteRule: .cascade) var experiences: [Experience]
+    @Relationship(deleteRule: .cascade) var educations: [Education]
+    @Relationship(deleteRule: .cascade) var references: [Reference]
     var skills: [String]
 
     init(
@@ -51,25 +51,57 @@ final class Profile {
     }
 }
 
-struct Experience: Codable, Hashable {
+@Model
+final class Experience {
     var company: String
     var startDate: Date
     var endDate: Date?
-    var description: String
+    var details: String
+    var profile: Profile?
+
+    init(company: String, startDate: Date, endDate: Date? = nil, details: String) {
+        self.company = company
+        self.startDate = startDate
+        self.endDate = endDate
+        self.details = details
+    }
 }
 
-struct Education: Codable, Hashable {
+@Model
+final class Education {
     var institution: String
     var degree: String
     var startDate: Date
     var endDate: Date?
-    var description: String
+    var details: String
+    var profile: Profile?
+
+    init(
+        institution: String, degree: String, startDate: Date, endDate: Date? = nil,
+        details: String
+    ) {
+        self.institution = institution
+        self.degree = degree
+        self.startDate = startDate
+        self.endDate = endDate
+        self.details = details
+    }
 }
 
-struct Reference: Codable, Hashable {
+@Model
+final class Reference {
     var name: String
     var position: String
     var company: String
     var email: String
     var phone: String
+    var profile: Profile?
+
+    init(name: String, position: String, company: String, email: String, phone: String) {
+        self.name = name
+        self.position = position
+        self.company = company
+        self.email = email
+        self.phone = phone
+    }
 }
