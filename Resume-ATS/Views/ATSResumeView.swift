@@ -16,10 +16,16 @@ struct ATSResumeView: View {
         let content = VStack(alignment: .leading, spacing: 20) {
                 // Header with name and contact
                 VStack(alignment: .leading, spacing: 5) {
-                     Text(fullName)
-                         .font(.custom("Arial", size: 16))
-                         .fontWeight(.bold)
-                         .foregroundColor(.black)
+                    if let first = profile.firstName, let last = profile.lastName {
+                        Text("\(first) \(last)")
+                            .font(.custom("Arial", size: 16))
+                            .fontWeight(.bold)
+                            .foregroundColor(.black)
+                    }
+                    Text(profile.name)
+                        .font(.custom("Arial", size: 14))
+                        .fontWeight(.semibold)
+                        .foregroundColor(.black)
 
                     contactInfo
                 }
@@ -123,7 +129,7 @@ struct ATSResumeView: View {
                  }
             }
             .padding()
-            .frame(maxWidth: 612)  // US Letter width equivalent
+            .frame(maxWidth: 595, minHeight: 842, alignment: .top)  // A4 size, align to top
             .background(Color.white)
 
         if isForPDF {

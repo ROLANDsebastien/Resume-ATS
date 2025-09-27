@@ -18,7 +18,7 @@ class PDFService {
 
         // Create NSHostingView from SwiftUI view
         let hostingView = NSHostingView(rootView: resumeView)
-        hostingView.frame = CGRect(x: 0, y: 0, width: 612, height: 792)  // US Letter size
+        hostingView.frame = CGRect(x: 0, y: 0, width: 595, height: 842)  // A4 size
 
         // Generate PDF data directly from the hosting view
         let pdfData = hostingView.dataWithPDF(inside: hostingView.bounds)
