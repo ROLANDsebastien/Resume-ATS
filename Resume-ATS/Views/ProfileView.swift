@@ -408,11 +408,14 @@ struct PersonalInfoForm: View {
                     }
                     return true
                 }
-            }
+             }
 
-            TextField(
-                "Prénom",
-                text: Binding(get: { profile.firstName ?? "" }, set: { profile.firstName = $0.isEmpty ? nil : $0 }))
+             Toggle("Afficher la photo dans le PDF", isOn: $profile.showPhotoInPDF)
+                 .toggleStyle(.switch)
+
+             TextField(
+                 "Prénom",
+                 text: Binding(get: { profile.firstName ?? "" }, set: { profile.firstName = $0.isEmpty ? nil : $0 }))
             TextField(
                 "Nom",
                 text: Binding(get: { profile.lastName ?? "" }, set: { profile.lastName = $0.isEmpty ? nil : $0 }))

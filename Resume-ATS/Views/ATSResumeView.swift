@@ -14,28 +14,28 @@ struct ATSResumeView: View {
 
     var body: some View {
         let content = VStack(alignment: .leading, spacing: 20) {
-                // Header with photo, name, and contact
-                HStack(alignment: .top, spacing: 20) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        if !isForPDF, let photoData = profile.photo, let nsImage = NSImage(data: photoData) {
-                            Image(nsImage: nsImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 100, height: 100)
-                                .cornerRadius(50)
-                                .overlay(Circle().stroke(Color.gray, lineWidth: 1))
-                        }
-                        if let first = profile.firstName, let last = profile.lastName {
-                            Text("\(first) \(last)")
-                                .font(.custom("Arial", size: 16))
-                                .fontWeight(.bold)
-                                .foregroundColor(.black)
-                        }
-                        Text(profile.name)
-                            .font(.custom("Arial", size: 14))
-                            .fontWeight(.semibold)
-                            .foregroundColor(.black)
-                    }
+                 // Header with photo, name, and contact
+                 HStack(alignment: .top, spacing: 20) {
+                     VStack(alignment: .leading, spacing: 10) {
+                         if let first = profile.firstName, let last = profile.lastName {
+                             Text("\(first) \(last)")
+                                 .font(.custom("Arial", size: 16))
+                                 .fontWeight(.bold)
+                                 .foregroundColor(.black)
+                         }
+                         Text(profile.name)
+                             .font(.custom("Arial", size: 14))
+                             .fontWeight(.semibold)
+                             .foregroundColor(.black)
+                         if profile.showPhotoInPDF, let photoData = profile.photo, let nsImage = NSImage(data: photoData) {
+                             Image(nsImage: nsImage)
+                                 .resizable()
+                                 .scaledToFill()
+                                 .frame(width: 100, height: 100)
+                                 .cornerRadius(50)
+                                 .overlay(Circle().stroke(Color.gray, lineWidth: 1))
+                         }
+                     }
                     Spacer()
                     contactInfo
                 }
@@ -220,7 +220,7 @@ struct SectionView<Content: View>: View {
     ATSResumeView(
         profile: Profile(
             name: "John Doe", firstName: "John", lastName: "Doe", email: "john@example.com",
-            summary: "Experienced developer",
+            showPhotoInPDF: true, summary: "Experienced developer",
             experiences: [
                 Experience(company: "Tech Corp", startDate: Date(), details: "Developed apps")
             ], skills: ["Swift", "iOS"]), isForPDF: false)
