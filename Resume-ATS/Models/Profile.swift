@@ -79,6 +79,21 @@ final class Profile {
     var summaryString: String {
         summaryAttributedString.string
     }
+
+    var normalizedSummaryAttributedString: NSAttributedString {
+        let attr = summaryAttributedString.mutableCopy() as! NSMutableAttributedString
+        attr.enumerateAttribute(.font, in: NSRange(location: 0, length: attr.length), options: []) { value, range, _ in
+            if let currentFont = value as? NSFont {
+                let descriptor = currentFont.fontDescriptor
+                let traits = descriptor.symbolicTraits
+                let newDescriptor = NSFontDescriptor(name: "Arial", size: 11).withSymbolicTraits(traits)
+                if let newFont = NSFont(descriptor: newDescriptor, size: 11) {
+                    attr.addAttribute(.font, value: newFont, range: range)
+                }
+            }
+        }
+        return attr
+    }
 }
 
 @Model
@@ -112,6 +127,21 @@ final class Experience {
 
     var detailsString: String {
         detailsAttributedString.string
+    }
+
+    var normalizedDetailsAttributedString: NSAttributedString {
+        let attr = detailsAttributedString.mutableCopy() as! NSMutableAttributedString
+        attr.enumerateAttribute(.font, in: NSRange(location: 0, length: attr.length), options: []) { value, range, _ in
+            if let currentFont = value as? NSFont {
+                let descriptor = currentFont.fontDescriptor
+                let traits = descriptor.symbolicTraits
+                let newDescriptor = NSFontDescriptor(name: "Arial", size: 11).withSymbolicTraits(traits)
+                if let newFont = NSFont(descriptor: newDescriptor, size: 11) {
+                    attr.addAttribute(.font, value: newFont, range: range)
+                }
+            }
+        }
+        return attr
     }
 }
 
@@ -151,6 +181,21 @@ final class Education {
 
     var detailsString: String {
         detailsAttributedString.string
+    }
+
+    var normalizedDetailsAttributedString: NSAttributedString {
+        let attr = detailsAttributedString.mutableCopy() as! NSMutableAttributedString
+        attr.enumerateAttribute(.font, in: NSRange(location: 0, length: attr.length), options: []) { value, range, _ in
+            if let currentFont = value as? NSFont {
+                let descriptor = currentFont.fontDescriptor
+                let traits = descriptor.symbolicTraits
+                let newDescriptor = NSFontDescriptor(name: "Arial", size: 11).withSymbolicTraits(traits)
+                if let newFont = NSFont(descriptor: newDescriptor, size: 11) {
+                    attr.addAttribute(.font, value: newFont, range: range)
+                }
+            }
+        }
+        return attr
     }
 }
 

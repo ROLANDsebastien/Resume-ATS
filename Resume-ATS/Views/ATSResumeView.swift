@@ -47,15 +47,9 @@ struct ATSResumeView: View {
             // Professional Summary
             if !profile.summaryString.isEmpty {
                 SectionView(title: "Professional Summary") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(profile.summaryString.components(separatedBy: "\n\n"), id: \.self) {
-                            paragraph in
-                            Text(paragraph.replacingOccurrences(of: "\n", with: " "))
-                                .font(.custom("Arial", size: 11))
-                                .lineSpacing(4)
-                                .foregroundColor(.black)
-                        }
-                    }
+                    Text(AttributedString(profile.normalizedSummaryAttributedString))
+                        .lineSpacing(4)
+                        .foregroundColor(.black)
                 }
             }
 
@@ -78,8 +72,7 @@ struct ATSResumeView: View {
                                     .font(.custom("Arial", size: 10))
                                     .foregroundColor(.black)
                                 }
-                                Text(experience.detailsString.replacingOccurrences(of: "\n", with: " "))
-                                    .font(.custom("Arial", size: 11))
+                                Text(AttributedString(experience.normalizedDetailsAttributedString))
                                     .lineSpacing(4)
                                     .foregroundColor(.black)
                             }
@@ -107,10 +100,7 @@ struct ATSResumeView: View {
                                     .foregroundColor(.black)
                                 }
                                 if !education.detailsString.isEmpty {
-                                    Text(
-                                        education.detailsString.replacingOccurrences(of: "\n", with: " ")
-                                    )
-                                    .font(.custom("Arial", size: 11))
+                                    Text(AttributedString(education.normalizedDetailsAttributedString))
                                     .lineSpacing(4)
                                     .foregroundColor(.black)
                                 }
