@@ -540,6 +540,7 @@ struct RichTextEditor: NSViewRepresentable {
         textView.usesInspectorBar = false
         textView.delegate = context.coordinator
         textView.textColor = NSColor.labelColor
+        textView.font = NSFont.systemFont(ofSize: 20.0)
         textView.drawsBackground = false
         textView.backgroundColor = NSColor.clear
 
@@ -556,8 +557,19 @@ struct RichTextEditor: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         if let textView = nsView.documentView as? NSTextView {
             textView.textColor = NSColor.labelColor
+        textView.font = NSFont.systemFont(ofSize: 14.0)
+            textView.typingAttributes[.font] = NSFont.systemFont(ofSize: 14.0)
             let mutableString = NSMutableAttributedString(attributedString: attributedString)
             mutableString.addAttribute(.foregroundColor, value: NSColor.labelColor, range: NSRange(location: 0, length: mutableString.length))
+            // Update font size in the attributed string
+            mutableString.enumerateAttribute(.font, in: NSRange(location: 0, length: mutableString.length), options: []) { value, range, _ in
+                if let font = value as? NSFont {
+                    let newFont = NSFont(descriptor: font.fontDescriptor, size: 14.0)
+                    mutableString.addAttribute(.font, value: newFont, range: range)
+                } else {
+                    mutableString.addAttribute(.font, value: NSFont.systemFont(ofSize: 14.0), range: range)
+                }
+            }
             if textView.attributedString() != mutableString {
                 textView.textStorage?.setAttributedString(mutableString)
             }
