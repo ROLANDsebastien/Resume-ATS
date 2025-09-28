@@ -60,10 +60,10 @@ struct ATSResumeView: View {
             }
 
             // Professional Experience
-            if !profile.experiences.isEmpty {
+            if profile.showExperiences && !profile.experiences.filter({ $0.isVisible }).isEmpty {
                 SectionView(title: "Professional Experience") {
                     VStack(alignment: .leading, spacing: 15) {
-                        ForEach(profile.experiences) { experience in
+                        ForEach(profile.experiences.filter({ $0.isVisible })) { experience in
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack {
                                     Text(experience.company)
@@ -89,10 +89,10 @@ struct ATSResumeView: View {
             }
 
             // Education
-            if !profile.educations.isEmpty {
+            if profile.showEducations && !profile.educations.filter({ $0.isVisible }).isEmpty {
                 SectionView(title: "Education") {
                     VStack(alignment: .leading, spacing: 15) {
-                        ForEach(profile.educations) { education in
+                        ForEach(profile.educations.filter({ $0.isVisible })) { education in
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack {
                                     Text("\(education.institution) - \(education.degree)")
@@ -121,10 +121,10 @@ struct ATSResumeView: View {
             }
 
             // References
-            if !profile.references.isEmpty {
+            if profile.showReferences && !profile.references.filter({ $0.isVisible }).isEmpty {
                 SectionView(title: "References") {
                     VStack(alignment: .leading, spacing: 15) {
-                        ForEach(profile.references) { reference in
+                        ForEach(profile.references.filter({ $0.isVisible })) { reference in
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(
                                     "\(reference.name) - \(reference.position) at \(reference.company)"
@@ -141,7 +141,7 @@ struct ATSResumeView: View {
             }
 
             // Skills
-            if !profile.skills.isEmpty {
+            if profile.showSkills && !profile.skills.isEmpty {
                 SectionView(title: "Skills") {
                     Text(profile.skills.joined(separator: ", "))
                         .font(.custom("Arial", size: 11))

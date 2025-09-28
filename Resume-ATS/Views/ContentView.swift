@@ -83,17 +83,18 @@ struct TemplatesView: View {
                           title: "Modèle ATS",
                           subtitle: "Optimisé pour les filtres ATS",
                           systemImage: "doc",
-                          isEnabled: selectedProfile != nil
-                      ) {
-                          guard let profile = selectedProfile else { return }
-                          PDFService.generateATSResumePDF(for: profile) { pdfURL in
-                              if let pdfURL = pdfURL {
-                                  DispatchQueue.main.async {
-                                      NSWorkspace.shared.open(pdfURL)
+                          action: {
+                              guard let profile = selectedProfile else { return }
+                              PDFService.generateATSResumePDF(for: profile) { pdfURL in
+                                  if let pdfURL = pdfURL {
+                                      DispatchQueue.main.async {
+                                          NSWorkspace.shared.open(pdfURL)
+                                      }
                                   }
                               }
-                          }
-                      }
+                          },
+                          isEnabled: selectedProfile != nil
+                      )
 
                     DashboardTile(
                         title: "Modèle Moderne",

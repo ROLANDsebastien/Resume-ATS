@@ -10,6 +10,9 @@ struct ProfileView: View {
 
     @State private var selectedProfile: Profile?
     @State private var newProfileName: String = ""
+    @State private var renameProfileName: String = ""
+    @State private var showRenameAlert: Bool = false
+    @State private var showDeleteAlert: Bool = false
 
     var body: some View {
         ScrollView {
@@ -36,126 +39,237 @@ struct ProfileView: View {
                          }
 
                         StyledSection(title: "Expériences") {
-                            ForEach(profile.experiences) { experience in
-                                ExperienceForm(experience: experience)
-                                    .padding(.bottom, 10)
-                                 Button(action: {
-                                     DispatchQueue.main.async {
-                                         if let index = profile.experiences.firstIndex(where: {
-                                             $0.id == experience.id
-                                         }) {
-                                             profile.experiences.remove(at: index)
-                                         }
-                                     }
-                                 }) {
-                                    Image(systemName: "trash.fill")
-                                        .foregroundColor(.red)
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Section visibility toggle
+                                HStack {
+                                    Text("Afficher cette section dans le CV")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Toggle("", isOn: Binding(
+                                        get: { profile.showExperiences },
+                                        set: { profile.showExperiences = $0 }
+                                    ))
+                                    .labelsHidden()
+                                    .toggleStyle(.switch)
                                 }
-                                .buttonStyle(.plain)
-                                if experience.id != profile.experiences.last?.id {
-                                    Divider().background(Color.secondary)
+
+                                if profile.showExperiences {
+                                    ForEach(profile.experiences) { experience in
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            HStack {
+                                                Toggle("Visible dans le CV", isOn: Binding(
+                                                    get: { experience.isVisible },
+                                                    set: { experience.isVisible = $0 }
+                                                ))
+                                                .toggleStyle(.switch)
+                                                Spacer()
+                                                Button(action: {
+                                                    DispatchQueue.main.async {
+                                                        if let index = profile.experiences.firstIndex(where: {
+                                                            $0.id == experience.id
+                                                        }) {
+                                                            profile.experiences.remove(at: index)
+                                                        }
+                                                    }
+                                                }) {
+                                                    Image(systemName: "trash.fill")
+                                                        .foregroundColor(.red)
+                                                }
+                                                .buttonStyle(.plain)
+                                            }
+                                            ExperienceForm(experience: experience)
+                                        }
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .background(Color.gray.opacity(0.05))
+                                        .cornerRadius(8)
+                                        if experience.id != profile.experiences.last?.id {
+                                            Divider().background(Color.secondary.opacity(0.3))
+                                        }
+                                    }
+                                    StyledButton(
+                                        title: "Ajouter une expérience", systemImage: "plus",
+                                        action: {
+                                            DispatchQueue.main.async {
+                                                profile.experiences.append(
+                                                    Experience(
+                                                        company: "", startDate: Date(), details: Data()))
+                                            }
+                                        })
                                 }
                             }
-                             StyledButton(
-                                 title: "Ajouter une expérience", systemImage: "plus",
-                                 action: {
-                                     DispatchQueue.main.async {
-                                         profile.experiences.append(
-                                             Experience(
-                                                 company: "", startDate: Date(), details: Data()))
-                                     }
-                                 })
                         }
 
                         StyledSection(title: "Formations") {
-                            ForEach(profile.educations) { education in
-                                EducationForm(education: education)
-                                    .padding(.bottom, 10)
-                                 Button(action: {
-                                     DispatchQueue.main.async {
-                                         if let index = profile.educations.firstIndex(where: {
-                                             $0.id == education.id
-                                         }) {
-                                             profile.educations.remove(at: index)
-                                         }
-                                     }
-                                 }) {
-                                    Image(systemName: "trash.fill")
-                                        .foregroundColor(.red)
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Section visibility toggle
+                                HStack {
+                                    Text("Afficher cette section dans le CV")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Toggle("", isOn: Binding(
+                                        get: { profile.showEducations },
+                                        set: { profile.showEducations = $0 }
+                                    ))
+                                    .labelsHidden()
+                                    .toggleStyle(.switch)
                                 }
-                                .buttonStyle(.plain)
-                                if education.id != profile.educations.last?.id {
-                                    Divider().background(Color.secondary)
+
+                                if profile.showEducations {
+                                    ForEach(profile.educations) { education in
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            HStack {
+                                                Toggle("Visible dans le CV", isOn: Binding(
+                                                    get: { education.isVisible },
+                                                    set: { education.isVisible = $0 }
+                                                ))
+                                                .toggleStyle(.switch)
+                                                Spacer()
+                                                Button(action: {
+                                                    DispatchQueue.main.async {
+                                                        if let index = profile.educations.firstIndex(where: {
+                                                            $0.id == education.id
+                                                        }) {
+                                                            profile.educations.remove(at: index)
+                                                        }
+                                                    }
+                                                }) {
+                                                    Image(systemName: "trash.fill")
+                                                        .foregroundColor(.red)
+                                                }
+                                                .buttonStyle(.plain)
+                                            }
+                                            EducationForm(education: education)
+                                        }
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .background(Color.gray.opacity(0.05))
+                                        .cornerRadius(8)
+                                        if education.id != profile.educations.last?.id {
+                                            Divider().background(Color.secondary.opacity(0.3))
+                                        }
+                                    }
+                                    StyledButton(
+                                        title: "Ajouter une formation", systemImage: "plus",
+                                        action: {
+                                            DispatchQueue.main.async {
+                                                profile.educations.append(
+                                                    Education(
+                                                        institution: "", degree: "", startDate: Date(),
+                                                        details: Data()))
+                                            }
+                                        })
                                 }
                             }
-                             StyledButton(
-                                 title: "Ajouter une formation", systemImage: "plus",
-                                 action: {
-                                     DispatchQueue.main.async {
-                                         profile.educations.append(
-                                             Education(
-                                                 institution: "", degree: "", startDate: Date(),
-                                                 details: Data()))
-                                     }
-                                 })
                         }
 
                         StyledSection(title: "Références") {
-                            ForEach(profile.references) { reference in
-                                ReferenceForm(reference: reference)
-                                    .padding(.bottom, 10)
-                                 Button(action: {
-                                     DispatchQueue.main.async {
-                                         if let index = profile.references.firstIndex(where: {
-                                             $0.id == reference.id
-                                         }) {
-                                             profile.references.remove(at: index)
-                                         }
-                                     }
-                                 }) {
-                                    Image(systemName: "trash.fill")
-                                        .foregroundColor(.red)
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Section visibility toggle
+                                HStack {
+                                    Text("Afficher cette section dans le CV")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Toggle("", isOn: Binding(
+                                        get: { profile.showReferences },
+                                        set: { profile.showReferences = $0 }
+                                    ))
+                                    .labelsHidden()
+                                    .toggleStyle(.switch)
                                 }
-                                .buttonStyle(.plain)
-                                if reference.id != profile.references.last?.id {
-                                    Divider().background(Color.secondary)
+
+                                if profile.showReferences {
+                                    ForEach(profile.references) { reference in
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            HStack {
+                                                Toggle("Visible dans le CV", isOn: Binding(
+                                                    get: { reference.isVisible },
+                                                    set: { reference.isVisible = $0 }
+                                                ))
+                                                .toggleStyle(.switch)
+                                                Spacer()
+                                                Button(action: {
+                                                    DispatchQueue.main.async {
+                                                        if let index = profile.references.firstIndex(where: {
+                                                            $0.id == reference.id
+                                                        }) {
+                                                            profile.references.remove(at: index)
+                                                        }
+                                                    }
+                                                }) {
+                                                    Image(systemName: "trash.fill")
+                                                    .foregroundColor(.red)
+                                                }
+                                                .buttonStyle(.plain)
+                                            }
+                                            ReferenceForm(reference: reference)
+                                        }
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .background(Color.gray.opacity(0.05))
+                                        .cornerRadius(8)
+                                        if reference.id != profile.references.last?.id {
+                                            Divider().background(Color.secondary.opacity(0.3))
+                                        }
+                                    }
+                                    StyledButton(
+                                        title: "Ajouter une référence", systemImage: "plus",
+                                        action: {
+                                            DispatchQueue.main.async {
+                                                profile.references.append(
+                                                    Reference(
+                                                        name: "", position: "", company: "", email: "",
+                                                        phone: ""))
+                                            }
+                                        })
                                 }
                             }
-                             StyledButton(
-                                 title: "Ajouter une référence", systemImage: "plus",
-                                 action: {
-                                     DispatchQueue.main.async {
-                                         profile.references.append(
-                                             Reference(
-                                                 name: "", position: "", company: "", email: "",
-                                                 phone: ""))
-                                     }
-                                 })
                         }
 
                         StyledSection(title: "Compétences") {
-                             ForEach(profile.skills.indices, id: \.self) { index in
-                                 HStack {
-                                     TextField(
-                                         "Compétence",
-                                         text: Binding(
-                                             get: { profile.skills[index] },
-                                             set: { profile.skills[index] = $0 })
-                                     )
-                                     .textFieldStyle(StyledTextField())
-                                     Button(action: { DispatchQueue.main.async { profile.skills.remove(at: index) } }) {
-                                         Image(systemName: "trash.fill")
-                                             .foregroundColor(.red)
-                                     }
-                                     .buttonStyle(.plain)
-                                 }
-                             }
-                             StyledButton(
-                                 title: "Ajouter une compétence", systemImage: "plus",
-                                 action: {
-                                     DispatchQueue.main.async { profile.skills.append("") }
-                                 })
-                         }
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Section visibility toggle
+                                HStack {
+                                    Text("Afficher cette section dans le CV")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Toggle("", isOn: Binding(
+                                        get: { profile.showSkills },
+                                        set: { profile.showSkills = $0 }
+                                    ))
+                                    .labelsHidden()
+                                    .toggleStyle(.switch)
+                                }
+
+                                if profile.showSkills {
+                                    ForEach(profile.skills.indices, id: \.self) { index in
+                                        HStack {
+                                            TextField(
+                                                "Compétence",
+                                                text: Binding(
+                                                    get: { profile.skills[index] },
+                                                    set: { profile.skills[index] = $0 })
+                                            )
+                                            .textFieldStyle(StyledTextField())
+                                            Button(action: { DispatchQueue.main.async { profile.skills.remove(at: index) } }) {
+                                                Image(systemName: "trash.fill")
+                                                    .foregroundColor(.red)
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                    }
+                                    StyledButton(
+                                        title: "Ajouter une compétence", systemImage: "plus",
+                                        action: {
+                                            DispatchQueue.main.async { profile.skills.append("") }
+                                        })
+                                }
+                            }
+                        }
                     }
                 } else {
                     VStack {
@@ -169,6 +283,21 @@ struct ProfileView: View {
             .padding(.horizontal)
         }
         .navigationTitle("Resume-ATS")
+        .alert("Renommer le profil", isPresented: $showRenameAlert) {
+            TextField("Nouveau nom", text: $renameProfileName)
+            Button("Annuler", role: .cancel) { }
+            Button("Renommer") {
+                confirmRenameProfile()
+            }
+        }
+        .alert("Supprimer le profil", isPresented: $showDeleteAlert) {
+            Button("Annuler", role: .cancel) { }
+            Button("Supprimer", role: .destructive) {
+                confirmDeleteProfile()
+            }
+        } message: {
+            Text("Êtes-vous sûr de vouloir supprimer ce profil ? Cette action est irréversible.")
+        }
     }
 
     private var profileSelector: some View {
@@ -179,6 +308,16 @@ struct ProfileView: View {
                         .textFieldStyle(StyledTextField())
                         .foregroundColor(.primary)
                     StyledButton(title: "Créer", action: createProfile)
+                }
+            } else {
+                HStack {
+                    Text("Profil sélectionné: \(selectedProfile!.name)")
+                        .font(.headline)
+                    Spacer()
+                    StyledButton(title: "Renommer", systemImage: "pencil", action: renameProfile)
+                    StyledButton(title: "Dupliquer", systemImage: "doc.on.doc", action: duplicateProfile)
+                    StyledButton(title: "Supprimer", systemImage: "trash", action: deleteProfile)
+                        .foregroundColor(.red)
                 }
             }
 
@@ -200,6 +339,63 @@ struct ProfileView: View {
             selectedProfile = newProfile
             newProfileName = ""
         }
+    }
+
+    private func renameProfile() {
+        guard let profile = selectedProfile else { return }
+        renameProfileName = profile.name
+        showRenameAlert = true
+    }
+
+    private func duplicateProfile() {
+        guard let profile = selectedProfile else { return }
+        let duplicatedProfile = Profile(
+            name: profile.name + " (Copie)",
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            email: profile.email,
+            phone: profile.phone,
+            location: profile.location,
+            github: profile.github,
+            gitlab: profile.gitlab,
+            linkedin: profile.linkedin,
+            website: profile.website,
+            photo: profile.photo,
+            showPhotoInPDF: profile.showPhotoInPDF,
+            summary: profile.summary,
+            showExperiences: profile.showExperiences,
+            showEducations: profile.showEducations,
+            showReferences: profile.showReferences,
+            showSkills: profile.showSkills,
+            experiences: profile.experiences.map { exp in
+                Experience(company: exp.company, startDate: exp.startDate, endDate: exp.endDate, details: exp.details, isVisible: exp.isVisible)
+            },
+            educations: profile.educations.map { edu in
+                Education(institution: edu.institution, degree: edu.degree, startDate: edu.startDate, endDate: edu.endDate, details: edu.details, isVisible: edu.isVisible)
+            },
+            references: profile.references.map { ref in
+                Reference(name: ref.name, position: ref.position, company: ref.company, email: ref.email, phone: ref.phone, isVisible: ref.isVisible)
+            },
+            skills: profile.skills
+        )
+        modelContext.insert(duplicatedProfile)
+        selectedProfile = duplicatedProfile
+    }
+
+    private func deleteProfile() {
+        showDeleteAlert = true
+    }
+
+    private func confirmDeleteProfile() {
+        guard let profile = selectedProfile else { return }
+        modelContext.delete(profile)
+        selectedProfile = nil
+    }
+
+    private func confirmRenameProfile() {
+        guard let profile = selectedProfile, !renameProfileName.isEmpty else { return }
+        profile.name = renameProfileName
+        showRenameAlert = false
     }
 }
 
@@ -564,7 +760,7 @@ struct RichTextEditor: NSViewRepresentable {
             // Update font size in the attributed string
             mutableString.enumerateAttribute(.font, in: NSRange(location: 0, length: mutableString.length), options: []) { value, range, _ in
                 if let font = value as? NSFont {
-                    let newFont = NSFont(descriptor: font.fontDescriptor, size: 14.0)
+                    let newFont = NSFont(descriptor: font.fontDescriptor, size: 14.0) ?? NSFont.systemFont(ofSize: 14.0)
                     mutableString.addAttribute(.font, value: newFont, range: range)
                 } else {
                     mutableString.addAttribute(.font, value: NSFont.systemFont(ofSize: 14.0), range: range)

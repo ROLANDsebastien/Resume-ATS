@@ -24,6 +24,10 @@ final class Profile {
     var photo: Data?
     var showPhotoInPDF: Bool = false
     var summary: Data
+    var showExperiences: Bool = true
+    var showEducations: Bool = true
+    var showReferences: Bool = true
+    var showSkills: Bool = true
     @Relationship(deleteRule: .cascade) var experiences: [Experience]
     @Relationship(deleteRule: .cascade) var educations: [Education]
     @Relationship(deleteRule: .cascade) var references: [Reference]
@@ -33,6 +37,7 @@ final class Profile {
         name: String, firstName: String? = nil, lastName: String? = nil, email: String? = nil,
         phone: String? = nil, location: String? = nil, github: String? = nil, gitlab: String? = nil,
         linkedin: String? = nil, website: String? = nil, photo: Data? = nil, showPhotoInPDF: Bool = false, summary: Data = Data(),
+        showExperiences: Bool = true, showEducations: Bool = true, showReferences: Bool = true, showSkills: Bool = true,
         experiences: [Experience] = [],
         educations: [Education] = [], references: [Reference] = [], skills: [String] = []
     ) {
@@ -49,6 +54,10 @@ final class Profile {
         self.photo = photo
         self.showPhotoInPDF = showPhotoInPDF
         self.summary = summary
+        self.showExperiences = showExperiences
+        self.showEducations = showEducations
+        self.showReferences = showReferences
+        self.showSkills = showSkills
         self.experiences = experiences
         self.educations = educations
         self.references = references
@@ -78,13 +87,15 @@ final class Experience {
     var startDate: Date
     var endDate: Date?
     var details: Data
+    var isVisible: Bool = true
     var profile: Profile?
 
-    init(company: String, startDate: Date, endDate: Date? = nil, details: Data = Data()) {
+    init(company: String, startDate: Date, endDate: Date? = nil, details: Data = Data(), isVisible: Bool = true) {
         self.company = company
         self.startDate = startDate
         self.endDate = endDate
         self.details = details
+        self.isVisible = isVisible
     }
 
     var detailsAttributedString: NSAttributedString {
@@ -111,17 +122,19 @@ final class Education {
     var startDate: Date
     var endDate: Date?
     var details: Data
+    var isVisible: Bool = true
     var profile: Profile?
 
     init(
         institution: String, degree: String, startDate: Date, endDate: Date? = nil,
-        details: Data = Data()
+        details: Data = Data(), isVisible: Bool = true
     ) {
         self.institution = institution
         self.degree = degree
         self.startDate = startDate
         self.endDate = endDate
         self.details = details
+        self.isVisible = isVisible
     }
 
     var detailsAttributedString: NSAttributedString {
@@ -148,13 +161,15 @@ final class Reference {
     var company: String
     var email: String
     var phone: String
+    var isVisible: Bool = true
     var profile: Profile?
 
-    init(name: String, position: String, company: String, email: String, phone: String) {
+    init(name: String, position: String, company: String, email: String, phone: String, isVisible: Bool = true) {
         self.name = name
         self.position = position
         self.company = company
         self.email = email
         self.phone = phone
+        self.isVisible = isVisible
     }
 }

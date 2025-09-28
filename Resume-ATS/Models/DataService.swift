@@ -25,6 +25,10 @@ class DataService {
         let photo: Data?
         let showPhotoInPDF: Bool
         let summary: Data
+        let showExperiences: Bool
+        let showEducations: Bool
+        let showReferences: Bool
+        let showSkills: Bool
         let experiences: [SerializableExperience]
         let educations: [SerializableEducation]
         let references: [SerializableReference]
@@ -36,6 +40,7 @@ class DataService {
         let startDate: Date
         let endDate: Date?
         let details: Data
+        let isVisible: Bool
     }
 
     struct SerializableEducation: Codable {
@@ -44,6 +49,7 @@ class DataService {
         let startDate: Date
         let endDate: Date?
         let details: Data
+        let isVisible: Bool
     }
 
     struct SerializableReference: Codable {
@@ -52,6 +58,7 @@ class DataService {
         let company: String
         let email: String
         let phone: String
+        let isVisible: Bool
     }
 
     struct SerializableApplication: Codable {
@@ -97,12 +104,17 @@ class DataService {
                 photo: profile.photo,
                 showPhotoInPDF: profile.showPhotoInPDF,
                 summary: profile.summary,
+                showExperiences: profile.showExperiences,
+                showEducations: profile.showEducations,
+                showReferences: profile.showReferences,
+                showSkills: profile.showSkills,
                 experiences: profile.experiences.map { exp in
                     SerializableExperience(
                         company: exp.company,
                         startDate: exp.startDate,
                         endDate: exp.endDate,
-                        details: exp.details
+                        details: exp.details,
+                        isVisible: exp.isVisible
                     )
                 },
                 educations: profile.educations.map { edu in
@@ -111,7 +123,8 @@ class DataService {
                         degree: edu.degree,
                         startDate: edu.startDate,
                         endDate: edu.endDate,
-                        details: edu.details
+                        details: edu.details,
+                        isVisible: edu.isVisible
                     )
                 },
                 references: profile.references.map { ref in
@@ -120,7 +133,8 @@ class DataService {
                         position: ref.position,
                         company: ref.company,
                         email: ref.email,
-                        phone: ref.phone
+                        phone: ref.phone,
+                        isVisible: ref.isVisible
                     )
                 },
                 skills: profile.skills
@@ -244,7 +258,11 @@ class DataService {
                 website: serializableProfile.website,
                 photo: serializableProfile.photo,
                 showPhotoInPDF: serializableProfile.showPhotoInPDF,
-                summary: serializableProfile.summary
+                summary: serializableProfile.summary,
+                showExperiences: serializableProfile.showExperiences,
+                showEducations: serializableProfile.showEducations,
+                showReferences: serializableProfile.showReferences,
+                showSkills: serializableProfile.showSkills
             )
 
             // Add experiences
@@ -253,7 +271,8 @@ class DataService {
                     company: exp.company,
                     startDate: exp.startDate,
                     endDate: exp.endDate,
-                    details: exp.details
+                    details: exp.details,
+                    isVisible: exp.isVisible
                 )
                 experience.profile = profile
                 profile.experiences.append(experience)
@@ -266,7 +285,8 @@ class DataService {
                     degree: edu.degree,
                     startDate: edu.startDate,
                     endDate: edu.endDate,
-                    details: edu.details
+                    details: edu.details,
+                    isVisible: edu.isVisible
                 )
                 education.profile = profile
                 profile.educations.append(education)
@@ -279,7 +299,8 @@ class DataService {
                     position: ref.position,
                     company: ref.company,
                     email: ref.email,
-                    phone: ref.phone
+                    phone: ref.phone,
+                    isVisible: ref.isVisible
                 )
                 reference.profile = profile
                 profile.references.append(reference)
