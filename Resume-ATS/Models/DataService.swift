@@ -143,7 +143,6 @@ class DataService {
 
         // Traiter les applications et copier les documents
         var serializableApplications: [SerializableApplication] = []
-        var documentIndex = 0
 
         for application in applications {
             var documentPaths: [String]? = nil
@@ -155,14 +154,14 @@ class DataService {
                         var isStale = false
                         let url = try URL(resolvingBookmarkData: bookmark, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
 
-                        if !isStale {
-                            let documentName = "\(application.company)_\(application.position)_\(documentIndex)"
+                        if !isStale && url.startAccessingSecurityScopedResource() {
+                            defer { url.stopAccessingSecurityScopedResource() }
+                            let documentName = url.lastPathComponent
                             let destinationURL = documentsDir.appendingPathComponent(documentName)
 
                             // Copier le fichier
                             try fileManager.copyItem(at: url, to: destinationURL)
                             documentPaths?.append(documentName)
-                            documentIndex += 1
                         }
                     } catch {
                         print("Erreur lors de la copie du document: \(error)")
@@ -314,19 +313,26 @@ class DataService {
         // Importer les applications
         let documentsDir = tempDir.appendingPathComponent("Documents")
 
+        // Créer un dossier permanent pour les documents importés
+        let appDocumentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("ResumeATS_Documents")
+        try? fileManager.createDirectory(at: appDocumentsDir, withIntermediateDirectories: true)
+
         for serializableApp in exportData.applications {
             var bookmarks: [Data]? = nil
 
             if let documentPaths = serializableApp.documentPaths {
                 bookmarks = []
                 for path in documentPaths {
-                    let documentURL = documentsDir.appendingPathComponent(path)
-                    if fileManager.fileExists(atPath: documentURL.path) {
+                    let tempDocumentURL = documentsDir.appendingPathComponent(path)
+                    if fileManager.fileExists(atPath: tempDocumentURL.path) {
+                        // Copier vers le dossier permanent
+                        let permanentURL = appDocumentsDir.appendingPathComponent(path)
                         do {
-                            let bookmark = try documentURL.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+                            try fileManager.copyItem(at: tempDocumentURL, to: permanentURL)
+                            let bookmark = try permanentURL.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
                             bookmarks?.append(bookmark)
                         } catch {
-                            print("Erreur lors de la création du bookmark pour \(path): \(error)")
+                            print("Erreur lors de la copie ou création du bookmark pour \(path): \(error)")
                         }
                     }
                 }
