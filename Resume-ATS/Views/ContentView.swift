@@ -79,22 +79,22 @@ struct TemplatesView: View {
                 .padding(.horizontal)
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
-                      DashboardTile(
-                          title: "Modèle ATS",
-                          subtitle: "Optimisé pour les filtres ATS",
-                          systemImage: "doc",
-                          action: {
-                              guard let profile = selectedProfile else { return }
-                              PDFService.generateATSResumePDF(for: profile) { pdfURL in
-                                  if let pdfURL = pdfURL {
-                                      DispatchQueue.main.async {
-                                          NSWorkspace.shared.open(pdfURL)
-                                      }
-                                  }
-                              }
-                          },
-                          isEnabled: selectedProfile != nil
-                      )
+                    DashboardTile(
+                        title: "Modèle ATS",
+                        subtitle: "Optimisé pour les filtres ATS",
+                        systemImage: "doc",
+                        action: {
+                            guard let profile = selectedProfile else { return }
+                            PDFService.generateATSResumePDF(for: profile) { pdfURL in
+                                if let pdfURL = pdfURL {
+                                    DispatchQueue.main.async {
+                                        NSWorkspace.shared.open(pdfURL)
+                                    }
+                                }
+                            }
+                        },
+                        isEnabled: selectedProfile != nil
+                    )
 
                     DashboardTile(
                         title: "Modèle Moderne",
@@ -118,7 +118,6 @@ struct TemplatesView: View {
 
     }
 
-
 }
 
 struct ContentView: View {
@@ -135,6 +134,9 @@ struct ContentView: View {
                 }
                 NavigationLink(value: "Candidatures") {
                     Label("Candidatures", systemImage: "briefcase")
+                }
+                NavigationLink(value: "Lettres") {
+                    Label("Lettres de Motivation", systemImage: "doc.text")
                 }
                 NavigationLink(value: "Templates") {
                     Label("Templates", systemImage: "doc")
@@ -155,6 +157,8 @@ struct ContentView: View {
                 ProfileView()
             case "Candidatures":
                 CandidaturesView()
+            case "Lettres":
+                CoverLettersView()
             case "Templates":
                 TemplatesView()
             case "Statistiques":

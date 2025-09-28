@@ -89,7 +89,10 @@ struct CandidaturesView: View {
             .listRowSeparator(.hidden)
 
             if !filteredApplications.isEmpty {
-                Section(header: Text("Candidatures").font(.title2).fontWeight(.semibold).padding(.top, 20)) {
+                Section(
+                    header: Text("Candidatures").font(.title2).fontWeight(.semibold).padding(
+                        .top, 20)
+                ) {
                     ForEach(filteredApplications) { application in
                         ApplicationRow(
                             application: application,
@@ -137,9 +140,16 @@ struct ApplicationRow: View {
                 Text("Statut: \(application.status.rawValue)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                Text("Date: \(application.dateApplied.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                Text(
+                    "Date: \(application.dateApplied.formatted(date: .abbreviated, time: .omitted))"
+                )
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                if let coverLetter = application.coverLetter {
+                    Text("Lettre: \(coverLetter.title)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
             }
             Spacer()
         }
@@ -165,6 +175,7 @@ struct ApplicationRow: View {
 struct EditApplicationView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Query private var coverLetters: [CoverLetter]
     var application: Application
 
     @State private var company: String
@@ -172,6 +183,7 @@ struct EditApplicationView: View {
     @State private var dateApplied: Date
     @State private var status: Application.Status
     @State private var notes: String
+    @State private var selectedCoverLetter: CoverLetter?
 
     init(application: Application) {
         self.application = application
@@ -180,6 +192,7 @@ struct EditApplicationView: View {
         _dateApplied = State(initialValue: application.dateApplied)
         _status = State(initialValue: application.status)
         _notes = State(initialValue: application.notes)
+        _selectedCoverLetter = State(initialValue: application.coverLetter)
     }
 
     var body: some View {
@@ -191,13 +204,20 @@ struct EditApplicationView: View {
             Form {
                 TextField("Entreprise", text: $company)
                 TextField("Poste", text: $position)
-                DatePicker("Date de candidature", selection: $dateApplied, displayedComponents: .date)
+                DatePicker(
+                    "Date de candidature", selection: $dateApplied, displayedComponents: .date)
                 Picker("Statut", selection: $status) {
                     ForEach(Application.Status.allCases, id: \.self) { status in
                         Text(status.rawValue).tag(status)
                     }
                 }
                 TextField("Notes", text: $notes)
+                Picker("Lettre de Motivation", selection: $selectedCoverLetter) {
+                    Text("Aucune").tag(nil as CoverLetter?)
+                    ForEach(coverLetters) { coverLetter in
+                        Text(coverLetter.title).tag(coverLetter as CoverLetter?)
+                    }
+                }
             }
             .frame(minWidth: 400, minHeight: 200)
 
@@ -211,6 +231,7 @@ struct EditApplicationView: View {
                     application.dateApplied = dateApplied
                     application.status = status
                     application.notes = notes
+                    application.coverLetter = selectedCoverLetter
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
@@ -226,12 +247,14 @@ struct EditApplicationView: View {
 struct AddApplicationView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Query private var coverLetters: [CoverLetter]
 
     @State private var company = ""
     @State private var position = ""
     @State private var dateApplied = Date()
     @State private var status: Application.Status = .applied
     @State private var notes = ""
+    @State private var selectedCoverLetter: CoverLetter? = nil
 
     var body: some View {
         VStack(spacing: 20) {
@@ -242,13 +265,20 @@ struct AddApplicationView: View {
             Form {
                 TextField("Entreprise", text: $company)
                 TextField("Poste", text: $position)
-                DatePicker("Date de candidature", selection: $dateApplied, displayedComponents: .date)
+                DatePicker(
+                    "Date de candidature", selection: $dateApplied, displayedComponents: .date)
                 Picker("Statut", selection: $status) {
                     ForEach(Application.Status.allCases, id: \.self) { status in
                         Text(status.rawValue).tag(status)
                     }
                 }
                 TextField("Notes", text: $notes)
+                Picker("Lettre de Motivation", selection: $selectedCoverLetter) {
+                    Text("Aucune").tag(nil as CoverLetter?)
+                    ForEach(coverLetters) { coverLetter in
+                        Text(coverLetter.title).tag(coverLetter as CoverLetter?)
+                    }
+                }
             }
             .frame(minWidth: 400, minHeight: 200)
 
@@ -262,7 +292,8 @@ struct AddApplicationView: View {
                         position: position,
                         dateApplied: dateApplied,
                         status: status,
-                        notes: notes
+                        notes: notes,
+                        coverLetter: selectedCoverLetter
                     )
                     modelContext.insert(newApplication)
                     dismiss()
@@ -287,7 +318,9 @@ struct DocumentsView: View {
     private func resolveBookmark(_ bookmark: Data) -> URL? {
         var isStale = false
         do {
-            let url = try URL(resolvingBookmarkData: bookmark, options: .withSecurityScope, bookmarkDataIsStale: &isStale)
+            let url = try URL(
+                resolvingBookmarkData: bookmark, options: .withSecurityScope,
+                bookmarkDataIsStale: &isStale)
             return url
         } catch {
             print("Error resolving bookmark: \(error)")
@@ -314,22 +347,44 @@ struct DocumentsView: View {
                 .fontWeight(.bold)
 
             List {
-                ForEach(application.documentBookmarks ?? [], id: \.self) { bookmark in
-                    HStack {
-                        if let url = resolveBookmark(bookmark) {
-                            Text(url.lastPathComponent)
+                if let coverLetter = application.coverLetter {
+                    Section(header: Text("Lettre de Motivation")) {
+                        HStack {
+                            Text(coverLetter.title)
                             Spacer()
                             Button("Voir") {
-                                openBookmark(bookmark)
-                            }
-                            Button("Supprimer") {
-                                if let index = application.documentBookmarks?.firstIndex(of: bookmark) {
-                                    application.documentBookmarks?.remove(at: index)
+                                PDFService.generateCoverLetterPDF(for: coverLetter) { pdfURL in
+                                    if let pdfURL = pdfURL {
+                                        DispatchQueue.main.async {
+                                            NSWorkspace.shared.open(pdfURL)
+                                        }
+                                    }
                                 }
                             }
-                            .foregroundColor(.red)
-                        } else {
-                            Text("Document invalide")
+                        }
+                    }
+                }
+
+                Section(header: Text("Documents")) {
+                    ForEach(application.documentBookmarks ?? [], id: \.self) { bookmark in
+                        HStack {
+                            if let url = resolveBookmark(bookmark) {
+                                Text(url.lastPathComponent)
+                                Spacer()
+                                Button("Voir") {
+                                    openBookmark(bookmark)
+                                }
+                                Button("Supprimer") {
+                                    if let index = application.documentBookmarks?.firstIndex(
+                                        of: bookmark)
+                                    {
+                                        application.documentBookmarks?.remove(at: index)
+                                    }
+                                }
+                                .foregroundColor(.red)
+                            } else {
+                                Text("Document invalide")
+                            }
                         }
                     }
                 }
@@ -362,13 +417,19 @@ struct DocumentsView: View {
                     print("Access granted: \(accessGranted)")
                     if accessGranted {
                         let fileManager = FileManager.default
-                        if let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first {
-                            let destinationURL = documentsDir.appendingPathComponent(url.lastPathComponent)
+                        if let documentsDir = fileManager.urls(
+                            for: .documentDirectory, in: .userDomainMask
+                        ).first {
+                            let destinationURL = documentsDir.appendingPathComponent(
+                                url.lastPathComponent)
                             print("Destination: \(destinationURL)")
                             do {
-                                let bookmark = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+                                let bookmark = try url.bookmarkData(
+                                    options: .withSecurityScope,
+                                    includingResourceValuesForKeys: nil, relativeTo: nil)
                                 print("Bookmark created")
-                                application.documentBookmarks = (application.documentBookmarks ?? []) + [bookmark]
+                                application.documentBookmarks =
+                                    (application.documentBookmarks ?? []) + [bookmark]
                             } catch {
                                 print("Error creating bookmark: \(error)")
                             }
@@ -387,5 +448,5 @@ struct DocumentsView: View {
 
 #Preview {
     CandidaturesView()
-        .modelContainer(for: [Profile.self, Application.self], inMemory: true)
+        .modelContainer(for: [Profile.self, Application.self, CoverLetter.self], inMemory: true)
 }

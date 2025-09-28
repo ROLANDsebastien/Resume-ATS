@@ -5,9 +5,9 @@
 //  Created by opencode on 2025-09-27.
 //
 
+import AppKit
 import Foundation
 import SwiftData
-import AppKit
 
 class DataService {
     // Serializable structs
@@ -67,7 +67,8 @@ class DataService {
         let dateApplied: Date
         let status: String
         let notes: String
-        let documentPaths: [String]? // Chemins relatifs des documents dans l'archive
+        let documentPaths: [String]?  // Chemins relatifs des documents dans l'archive
+        let profileName: String  // Ajout pour lier à un profil
     }
 
     struct ExportData: Codable {
@@ -81,7 +82,8 @@ class DataService {
         let fileManager = FileManager.default
 
         // Créer un dossier temporaire pour l'export
-        let tempDir = fileManager.temporaryDirectory.appendingPathComponent("ResumeATS_Export_\(UUID().uuidString)")
+        let tempDir = fileManager.temporaryDirectory.appendingPathComponent(
+            "ResumeATS_Export_\(UUID().uuidString)")
         try? fileManager.createDirectory(at: tempDir, withIntermediateDirectories: true)
 
         // Créer le dossier pour les documents
@@ -152,7 +154,9 @@ class DataService {
                 for bookmark in bookmarks {
                     do {
                         var isStale = false
-                        let url = try URL(resolvingBookmarkData: bookmark, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
+                        let url = try URL(
+                            resolvingBookmarkData: bookmark, options: .withSecurityScope,
+                            relativeTo: nil, bookmarkDataIsStale: &isStale)
 
                         if !isStale && url.startAccessingSecurityScopedResource() {
                             defer { url.stopAccessingSecurityScopedResource() }
@@ -175,7 +179,8 @@ class DataService {
                 dateApplied: application.dateApplied,
                 status: application.status.rawValue,
                 notes: application.notes,
-                documentPaths: documentPaths
+                documentPaths: documentPaths,
+                profileName: application.profile?.name ?? ""
             )
             serializableApplications.append(serializableApp)
         }
@@ -193,7 +198,8 @@ class DataService {
         try? jsonData?.write(to: jsonURL)
 
         // Créer l'archive ZIP
-        let zipURL = fileManager.temporaryDirectory.appendingPathComponent("ResumeATS_Backup_\(Date().formatted(.iso8601.dateSeparator(.dash))).zip")
+        let zipURL = fileManager.temporaryDirectory.appendingPathComponent(
+            "ResumeATS_Backup_\(Date().formatted(.iso8601.dateSeparator(.dash))).zip")
 
         // Utiliser ditto pour créer l'archive (commande macOS)
         let process = Process()
@@ -222,7 +228,8 @@ class DataService {
         let fileManager = FileManager.default
 
         // Créer un dossier temporaire pour extraire l'archive
-        let tempDir = fileManager.temporaryDirectory.appendingPathComponent("ResumeATS_Import_\(UUID().uuidString)")
+        let tempDir = fileManager.temporaryDirectory.appendingPathComponent(
+            "ResumeATS_Import_\(UUID().uuidString)")
         try? fileManager.createDirectory(at: tempDir, withIntermediateDirectories: true)
 
         // Extraire l'archive
@@ -234,7 +241,9 @@ class DataService {
         process.waitUntilExit()
 
         guard process.terminationStatus == 0 else {
-            throw NSError(domain: "DataService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Erreur lors de l'extraction de l'archive"])
+            throw NSError(
+                domain: "DataService", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Erreur lors de l'extraction de l'archive"])
         }
 
         // Lire le fichier JSON
@@ -242,8 +251,21 @@ class DataService {
         let jsonData = try Data(contentsOf: jsonURL)
         let exportData = try JSONDecoder().decode(ExportData.self, from: jsonData)
 
-        // Importer les profils
-        for serializableProfile in exportData.profiles {
+        // --- Prévention des doublons ---
+        // Récupérer les profils existants pour éviter les doublons
+        let existingProfiles = try context.fetch(FetchDescriptor<Profile>())
+        let existingProfileNames = Set(existingProfiles.map { $0.name })
+
+        // Récupérer les candidatures existantes pour éviter les doublons
+        let existingApplications = try context.fetch(FetchDescriptor<Application>())
+        let existingApplicationKeys = Set(
+            existingApplications.map {
+                "\($0.company)|\($0.position)|\($0.dateApplied.timeIntervalSince1970)"
+            })
+
+        // Importer les profils non existants
+        for serializableProfile in exportData.profiles
+        where !existingProfileNames.contains(serializableProfile.name) {
             let profile = Profile(
                 name: serializableProfile.name,
                 firstName: serializableProfile.firstName,
@@ -310,14 +332,24 @@ class DataService {
             context.insert(profile)
         }
 
+        // Créer une map pour un accès rapide aux profils par nom
+        var profileMap: [String: Profile] = [:]
+        for profile in context.insertedModelsArray.compactMap({ $0 as? Profile }) {
+            profileMap[profile.name] = profile
+        }
+
         // Importer les applications
         let documentsDir = tempDir.appendingPathComponent("Documents")
 
         // Créer un dossier permanent pour les documents importés
-        let appDocumentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("ResumeATS_Documents")
+        let appDocumentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("ResumeATS_Documents")
         try? fileManager.createDirectory(at: appDocumentsDir, withIntermediateDirectories: true)
 
-        for serializableApp in exportData.applications {
+        for serializableApp in exportData.applications
+        where !existingApplicationKeys.contains(
+            "\(serializableApp.company)|\(serializableApp.position)|\(serializableApp.dateApplied.timeIntervalSince1970)"
+        ) {
             var bookmarks: [Data]? = nil
 
             if let documentPaths = serializableApp.documentPaths {
@@ -329,10 +361,14 @@ class DataService {
                         let permanentURL = appDocumentsDir.appendingPathComponent(path)
                         do {
                             try fileManager.copyItem(at: tempDocumentURL, to: permanentURL)
-                            let bookmark = try permanentURL.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+                            let bookmark = try permanentURL.bookmarkData(
+                                options: .withSecurityScope, includingResourceValuesForKeys: nil,
+                                relativeTo: nil)
                             bookmarks?.append(bookmark)
                         } catch {
-                            print("Erreur lors de la copie ou création du bookmark pour \(path): \(error)")
+                            print(
+                                "Erreur lors de la copie ou création du bookmark pour \(path): \(error)"
+                            )
                         }
                     }
                 }
@@ -347,6 +383,11 @@ class DataService {
                 notes: serializableApp.notes,
                 documentBookmarks: bookmarks
             )
+
+            // Lier l'application au bon profil
+            if !serializableApp.profileName.isEmpty {
+                application.profile = profileMap[serializableApp.profileName]
+            }
 
             context.insert(application)
         }
