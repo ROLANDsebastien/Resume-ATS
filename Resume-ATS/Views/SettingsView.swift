@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import AppKit
+import SwiftData
+import SwiftUI
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
@@ -82,125 +82,128 @@ struct SettingsView: View {
                     .cornerRadius(10)
                 }
 
-                 // Préférences Section
-                 VStack(alignment: .leading, spacing: 15) {
-                     HStack {
-                         Image(systemName: "slider.horizontal.3")
-                             .foregroundColor(.accentColor)
-                         Text("Préférences")
-                             .font(.title2)
-                             .fontWeight(.semibold)
-                             .foregroundColor(.primary)
-                     }
+                // Préférences Section
+                VStack(alignment: .leading, spacing: 15) {
+                    HStack {
+                        Image(systemName: "slider.horizontal.3")
+                            .foregroundColor(.accentColor)
+                        Text("Préférences")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                    }
 
-                     VStack(spacing: 10) {
-                         HStack {
-                             VStack(alignment: .leading) {
-                                 Text("Sauvegarde automatique")
-                                     .foregroundColor(.primary)
-                                 Text("Sauvegarder automatiquement les modifications")
-                                     .font(.caption)
-                                     .foregroundColor(.secondary)
-                             }
-                             Spacer()
-                             Toggle("", isOn: $autoSave)
-                                 .labelsHidden()
-                         }
-                     }
-                     .padding()
-                     .background(sectionBackground)
-                     .cornerRadius(10)
-                 }
+                    VStack(spacing: 10) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Sauvegarde automatique")
+                                    .foregroundColor(.primary)
+                                Text("Sauvegarder automatiquement les modifications")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Toggle("", isOn: $autoSave)
+                                .labelsHidden()
+                                .toggleStyle(.switch)
+                        }
+                    }
+                    .padding()
+                    .background(sectionBackground)
+                    .cornerRadius(10)
+                }
 
-                 // Sauvegarde et Restauration Section
-                 VStack(alignment: .leading, spacing: 15) {
-                     HStack {
-                         Image(systemName: "arrow.up.arrow.down.circle.fill")
-                             .foregroundColor(.accentColor)
-                         Text("Sauvegarde et Restauration")
-                             .font(.title2)
-                             .fontWeight(.semibold)
-                             .foregroundColor(.primary)
-                     }
+                // Sauvegarde et Restauration Section
+                VStack(alignment: .leading, spacing: 15) {
+                    HStack {
+                        Image(systemName: "arrow.up.arrow.down.circle.fill")
+                            .foregroundColor(.accentColor)
+                        Text("Sauvegarde et Restauration")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                    }
 
-                     VStack(spacing: 10) {
-                         HStack {
-                             VStack(alignment: .leading) {
-                                 Text("Exporter les données")
-                                     .foregroundColor(.primary)
-                                 Text("Sauvegarder profils, candidatures et documents joints")
-                                     .font(.caption)
-                                     .foregroundColor(.secondary)
-                             }
-                             Spacer()
-                             Button("Exporter") {
-                                 exportProfiles()
-                             }
-                             .buttonStyle(.borderedProminent)
-                         }
+                    VStack(spacing: 10) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Exporter les données")
+                                    .foregroundColor(.primary)
+                                Text("Sauvegarder profils, candidatures et documents joints")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Button("Exporter") {
+                                exportProfiles()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
 
-                         HStack {
-                             VStack(alignment: .leading) {
-                                 Text("Importer les données")
-                                     .foregroundColor(.primary)
-                                 Text("Restaurer profils, candidatures et documents joints")
-                                     .font(.caption)
-                                     .foregroundColor(.secondary)
-                             }
-                             Spacer()
-                             Button("Importer") {
-                                 importProfiles()
-                             }
-                             .buttonStyle(.borderedProminent)
-                         }
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Importer les données")
+                                    .foregroundColor(.primary)
+                                Text("Restaurer profils, candidatures et documents joints")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Button("Importer") {
+                                importProfiles()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
 
-                         HStack {
-                             VStack(alignment: .leading) {
-                                 Text("Effacer toutes les données")
-                                     .foregroundColor(.red)
-                                 Text("Supprimer définitivement tous les profils et candidatures")
-                                     .font(.caption)
-                                     .foregroundColor(.secondary)
-                             }
-                             Spacer()
-                             Button("Effacer") {
-                                 showingClearDataConfirmation = true
-                             }
-                             .buttonStyle(.borderedProminent)
-                             .tint(.red)
-                         }
-                     }
-                     .padding()
-                     .background(sectionBackground)
-                     .cornerRadius(10)
-                 }
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Effacer toutes les données")
+                                    .foregroundColor(.red)
+                                Text("Supprimer définitivement tous les profils et candidatures")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Button("Effacer") {
+                                showingClearDataConfirmation = true
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.red)
+                        }
+                    }
+                    .padding()
+                    .background(sectionBackground)
+                    .cornerRadius(10)
+                }
 
-                 Spacer()
+                Spacer()
             }
             .padding(.horizontal)
         }
         .alert("Export réussi", isPresented: $showingExportSuccess) {
-            Button("OK", role: .cancel) { }
+            Button("OK", role: .cancel) {}
         } message: {
             Text("Les profils ont été exportés avec succès.")
         }
         .alert("Import réussi", isPresented: $showingImportSuccess) {
-            Button("OK", role: .cancel) { }
+            Button("OK", role: .cancel) {}
         } message: {
             Text("Les profils ont été importés avec succès.")
         }
         .alert("Erreur", isPresented: $showingError) {
-            Button("OK", role: .cancel) { }
+            Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage)
         }
         .alert("Confirmer la suppression", isPresented: $showingClearDataConfirmation) {
-            Button("Annuler", role: .cancel) { }
+            Button("Annuler", role: .cancel) {}
             Button("Effacer définitivement", role: .destructive) {
                 clearAllData()
             }
         } message: {
-            Text("Cette action supprimera définitivement tous les profils, candidatures et documents joints. Cette action est irréversible.")
+            Text(
+                "Cette action supprimera définitivement tous les profils, candidatures et documents joints. Cette action est irréversible."
+            )
         }
 
     }
@@ -214,7 +217,8 @@ struct SettingsView: View {
 
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.zip]
-        savePanel.nameFieldStringValue = "ResumeATS_Backup_\(Date().formatted(.iso8601.dateSeparator(.dash)))"
+        savePanel.nameFieldStringValue =
+            "ResumeATS_Backup_\(Date().formatted(.iso8601.dateSeparator(.dash)))"
 
         savePanel.begin { response in
             if response == .OK, let url = savePanel.url {
@@ -230,7 +234,8 @@ struct SettingsView: View {
 
                     showingExportSuccess = true
                 } catch {
-                    errorMessage = "Erreur lors de la sauvegarde du fichier: \(error.localizedDescription)"
+                    errorMessage =
+                        "Erreur lors de la sauvegarde du fichier: \(error.localizedDescription)"
                     showingError = true
                 }
             }
@@ -263,7 +268,8 @@ struct SettingsView: View {
             // Afficher un message de succès
             showingImportSuccess = true
         } catch {
-            errorMessage = "Erreur lors de la suppression des données: \(error.localizedDescription)"
+            errorMessage =
+                "Erreur lors de la suppression des données: \(error.localizedDescription)"
             showingError = true
         }
     }
