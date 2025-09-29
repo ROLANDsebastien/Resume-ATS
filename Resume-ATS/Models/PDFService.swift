@@ -193,6 +193,27 @@ class PDFService {
             return cleaned
         }
 
+        // Fonction pour nettoyer le numéro de téléphone pour les ATS
+        func cleanPhoneForATS(_ phoneString: String) -> String {
+            // Garder seulement les chiffres et le + au début
+            var result = ""
+            var hasPlus = false
+
+            for char in phoneString {
+                if char == "+" && result.isEmpty {
+                    // Garder le + seulement s'il est au début
+                    result.append(char)
+                    hasPlus = true
+                } else if char.isNumber {
+                    // Garder les chiffres
+                    result.append(char)
+                }
+                // Ignorer tous les autres caractères
+            }
+
+            return result
+        }
+
         // Fonction pour dessiner du texte avec attributs et pagination
         func drawAttributedText(
             _ attributedString: NSAttributedString, x: CGFloat, maxWidth: CGFloat
@@ -307,7 +328,7 @@ class PDFService {
                     .font: NSFont.boldSystemFont(ofSize: 11),
                     .foregroundColor: NSColor.darkGray
                 ]))
-                attributedString.append(NSAttributedString(string: phone, attributes: [
+                attributedString.append(NSAttributedString(string: cleanPhoneForATS(phone), attributes: [
                     .font: NSFont.systemFont(ofSize: 11),
                     .foregroundColor: NSColor.darkGray
                 ]))
