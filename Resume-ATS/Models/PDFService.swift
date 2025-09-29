@@ -44,25 +44,14 @@ class PDFService {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
             "Cover_Letter_\(coverLetter.title).pdf")
 
-        // Create a simple view for the cover letter
-        let coverLetterView = VStack(alignment: .leading, spacing: 20) {
-            Text(coverLetter.title)
-                .font(.title)
-                .fontWeight(.bold)
-            Text(coverLetter.contentString)
-                .font(.body)
-        }
-        .padding()
-        .frame(width: 595, height: 842)  // A4 size
+        // Create NSTextView for rendering the rich text
+        let textView = NSTextView(frame: CGRect(x: 0, y: 0, width: 595, height: 842))
+        textView.textStorage?.setAttributedString(coverLetter.normalizedContentAttributedString)
+        textView.isEditable = false
+        textView.backgroundColor = .white
 
-        // Create NSHostingView from SwiftUI view
-        let hostingView = NSHostingView(rootView: coverLetterView)
-        hostingView.frame = CGRect(x: 0, y: 0, width: 595, height: 842)
-
-        // Generate PDF data directly from the hosting view
-        let pdfData = hostingView.dataWithPDF(inside: hostingView.bounds)
-
-        print("PDF data size: \(pdfData.count)")
+        // Generate PDF data
+        let pdfData = textView.dataWithPDF(inside: textView.bounds)
 
         // Create PDF document
         let pdfDocument = PDFDocument(data: pdfData)

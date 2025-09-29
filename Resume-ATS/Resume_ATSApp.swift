@@ -26,5 +26,13 @@ struct Resume_ATSApp: App {
                 .preferredColorScheme(colorScheme == 0 ? .light : (colorScheme == 1 ? .dark : nil))
         }
         .modelContainer(sharedModelContainer)
+        .commands {
+            CommandGroup(replacing: .appTermination) {
+                Button("Quitter") {
+                    NSApplication.shared.terminate(nil)
+                }
+                .keyboardShortcut("q", modifiers: .command)
+            }
+        }
     }
 }

@@ -112,12 +112,26 @@ struct CoverLetterRow: View {
             Button(role: .destructive, action: onDelete) {
                 Label("Supprimer", systemImage: "trash")
             }
+
+            Button(action: {
+                PDFService.generateCoverLetterPDF(for: coverLetter) { pdfURL in
+                    if let pdfURL = pdfURL {
+                        DispatchQueue.main.async {
+                            NSWorkspace.shared.open(pdfURL)
+                        }
+                    }
+                }
+            }) {
+                Label("Exporter", systemImage: "square.and.arrow.up")
+            }
+            .tint(.blue)
         }
     }
 }
 
 struct AddCoverLetterView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Query private var profiles: [Profile]
 
     @State private var title = ""
@@ -156,7 +170,7 @@ struct AddCoverLetterView: View {
                             profile: selectedProfile
                         )
                         modelContext.insert(newCoverLetter)
-                        // Navigate back
+                        dismiss()
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(title.isEmpty)
@@ -172,6 +186,7 @@ struct AddCoverLetterView: View {
 
 struct EditCoverLetterView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Query private var profiles: [Profile]
     var coverLetter: CoverLetter
 
@@ -213,7 +228,7 @@ struct EditCoverLetterView: View {
                         coverLetter.title = title
                         coverLetter.contentAttributedString = contentAttributedString
                         coverLetter.profile = selectedProfile
-                        // Navigate back
+                        dismiss()
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(title.isEmpty)

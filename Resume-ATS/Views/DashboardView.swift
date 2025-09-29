@@ -51,13 +51,21 @@ struct DashboardView: View {
                         selectedSection = "Statistiques"
                     }
 
+                    DashboardTile(
+                        title: "Lettres",
+                        subtitle: "Gérer vos lettres de motivation",
+                        systemImage: "doc.text"
+                    ) {
+                        selectedSection = "Lettres"
+                    }
+
                      DashboardTile(
                          title: "Réglages",
                          subtitle: "Préférences de l'app",
                          systemImage: "gear"
                      ) {
                         selectedSection = "Settings"
-                    }
+                     }
                 }
                 .padding(.horizontal, 40)
             }
