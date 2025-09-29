@@ -179,6 +179,20 @@ class PDFService {
             currentY += textHeight + 10
         }
 
+        // Fonction pour nettoyer l'affichage des URLs
+        func cleanURLDisplay(_ urlString: String) -> String {
+            var cleaned = urlString
+            // Enlever https://
+            if cleaned.hasPrefix("https://") {
+                cleaned = String(cleaned.dropFirst(8))
+            }
+            // Enlever www. si présent
+            if cleaned.hasPrefix("www.") {
+                cleaned = String(cleaned.dropFirst(4))
+            }
+            return cleaned
+        }
+
         // Fonction pour dessiner du texte avec attributs et pagination
         func drawAttributedText(
             _ attributedString: NSAttributedString, x: CGFloat, maxWidth: CGFloat
@@ -317,7 +331,7 @@ class PDFService {
                     .font: NSFont.boldSystemFont(ofSize: 11),
                     .foregroundColor: NSColor.darkGray
                 ]))
-                attributedString.append(NSAttributedString(string: linkedin, attributes: [
+                attributedString.append(NSAttributedString(string: cleanURLDisplay(linkedin), attributes: [
                     .font: NSFont.systemFont(ofSize: 11),
                     .foregroundColor: NSColor.darkGray
                 ]))
@@ -329,7 +343,7 @@ class PDFService {
                     .font: NSFont.boldSystemFont(ofSize: 11),
                     .foregroundColor: NSColor.darkGray
                 ]))
-                attributedString.append(NSAttributedString(string: github, attributes: [
+                attributedString.append(NSAttributedString(string: cleanURLDisplay(github), attributes: [
                     .font: NSFont.systemFont(ofSize: 11),
                     .foregroundColor: NSColor.darkGray
                 ]))
@@ -341,7 +355,7 @@ class PDFService {
                     .font: NSFont.boldSystemFont(ofSize: 11),
                     .foregroundColor: NSColor.darkGray
                 ]))
-                attributedString.append(NSAttributedString(string: gitlab, attributes: [
+                attributedString.append(NSAttributedString(string: cleanURLDisplay(gitlab), attributes: [
                     .font: NSFont.systemFont(ofSize: 11),
                     .foregroundColor: NSColor.darkGray
                 ]))
@@ -353,7 +367,7 @@ class PDFService {
                     .font: NSFont.boldSystemFont(ofSize: 11),
                     .foregroundColor: NSColor.darkGray
                 ]))
-                attributedString.append(NSAttributedString(string: website, attributes: [
+                attributedString.append(NSAttributedString(string: cleanURLDisplay(website), attributes: [
                     .font: NSFont.systemFont(ofSize: 11),
                     .foregroundColor: NSColor.darkGray
                 ]))
