@@ -25,6 +25,7 @@ struct StatistiquesView: View {
     @Binding var selectedSection: String?
     @Query private var applications: [Application]
     @State private var selectedYear: Int = 2025
+    var language: String
 
     var monthlyStats: [MonthlyStat] {
         let calendar = Calendar.current
@@ -51,7 +52,7 @@ struct StatistiquesView: View {
         var stats: [MonthlyStat] = []
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMM"
-        dateFormatter.locale = Locale(identifier: "fr_FR")
+        dateFormatter.locale = Locale(identifier: language == "fr" ? "fr_FR" : "en_US")
 
         for monthDate in allMonths {
             let monthComponents = calendar.dateComponents([.year, .month], from: monthDate)
@@ -69,12 +70,12 @@ struct StatistiquesView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text("Statistiques des Candidatures")
+                Text(language == "fr" ? "Statistiques des Candidatures" : "Applications Statistics")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.bottom)
 
-                Picker("Année", selection: $selectedYear) {
+                Picker(language == "fr" ? "Année" : "Year", selection: $selectedYear) {
                     ForEach(2020...2030, id: \.self) { year in
                         Text(String(year))
                     }
@@ -83,18 +84,18 @@ struct StatistiquesView: View {
 
                 Chart(monthlyStats) { stat in
                     BarMark(
-                        x: .value("Mois", stat.month),
-                        y: .value("Nombre", stat.count)
+                        x: .value(language == "fr" ? "Mois" : "Month", stat.month),
+                        y: .value(language == "fr" ? "Nombre" : "Count", stat.count)
                     )
-                    .foregroundStyle(by: .value("Statut", stat.status.rawValue))
+                    .foregroundStyle(by: .value(language == "fr" ? "Statut" : "Status", stat.status.localizedString(language: language)))
                 }
                 .chartForegroundStyleScale([
-                    "Acceptée": .green,
-                    "Refusée": .red,
-                    "Candidature envoyée": .blue,
-                    "En attente": .orange,
-                    "Retirée": .gray,
-                    "Entretien": .cyan,
+                    (language == "fr" ? "Acceptée" : "Accepted"): .green,
+                    (language == "fr" ? "Refusée" : "Rejected"): .red,
+                    (language == "fr" ? "Candidature envoyée" : "Applied"): .blue,
+                    (language == "fr" ? "En attente" : "Pending"): .orange,
+                    (language == "fr" ? "Retirée" : "Withdrawn"): .gray,
+                    (language == "fr" ? "Entretien" : "Interviewing"): .cyan,
                 ])
                 .chartXAxis {
                     AxisMarks { value in
@@ -123,6 +124,6 @@ struct StatistiquesView: View {
 }
 
 #Preview {
-    StatistiquesView(selectedSection: .constant(nil))
+    StatistiquesView(selectedSection: .constant(nil), language: "fr")
         .modelContainer(for: [Application.self], inMemory: true)
 }

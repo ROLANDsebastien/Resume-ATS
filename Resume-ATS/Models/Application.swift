@@ -39,5 +39,22 @@ final class Application {
         case rejected = "Refusée"
         case accepted = "Acceptée"
         case withdrawn = "Retirée"
+
+        func localizedString(language: String) -> String {
+            switch self {
+            case .applied:
+                return language == "fr" ? "Candidature envoyée" : "Applied"
+            case .pending:
+                return language == "fr" ? "En attente" : "Pending"
+            case .interviewing:
+                return language == "fr" ? "Entretien" : "Interviewing"
+            case .rejected:
+                return language == "fr" ? "Refusée" : "Rejected"
+            case .accepted:
+                return language == "fr" ? "Acceptée" : "Accepted"
+            case .withdrawn:
+                return language == "fr" ? "Retirée" : "Withdrawn"
+            }
+        }
     }
 }

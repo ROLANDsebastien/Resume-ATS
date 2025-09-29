@@ -13,26 +13,27 @@ struct CoverLettersView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var coverLetters: [CoverLetter]
     @Query private var profiles: [Profile]
+    var language: String
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    Text("Gestion des Lettres de Motivation")
+                    Text(language == "fr" ? "Gestion des Lettres de Motivation" : "Cover Letters Management")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .padding(.top)
 
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
-                        NavigationLink(destination: AddCoverLetterView()) {
+                        NavigationLink(destination: AddCoverLetterView(language: language)) {
                             VStack(spacing: 10) {
                                 Image(systemName: "plus")
                                     .font(.largeTitle)
                                     .foregroundColor(.blue)
-                                Text("Nouvelle Lettre")
+                                Text(language == "fr" ? "Nouvelle Lettre" : "New Letter")
                                     .font(.headline)
                                     .foregroundColor(.primary)
-                                Text("Créer une nouvelle lettre de motivation")
+                                Text(language == "fr" ? "Créer une nouvelle lettre de motivation" : "Create a new cover letter")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)
@@ -48,7 +49,7 @@ struct CoverLettersView: View {
 
                     if !coverLetters.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Lettres de Motivation")
+                            Text(language == "fr" ? "Lettres de Motivation" : "Cover Letters")
                                 .font(.title2)
                                 .fontWeight(.semibold)
                                 .padding(.horizontal)
@@ -56,14 +57,15 @@ struct CoverLettersView: View {
                             List {
                                 ForEach(coverLetters) { coverLetter in
                                     NavigationLink(
-                                        destination: EditCoverLetterView(coverLetter: coverLetter)
+                                        destination: EditCoverLetterView(coverLetter: coverLetter, language: language)
                                     ) {
-                                        CoverLetterRow(
-                                            coverLetter: coverLetter,
-                                            onDelete: {
-                                                modelContext.delete(coverLetter)
-                                            }
-                                        )
+                                         CoverLetterRow(
+                                             coverLetter: coverLetter,
+                                             onDelete: {
+                                                 modelContext.delete(coverLetter)
+                                             },
+                                             language: language
+                                         )
                                     }
                                     .listRowSeparator(.hidden)
                                 }
@@ -72,7 +74,7 @@ struct CoverLettersView: View {
                             .frame(height: min(CGFloat(coverLetters.count) * 80, 400))  // Adjust height as needed
                         }
                     } else {
-                        Text("Aucune lettre de motivation trouvée.")
+                        Text(language == "fr" ? "Aucune lettre de motivation trouvée." : "No cover letters found.")
                             .foregroundColor(.secondary)
                             .padding()
                     }
@@ -96,6 +98,7 @@ struct CoverLettersView: View {
 struct CoverLetterRow: View {
     var coverLetter: CoverLetter
     var onDelete: () -> Void
+    var language: String
 
     var body: some View {
         HStack {
@@ -103,12 +106,12 @@ struct CoverLetterRow: View {
                 Text(coverLetter.title)
                     .font(.headline)
                 if let profile = coverLetter.profile {
-                    Text("Profil: \(profile.name)")
+                    Text("\(language == "fr" ? "Profil" : "Profile"): \(profile.name)")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
                 Text(
-                    "Créée le: \(coverLetter.creationDate.formatted(date: .abbreviated, time: .omitted))"
+                    "\(language == "fr" ? "Créée le" : "Created on"): \(coverLetter.creationDate.formatted(date: .abbreviated, time: .omitted))"
                 )
                 .font(.subheadline)
                 .foregroundColor(.secondary)
@@ -120,7 +123,7 @@ struct CoverLetterRow: View {
         .cornerRadius(8)
         .swipeActions {
             Button(role: .destructive, action: onDelete) {
-                Label("Supprimer", systemImage: "trash")
+                Label(language == "fr" ? "Supprimer" : "Delete", systemImage: "trash")
             }
 
             Button(action: {
@@ -132,7 +135,7 @@ struct CoverLetterRow: View {
                     }
                 }
             }) {
-                Label("Exporter", systemImage: "square.and.arrow.up")
+                Label(language == "fr" ? "Exporter" : "Export", systemImage: "square.and.arrow.up")
             }
             .tint(.blue)
         }
@@ -143,6 +146,7 @@ struct AddCoverLetterView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query private var profiles: [Profile]
+    var language: String
 
     @State private var title = ""
     @State private var contentAttributedString = NSAttributedString()
@@ -151,15 +155,15 @@ struct AddCoverLetterView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                Text("Nouvelle Lettre de Motivation")
+                Text(language == "fr" ? "Nouvelle Lettre de Motivation" : "New Cover Letter")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.top)
 
                 Form {
-                    TextField("Titre", text: $title)
-                    Picker("Profil associé", selection: $selectedProfile) {
-                        Text("Aucun").tag(nil as Profile?)
+                    TextField(language == "fr" ? "Titre" : "Title", text: $title)
+                    Picker(language == "fr" ? "Profil associé" : "Associated Profile", selection: $selectedProfile) {
+                        Text(language == "fr" ? "Aucun" : "None").tag(nil as Profile?)
                         ForEach(profiles) { profile in
                             Text(profile.name).tag(profile as Profile?)
                         }
@@ -171,7 +175,7 @@ struct AddCoverLetterView: View {
 
                 HStack {
                     Spacer()
-                    Button("Ajouter") {
+                    Button(language == "fr" ? "Ajouter" : "Add") {
                         let newCoverLetter = CoverLetter(
                             title: title,
                             content: contentAttributedString.rtf(
@@ -190,7 +194,7 @@ struct AddCoverLetterView: View {
             .padding()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .navigationTitle("Nouvelle Lettre")
+        .navigationTitle(language == "fr" ? "Nouvelle Lettre" : "New Letter")
     }
 }
 
@@ -199,13 +203,15 @@ struct EditCoverLetterView: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var profiles: [Profile]
     var coverLetter: CoverLetter
+    var language: String
 
     @State private var title: String
     @State private var contentAttributedString: NSAttributedString
     @State private var selectedProfile: Profile?
 
-    init(coverLetter: CoverLetter) {
+    init(coverLetter: CoverLetter, language: String) {
         self.coverLetter = coverLetter
+        self.language = language
         _title = State(initialValue: coverLetter.title)
         _contentAttributedString = State(initialValue: coverLetter.contentAttributedString)
         _selectedProfile = State(initialValue: coverLetter.profile)
@@ -214,15 +220,15 @@ struct EditCoverLetterView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                Text("Modifier Lettre de Motivation")
+                Text(language == "fr" ? "Modifier Lettre de Motivation" : "Edit Cover Letter")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.top)
 
                 Form {
-                    TextField("Titre", text: $title)
-                    Picker("Profil associé", selection: $selectedProfile) {
-                        Text("Aucun").tag(nil as Profile?)
+                    TextField(language == "fr" ? "Titre" : "Title", text: $title)
+                    Picker(language == "fr" ? "Profil associé" : "Associated Profile", selection: $selectedProfile) {
+                        Text(language == "fr" ? "Aucun" : "None").tag(nil as Profile?)
                         ForEach(profiles) { profile in
                             Text(profile.name).tag(profile as Profile?)
                         }
@@ -234,7 +240,7 @@ struct EditCoverLetterView: View {
 
                 HStack {
                     Spacer()
-                    Button("Sauvegarder") {
+                    Button(language == "fr" ? "Sauvegarder" : "Save") {
                         coverLetter.title = title
                         coverLetter.contentAttributedString = contentAttributedString
                         coverLetter.profile = selectedProfile
@@ -248,13 +254,13 @@ struct EditCoverLetterView: View {
             .padding()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .navigationTitle("Modifier Lettre")
+        .navigationTitle(language == "fr" ? "Modifier Lettre" : "Edit Letter")
     }
 }
 
 #Preview {
     NavigationStack {
-        CoverLettersView(selectedSection: .constant(nil))
+        CoverLettersView(selectedSection: .constant(nil), language: "fr")
     }
     .modelContainer(for: [Profile.self, Application.self, CoverLetter.self], inMemory: true)
 }

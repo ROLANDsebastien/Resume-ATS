@@ -11,3 +11,64 @@
 "linkedin_prefix" = "LinkedIn :";
 "website_prefix" = "Site Web :";
 "present" = "Présent";
+
+// UI strings
+"personal_info" = "Informations Personnelles";
+"summary" = "Résumé";
+"experiences" = "Expériences";
+"educations" = "Formations";
+"references" = "Références";
+"skills" = "Compétences";
+"show_section" = "Afficher cette section dans le CV";
+"visible_cv" = "Visible dans le CV";
+"add_experience" = "Ajouter une expérience";
+"add_education" = "Ajouter une formation";
+"add_reference" = "Ajouter une référence";
+"add_skill" = "Ajouter une compétence";
+"first_name" = "Prénom";
+"last_name" = "Nom";
+"email" = "Email";
+"phone" = "Téléphone";
+"location" = "Localisation";
+"github" = "GitHub";
+"gitlab" = "GitLab";
+"linkedin" = "LinkedIn";
+"website" = "Site Web";
+"show_photo_pdf" = "Afficher la photo dans le PDF";
+"select_photo" = "Sélectionner une photo";
+"drag_photo" = "Glissez une photo ici";
+"cv_language" = "Langue du CV";
+"french" = "Français";
+"english" = "English";
+"company" = "Entreprise";
+"start_date" = "Date de début";
+"end_date" = "Date de fin";
+"institution" = "Institution";
+"degree" = "Diplôme";
+"name" = "Nom";
+"position" = "Poste";
+"new_profile_name" = "Nom du nouveau profil";
+"create" = "Créer";
+"profile_selected" = "Profil sélectionné: ";
+"rename" = "Renommer";
+"duplicate" = "Dupliquer";
+"delete" = "Supprimer";
+"select_section" = "Veuillez sélectionner ou créer un profil.";
+"rename_profile" = "Renommer le profil";
+"cancel" = "Annuler";
+"delete_profile" = "Supprimer le profil";
+"delete_confirm" = "Êtes-vous sûr de vouloir supprimer ce profil ? Cette action est irréversible.";
+
+// Sidebar
+"sections" = "Sections";
+"dashboard" = "Dashboard";
+"profile" = "Profil";
+"candidatures" = "Candidatures";
+"lettres" = "Lettres de Motivation";
+"templates" = "Templates";
+"statistiques" = "Statistiques";
+"settings" = "Réglages";
+
+// Settings
+"app_language" = "Langue de l'app";
+"app_language_desc" = "Langue de l'interface de l'app";

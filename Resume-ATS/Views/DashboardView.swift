@@ -9,63 +9,64 @@ import SwiftUI
 
 struct DashboardView: View {
     @Binding var selectedSection: String?
+    var language: String
 
     var body: some View {
         ScrollView {
             VStack(spacing: 30) {
-                Text("Dashboard")
+                Text(language == "fr" ? "Dashboard" : "Dashboard")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.top)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 50) {
                      DashboardTile(
-                        title: "Profile",
-                        subtitle: "Gérer votre profil",
-                        systemImage: "person"
-                    ) {
-                        selectedSection = "Profile"
-                    }
-
-                    DashboardTile(
-                        title: "Candidatures",
-                        subtitle: "Suivre vos candidatures",
-                        systemImage: "briefcase"
-                    ) {
-                        selectedSection = "Candidatures"
-                    }
-
-                    DashboardTile(
-                        title: "Templates",
-                        subtitle: "Choisir des modèles de CV",
-                        systemImage: "doc"
-                    ) {
-                        selectedSection = "Templates"
-                    }
-
-                    DashboardTile(
-                        title: "Statistiques",
-                        subtitle: "Voir les statistiques",
-                        systemImage: "chart.bar"
-                    ) {
-                        selectedSection = "Statistiques"
-                    }
-
-                    DashboardTile(
-                        title: "Lettres",
-                        subtitle: "Gérer vos lettres de motivation",
-                        systemImage: "doc.text"
-                    ) {
-                        selectedSection = "Lettres"
-                    }
+                         title: language == "fr" ? "Profil" : "Profile",
+                         subtitle: language == "fr" ? "Gérer votre profil" : "Manage your profile",
+                         systemImage: "person"
+                     ) {
+                         selectedSection = "Profile"
+                     }
 
                      DashboardTile(
-                         title: "Réglages",
-                         subtitle: "Préférences de l'app",
-                         systemImage: "gear"
+                         title: language == "fr" ? "Candidatures" : "Applications",
+                         subtitle: language == "fr" ? "Suivre vos candidatures" : "Track your applications",
+                         systemImage: "briefcase"
                      ) {
-                        selectedSection = "Settings"
+                         selectedSection = "Candidatures"
                      }
+
+                     DashboardTile(
+                         title: language == "fr" ? "Templates" : "Templates",
+                         subtitle: language == "fr" ? "Choisir des modèles de CV" : "Choose CV templates",
+                         systemImage: "doc"
+                     ) {
+                         selectedSection = "Templates"
+                     }
+
+                     DashboardTile(
+                         title: language == "fr" ? "Statistiques" : "Statistics",
+                         subtitle: language == "fr" ? "Voir les statistiques" : "View statistics",
+                         systemImage: "chart.bar"
+                     ) {
+                         selectedSection = "Statistiques"
+                     }
+
+                     DashboardTile(
+                         title: language == "fr" ? "Lettres" : "Letters",
+                         subtitle: language == "fr" ? "Gérer vos lettres de motivation" : "Manage your cover letters",
+                         systemImage: "doc.text"
+                     ) {
+                         selectedSection = "Lettres"
+                     }
+
+                      DashboardTile(
+                          title: language == "fr" ? "Réglages" : "Settings",
+                          subtitle: language == "fr" ? "Préférences de l'app" : "App preferences",
+                          systemImage: "gear"
+                      ) {
+                         selectedSection = "Settings"
+                      }
                 }
                 .padding(.horizontal, 40)
             }
@@ -74,5 +75,5 @@ struct DashboardView: View {
 }
 
 #Preview {
-    DashboardView(selectedSection: .constant("Dashboard"))
+    DashboardView(selectedSection: .constant("Dashboard"), language: "fr")
 }

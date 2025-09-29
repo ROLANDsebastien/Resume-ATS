@@ -17,6 +17,7 @@ struct CandidaturesView: View {
     @State private var selectedStatus: Application.Status? = nil
     @State private var editingApplication: Application?
     @State private var showingDocumentsFor: Application?
+    var language: String
 
     var filteredApplications: [Application] {
         if let status = selectedStatus {
@@ -29,7 +30,7 @@ struct CandidaturesView: View {
     var body: some View {
         List {
             Section {
-                Text("Gestion des Candidatures")
+                Text(language == "fr" ? "Gestion des Candidatures" : "Applications Management")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.top)
@@ -37,12 +38,12 @@ struct CandidaturesView: View {
                 // Status filter
                 HStack {
                     Spacer()
-                    Text("Filtrer par statut:")
+                    Text(language == "fr" ? "Filtrer par statut:" : "Filter by status:")
                         .font(.headline)
-                    Picker("Statut", selection: $selectedStatus) {
-                        Text("Toutes").tag(nil as Application.Status?)
+                    Picker(language == "fr" ? "Statut" : "Status", selection: $selectedStatus) {
+                        Text(language == "fr" ? "Toutes" : "All").tag(nil as Application.Status?)
                         ForEach(Application.Status.allCases, id: \.self) { status in
-                            Text(status.rawValue).tag(status as Application.Status?)
+                            Text(status.localizedString(language: language)).tag(status as Application.Status?)
                         }
                     }
                     .pickerStyle(MenuPickerStyle())
@@ -52,32 +53,32 @@ struct CandidaturesView: View {
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
                     DashboardTile(
-                        title: "Nouvelle Candidature",
-                        subtitle: "Ajouter une nouvelle candidature",
+                        title: language == "fr" ? "Nouvelle Candidature" : "New Application",
+                        subtitle: language == "fr" ? "Ajouter une nouvelle candidature" : "Add a new application",
                         systemImage: "plus"
                     ) {
                         showingAddApplication = true
                     }
 
                     DashboardTile(
-                        title: "Candidatures en Cours",
-                        subtitle: "Voir les candidatures actives",
+                        title: language == "fr" ? "Candidatures en Cours" : "Ongoing Applications",
+                        subtitle: language == "fr" ? "Voir les candidatures actives" : "View active applications",
                         systemImage: "briefcase"
                     ) {
                         selectedStatus = .applied
                     }
 
                     DashboardTile(
-                        title: "Entretiens",
-                        subtitle: "Candidatures en entretien",
+                        title: language == "fr" ? "Entretiens" : "Interviews",
+                        subtitle: language == "fr" ? "Candidatures en entretien" : "Applications in interview",
                         systemImage: "person.2"
                     ) {
                         selectedStatus = .interviewing
                     }
 
                     DashboardTile(
-                        title: "Candidatures Archivée",
-                        subtitle: "Historique des candidatures",
+                        title: language == "fr" ? "Candidatures Archivée" : "Archived Applications",
+                        subtitle: language == "fr" ? "Historique des candidatures" : "Applications history",
                         systemImage: "archivebox"
                     ) {
                         selectedStatus = .rejected
@@ -91,7 +92,7 @@ struct CandidaturesView: View {
 
             if !filteredApplications.isEmpty {
                 Section(
-                    header: Text("Candidatures").font(.title2).fontWeight(.semibold).padding(
+                    header: Text(language == "fr" ? "Candidatures" : "Applications").font(.title2).fontWeight(.semibold).padding(
                         .top, 20)
                 ) {
                     ForEach(filteredApplications) { application in
@@ -101,14 +102,15 @@ struct CandidaturesView: View {
                             onDocuments: { showingDocumentsFor = application },
                             onDelete: {
                                 modelContext.delete(application)
-                            }
+                            },
+                            language: language
                         )
                         .listRowSeparator(.hidden)
                     }
                 }
             } else {
                 Section {
-                    Text("Aucune candidature trouvée.")
+                    Text(language == "fr" ? "Aucune candidature trouvée." : "No applications found.")
                         .foregroundColor(.secondary)
                         .padding()
                 }
@@ -116,13 +118,13 @@ struct CandidaturesView: View {
         }
         .listStyle(.plain)
         .sheet(isPresented: $showingAddApplication) {
-            AddApplicationView()
+            AddApplicationView(language: language)
         }
         .sheet(item: $editingApplication) { application in
-            EditApplicationView(application: application)
+            EditApplicationView(application: application, language: language)
         }
         .sheet(item: $showingDocumentsFor) { application in
-            DocumentsView(application: application)
+            DocumentsView(application: application, language: language)
         }
         .navigationTitle("Resume-ATS")
         .toolbar {
@@ -142,22 +144,23 @@ struct ApplicationRow: View {
     var onEdit: () -> Void
     var onDocuments: () -> Void
     var onDelete: () -> Void
+    var language: String
 
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
                 Text("\(application.position) chez \(application.company)")
                     .font(.headline)
-                Text("Statut: \(application.status.rawValue)")
+                Text("\(language == "fr" ? "Statut" : "Status"): \(application.status.localizedString(language: language))")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 Text(
-                    "Date: \(application.dateApplied.formatted(date: .abbreviated, time: .omitted))"
+                    "\(language == "fr" ? "Date" : "Date"): \(application.dateApplied.formatted(date: .abbreviated, time: .omitted))"
                 )
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 if let coverLetter = application.coverLetter {
-                    Text("Lettre: \(coverLetter.title)")
+                    Text("\(language == "fr" ? "Lettre" : "Letter"): \(coverLetter.title)")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -169,14 +172,14 @@ struct ApplicationRow: View {
         .cornerRadius(8)
         .swipeActions {
             Button(role: .destructive, action: onDelete) {
-                Label("Supprimer", systemImage: "trash")
+                Label(language == "fr" ? "Supprimer" : "Delete", systemImage: "trash")
             }
             Button(action: onEdit) {
-                Label("Editer", systemImage: "pencil")
+                Label(language == "fr" ? "Editer" : "Edit", systemImage: "pencil")
             }
             .tint(.blue)
             Button(action: onDocuments) {
-                Label("Document", systemImage: "doc")
+                Label(language == "fr" ? "Document" : "Document", systemImage: "doc")
             }
             .tint(.green)
         }
@@ -188,6 +191,7 @@ struct EditApplicationView: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var coverLetters: [CoverLetter]
     var application: Application
+    var language: String
 
     @State private var company: String
     @State private var position: String
@@ -196,8 +200,9 @@ struct EditApplicationView: View {
     @State private var notes: String
     @State private var selectedCoverLetter: CoverLetter?
 
-    init(application: Application) {
+    init(application: Application, language: String) {
         self.application = application
+        self.language = language
         _company = State(initialValue: application.company)
         _position = State(initialValue: application.position)
         _dateApplied = State(initialValue: application.dateApplied)
@@ -208,23 +213,23 @@ struct EditApplicationView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Modifier Candidature")
+            Text(language == "fr" ? "Modifier Candidature" : "Edit Application")
                 .font(.title)
                 .fontWeight(.bold)
 
             Form {
-                TextField("Entreprise", text: $company)
-                TextField("Poste", text: $position)
+                TextField(language == "fr" ? "Entreprise" : "Company", text: $company)
+                TextField(language == "fr" ? "Poste" : "Position", text: $position)
                 DatePicker(
-                    "Date de candidature", selection: $dateApplied, displayedComponents: .date)
-                Picker("Statut", selection: $status) {
+                    language == "fr" ? "Date de candidature" : "Application Date", selection: $dateApplied, displayedComponents: .date)
+                Picker(language == "fr" ? "Statut" : "Status", selection: $status) {
                     ForEach(Application.Status.allCases, id: \.self) { status in
-                        Text(status.rawValue).tag(status)
+                        Text(status.localizedString(language: language)).tag(status)
                     }
                 }
-                TextField("Notes", text: $notes)
-                Picker("Lettre de Motivation", selection: $selectedCoverLetter) {
-                    Text("Aucune").tag(nil as CoverLetter?)
+                TextField(language == "fr" ? "Notes" : "Notes", text: $notes)
+                Picker(language == "fr" ? "Lettre de Motivation" : "Cover Letter", selection: $selectedCoverLetter) {
+                    Text(language == "fr" ? "Aucune" : "None").tag(nil as CoverLetter?)
                     ForEach(coverLetters) { coverLetter in
                         Text(coverLetter.title).tag(coverLetter as CoverLetter?)
                     }
@@ -233,10 +238,10 @@ struct EditApplicationView: View {
             .frame(minWidth: 400, minHeight: 200)
 
             HStack {
-                Button("Annuler") { dismiss() }
+                Button(language == "fr" ? "Annuler" : "Cancel") { dismiss() }
                     .buttonStyle(.bordered)
                 Spacer()
-                Button("Sauvegarder") {
+                Button(language == "fr" ? "Sauvegarder" : "Save") {
                     application.company = company
                     application.position = position
                     application.dateApplied = dateApplied
@@ -259,6 +264,7 @@ struct AddApplicationView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query private var coverLetters: [CoverLetter]
+    var language: String
 
     @State private var company = ""
     @State private var position = ""
@@ -267,25 +273,29 @@ struct AddApplicationView: View {
     @State private var notes = ""
     @State private var selectedCoverLetter: CoverLetter? = nil
 
+    init(language: String) {
+        self.language = language
+    }
+
     var body: some View {
         VStack(spacing: 20) {
-            Text("Nouvelle Candidature")
+            Text(language == "fr" ? "Nouvelle Candidature" : "New Application")
                 .font(.title)
                 .fontWeight(.bold)
 
             Form {
-                TextField("Entreprise", text: $company)
-                TextField("Poste", text: $position)
+                TextField(language == "fr" ? "Entreprise" : "Company", text: $company)
+                TextField(language == "fr" ? "Poste" : "Position", text: $position)
                 DatePicker(
-                    "Date de candidature", selection: $dateApplied, displayedComponents: .date)
-                Picker("Statut", selection: $status) {
+                    language == "fr" ? "Date de candidature" : "Application Date", selection: $dateApplied, displayedComponents: .date)
+                Picker(language == "fr" ? "Statut" : "Status", selection: $status) {
                     ForEach(Application.Status.allCases, id: \.self) { status in
-                        Text(status.rawValue).tag(status)
+                        Text(status.localizedString(language: language)).tag(status)
                     }
                 }
-                TextField("Notes", text: $notes)
-                Picker("Lettre de Motivation", selection: $selectedCoverLetter) {
-                    Text("Aucune").tag(nil as CoverLetter?)
+                TextField(language == "fr" ? "Notes" : "Notes", text: $notes)
+                Picker(language == "fr" ? "Lettre de Motivation" : "Cover Letter", selection: $selectedCoverLetter) {
+                    Text(language == "fr" ? "Aucune" : "None").tag(nil as CoverLetter?)
                     ForEach(coverLetters) { coverLetter in
                         Text(coverLetter.title).tag(coverLetter as CoverLetter?)
                     }
@@ -294,10 +304,10 @@ struct AddApplicationView: View {
             .frame(minWidth: 400, minHeight: 200)
 
             HStack {
-                Button("Annuler") { dismiss() }
+                Button(language == "fr" ? "Annuler" : "Cancel") { dismiss() }
                     .buttonStyle(.bordered)
                 Spacer()
-                Button("Ajouter") {
+                Button(language == "fr" ? "Ajouter" : "Add") {
                     let newApplication = Application(
                         company: company,
                         position: position,
@@ -323,6 +333,12 @@ struct DocumentsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     var application: Application
+    var language: String
+
+    init(application: Application, language: String) {
+        self.application = application
+        self.language = language
+    }
 
     @State private var showingFileImporter = false
 
@@ -353,17 +369,17 @@ struct DocumentsView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Documents pour \(application.position) chez \(application.company)")
+            Text(language == "fr" ? "Documents pour \(application.position) chez \(application.company)" : "Documents for \(application.position) at \(application.company)")
                 .font(.title)
                 .fontWeight(.bold)
 
             List {
                 if let coverLetter = application.coverLetter {
-                    Section(header: Text("Lettre de Motivation")) {
+                    Section(header: Text(language == "fr" ? "Lettre de Motivation" : "Cover Letter")) {
                         HStack {
                             Text(coverLetter.title)
                             Spacer()
-                            Button("Voir") {
+                            Button(language == "fr" ? "Voir" : "View") {
                                 PDFService.generateCoverLetterPDF(for: coverLetter) { pdfURL in
                                     if let pdfURL = pdfURL {
                                         DispatchQueue.main.async {
@@ -376,16 +392,16 @@ struct DocumentsView: View {
                     }
                 }
 
-                Section(header: Text("Documents")) {
+                Section(header: Text(language == "fr" ? "Documents" : "Documents")) {
                     ForEach(application.documentBookmarks ?? [], id: \.self) { bookmark in
                         HStack {
                             if let url = resolveBookmark(bookmark) {
                                 Text(url.lastPathComponent)
                                 Spacer()
-                                Button("Voir") {
+                                Button(language == "fr" ? "Voir" : "View") {
                                     openBookmark(bookmark)
                                 }
-                                Button("Supprimer") {
+                                Button(language == "fr" ? "Supprimer" : "Delete") {
                                     if let index = application.documentBookmarks?.firstIndex(
                                         of: bookmark)
                                     {
@@ -394,7 +410,7 @@ struct DocumentsView: View {
                                 }
                                 .foregroundColor(.red)
                             } else {
-                                Text("Document invalide")
+                                Text(language == "fr" ? "Document invalide" : "Invalid document")
                             }
                         }
                     }
@@ -402,12 +418,12 @@ struct DocumentsView: View {
             }
 
             HStack {
-                Button("Ajouter Document") {
+                Button(language == "fr" ? "Ajouter Document" : "Add Document") {
                     showingFileImporter = true
                 }
                 .buttonStyle(.borderedProminent)
                 Spacer()
-                Button("Fermer") { dismiss() }
+                Button(language == "fr" ? "Fermer" : "Close") { dismiss() }
                     .buttonStyle(.bordered)
             }
             .padding(.horizontal)
@@ -458,6 +474,6 @@ struct DocumentsView: View {
 }
 
 #Preview {
-    CandidaturesView(selectedSection: .constant(nil))
+    CandidaturesView(selectedSection: .constant(nil), language: "fr")
         .modelContainer(for: [Profile.self, Application.self, CoverLetter.self], inMemory: true)
 }
