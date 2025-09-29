@@ -224,18 +224,18 @@ class PDFService {
             // S'assurer que tout le texte a une police et une couleur
             mutableString.addAttribute(.foregroundColor, value: NSColor.black, range: NSRange(location: 0, length: mutableString.length))
 
-            // Pour chaque partie du texte, s'assurer qu'elle a une police Arial de taille 12
+            // Pour chaque partie du texte, s'assurer qu'elle a une police Arial de taille 10 (plus petite)
             mutableString.enumerateAttribute(.font, in: NSRange(location: 0, length: mutableString.length), options: []) { value, range, _ in
                 if let currentFont = value as? NSFont {
                     let descriptor = currentFont.fontDescriptor
                     let traits = descriptor.symbolicTraits
-                    let newDescriptor = NSFontDescriptor(name: "Arial", size: 12).withSymbolicTraits(traits)
-                    if let newFont = NSFont(descriptor: newDescriptor, size: 12) {
+                    let newDescriptor = NSFontDescriptor(name: "Arial", size: 10).withSymbolicTraits(traits)
+                    if let newFont = NSFont(descriptor: newDescriptor, size: 10) {
                         mutableString.addAttribute(.font, value: newFont, range: range)
                     }
                 } else {
                     // Si pas de police, utiliser Arial normale
-                    mutableString.addAttribute(.font, value: NSFont(name: "Arial", size: 12) ?? NSFont.systemFont(ofSize: 12), range: range)
+                    mutableString.addAttribute(.font, value: NSFont(name: "Arial", size: 10) ?? NSFont.systemFont(ofSize: 10), range: range)
                 }
             }
 
@@ -456,11 +456,11 @@ class PDFService {
 
                     // Mesurer la hauteur de la ligne
                     let attributesLeft: [NSAttributedString.Key: Any] = [
-                        .font: NSFont.boldSystemFont(ofSize: 14),
+                        .font: NSFont.boldSystemFont(ofSize: 12),
                         .foregroundColor: NSColor.black,
                     ]
                     let attributesRight: [NSAttributedString.Key: Any] = [
-                        .font: NSFont.systemFont(ofSize: 13),
+                        .font: NSFont.systemFont(ofSize: 11),
                         .foregroundColor: NSColor.black,
                     ]
                     let leftAttr = NSAttributedString(string: leftText, attributes: attributesLeft)
@@ -518,7 +518,7 @@ class PDFService {
                 for education in profile.educations.filter({ $0.isVisible }) {
                     drawText(
                         "\(education.institution) - \(education.degree)",
-                        font: NSFont.boldSystemFont(ofSize: 14), color: .black, x: margin,
+                        font: NSFont.boldSystemFont(ofSize: 12), color: .black, x: margin,
                         maxWidth: pageWidth - 2 * margin)
                     drawAttributedText(
                         education.normalizedDetailsAttributedString,
