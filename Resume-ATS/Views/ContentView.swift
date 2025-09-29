@@ -51,6 +51,7 @@ struct ApplicationsView: View {
 }
 
 struct TemplatesView: View {
+    @Binding var selectedSection: String?
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [Profile]
     @State private var selectedProfile: Profile?
@@ -115,6 +116,16 @@ struct TemplatesView: View {
                 .padding(.horizontal)
             }
         }
+        .navigationTitle("Resume-ATS")
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: {
+                    selectedSection = "Dashboard"
+                }) {
+                    Image(systemName: "chevron.left")
+                }
+            }
+        }
 
     }
 
@@ -154,17 +165,17 @@ struct ContentView: View {
             case "Dashboard":
                 DashboardView(selectedSection: $selectedSection)
             case "Profile":
-                ProfileView()
+                ProfileView(selectedSection: $selectedSection)
             case "Candidatures":
-                CandidaturesView()
+                CandidaturesView(selectedSection: $selectedSection)
             case "Lettres":
-                CoverLettersView()
+                CoverLettersView(selectedSection: $selectedSection)
             case "Templates":
-                TemplatesView()
+                TemplatesView(selectedSection: $selectedSection)
             case "Statistiques":
-                StatistiquesView()
+                StatistiquesView(selectedSection: $selectedSection)
             case "Settings":
-                SettingsView()
+                SettingsView(selectedSection: $selectedSection)
             default:
                 Text("Select a section")
             }

@@ -9,6 +9,7 @@ import SwiftData
 import SwiftUI
 
 struct CoverLettersView: View {
+    @Binding var selectedSection: String?
     @Environment(\.modelContext) private var modelContext
     @Query private var coverLetters: [CoverLetter]
     @Query private var profiles: [Profile]
@@ -78,7 +79,16 @@ struct CoverLettersView: View {
                 }
                 .padding(.horizontal)
             }
-            .navigationTitle("Lettres de Motivation")
+            .navigationTitle("Resume-ATS")
+            .toolbar {
+                ToolbarItem(placement: .navigation) {
+                    Button(action: {
+                        selectedSection = "Dashboard"
+                    }) {
+                        Image(systemName: "chevron.left")
+                    }
+                }
+            }
         }
     }
 }
@@ -244,7 +254,7 @@ struct EditCoverLetterView: View {
 
 #Preview {
     NavigationStack {
-        CoverLettersView()
+        CoverLettersView(selectedSection: .constant(nil))
     }
     .modelContainer(for: [Profile.self, Application.self, CoverLetter.self], inMemory: true)
 }

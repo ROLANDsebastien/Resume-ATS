@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 
 // MARK: - Main Profile View
 struct ProfileView: View {
+    @Binding var selectedSection: String?
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [Profile]
 
@@ -32,11 +33,12 @@ struct ProfileView: View {
                         }
 
                         StyledSection(title: "Résumé") {
-                             RichTextEditorWithToolbar(attributedString: Binding(
-                                 get: { profile.summaryAttributedString },
-                                 set: { profile.summaryAttributedString = $0 }
-                             ))
-                         }
+                            RichTextEditorWithToolbar(
+                                attributedString: Binding(
+                                    get: { profile.summaryAttributedString },
+                                    set: { profile.summaryAttributedString = $0 }
+                                ))
+                        }
 
                         StyledSection(title: "Expériences") {
                             VStack(alignment: .leading, spacing: 12) {
@@ -46,10 +48,13 @@ struct ProfileView: View {
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
                                     Spacer()
-                                    Toggle("", isOn: Binding(
-                                        get: { profile.showExperiences },
-                                        set: { profile.showExperiences = $0 }
-                                    ))
+                                    Toggle(
+                                        "",
+                                        isOn: Binding(
+                                            get: { profile.showExperiences },
+                                            set: { profile.showExperiences = $0 }
+                                        )
+                                    )
                                     .labelsHidden()
                                     .toggleStyle(.switch)
                                 }
@@ -58,17 +63,22 @@ struct ProfileView: View {
                                     ForEach(profile.experiences) { experience in
                                         VStack(alignment: .leading, spacing: 8) {
                                             HStack {
-                                                Toggle("Visible dans le CV", isOn: Binding(
-                                                    get: { experience.isVisible },
-                                                    set: { experience.isVisible = $0 }
-                                                ))
+                                                Toggle(
+                                                    "Visible dans le CV",
+                                                    isOn: Binding(
+                                                        get: { experience.isVisible },
+                                                        set: { experience.isVisible = $0 }
+                                                    )
+                                                )
                                                 .toggleStyle(.switch)
                                                 Spacer()
                                                 Button(action: {
                                                     DispatchQueue.main.async {
-                                                        if let index = profile.experiences.firstIndex(where: {
-                                                            $0.id == experience.id
-                                                        }) {
+                                                        if let index = profile.experiences
+                                                            .firstIndex(where: {
+                                                                $0.id == experience.id
+                                                            })
+                                                        {
                                                             profile.experiences.remove(at: index)
                                                         }
                                                     }
@@ -94,7 +104,8 @@ struct ProfileView: View {
                                             DispatchQueue.main.async {
                                                 profile.experiences.append(
                                                     Experience(
-                                                        company: "", startDate: Date(), details: Data()))
+                                                        company: "", startDate: Date(),
+                                                        details: Data()))
                                             }
                                         })
                                 }
@@ -109,10 +120,13 @@ struct ProfileView: View {
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
                                     Spacer()
-                                    Toggle("", isOn: Binding(
-                                        get: { profile.showEducations },
-                                        set: { profile.showEducations = $0 }
-                                    ))
+                                    Toggle(
+                                        "",
+                                        isOn: Binding(
+                                            get: { profile.showEducations },
+                                            set: { profile.showEducations = $0 }
+                                        )
+                                    )
                                     .labelsHidden()
                                     .toggleStyle(.switch)
                                 }
@@ -121,17 +135,22 @@ struct ProfileView: View {
                                     ForEach(profile.educations) { education in
                                         VStack(alignment: .leading, spacing: 8) {
                                             HStack {
-                                                Toggle("Visible dans le CV", isOn: Binding(
-                                                    get: { education.isVisible },
-                                                    set: { education.isVisible = $0 }
-                                                ))
+                                                Toggle(
+                                                    "Visible dans le CV",
+                                                    isOn: Binding(
+                                                        get: { education.isVisible },
+                                                        set: { education.isVisible = $0 }
+                                                    )
+                                                )
                                                 .toggleStyle(.switch)
                                                 Spacer()
                                                 Button(action: {
                                                     DispatchQueue.main.async {
-                                                        if let index = profile.educations.firstIndex(where: {
-                                                            $0.id == education.id
-                                                        }) {
+                                                        if let index = profile.educations
+                                                            .firstIndex(where: {
+                                                                $0.id == education.id
+                                                            })
+                                                        {
                                                             profile.educations.remove(at: index)
                                                         }
                                                     }
@@ -157,7 +176,8 @@ struct ProfileView: View {
                                             DispatchQueue.main.async {
                                                 profile.educations.append(
                                                     Education(
-                                                        institution: "", degree: "", startDate: Date(),
+                                                        institution: "", degree: "",
+                                                        startDate: Date(),
                                                         details: Data()))
                                             }
                                         })
@@ -173,10 +193,13 @@ struct ProfileView: View {
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
                                     Spacer()
-                                    Toggle("", isOn: Binding(
-                                        get: { profile.showReferences },
-                                        set: { profile.showReferences = $0 }
-                                    ))
+                                    Toggle(
+                                        "",
+                                        isOn: Binding(
+                                            get: { profile.showReferences },
+                                            set: { profile.showReferences = $0 }
+                                        )
+                                    )
                                     .labelsHidden()
                                     .toggleStyle(.switch)
                                 }
@@ -185,23 +208,28 @@ struct ProfileView: View {
                                     ForEach(profile.references) { reference in
                                         VStack(alignment: .leading, spacing: 8) {
                                             HStack {
-                                                Toggle("Visible dans le CV", isOn: Binding(
-                                                    get: { reference.isVisible },
-                                                    set: { reference.isVisible = $0 }
-                                                ))
+                                                Toggle(
+                                                    "Visible dans le CV",
+                                                    isOn: Binding(
+                                                        get: { reference.isVisible },
+                                                        set: { reference.isVisible = $0 }
+                                                    )
+                                                )
                                                 .toggleStyle(.switch)
                                                 Spacer()
                                                 Button(action: {
                                                     DispatchQueue.main.async {
-                                                        if let index = profile.references.firstIndex(where: {
-                                                            $0.id == reference.id
-                                                        }) {
+                                                        if let index = profile.references
+                                                            .firstIndex(where: {
+                                                                $0.id == reference.id
+                                                            })
+                                                        {
                                                             profile.references.remove(at: index)
                                                         }
                                                     }
                                                 }) {
                                                     Image(systemName: "trash.fill")
-                                                    .foregroundColor(.red)
+                                                        .foregroundColor(.red)
                                                 }
                                                 .buttonStyle(.plain)
                                             }
@@ -221,7 +249,8 @@ struct ProfileView: View {
                                             DispatchQueue.main.async {
                                                 profile.references.append(
                                                     Reference(
-                                                        name: "", position: "", company: "", email: "",
+                                                        name: "", position: "", company: "",
+                                                        email: "",
                                                         phone: ""))
                                             }
                                         })
@@ -237,10 +266,13 @@ struct ProfileView: View {
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
                                     Spacer()
-                                    Toggle("", isOn: Binding(
-                                        get: { profile.showSkills },
-                                        set: { profile.showSkills = $0 }
-                                    ))
+                                    Toggle(
+                                        "",
+                                        isOn: Binding(
+                                            get: { profile.showSkills },
+                                            set: { profile.showSkills = $0 }
+                                        )
+                                    )
                                     .labelsHidden()
                                     .toggleStyle(.switch)
                                 }
@@ -255,7 +287,11 @@ struct ProfileView: View {
                                                     set: { profile.skills[index] = $0 })
                                             )
                                             .textFieldStyle(StyledTextField())
-                                            Button(action: { DispatchQueue.main.async { profile.skills.remove(at: index) } }) {
+                                            Button(action: {
+                                                DispatchQueue.main.async {
+                                                    profile.skills.remove(at: index)
+                                                }
+                                            }) {
                                                 Image(systemName: "trash.fill")
                                                     .foregroundColor(.red)
                                             }
@@ -283,15 +319,24 @@ struct ProfileView: View {
             .padding(.horizontal)
         }
         .navigationTitle("Resume-ATS")
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: {
+                    selectedSection = "Dashboard"
+                }) {
+                    Image(systemName: "chevron.left")
+                }
+            }
+        }
         .alert("Renommer le profil", isPresented: $showRenameAlert) {
             TextField("Nouveau nom", text: $renameProfileName)
-            Button("Annuler", role: .cancel) { }
+            Button("Annuler", role: .cancel) {}
             Button("Renommer") {
                 confirmRenameProfile()
             }
         }
         .alert("Supprimer le profil", isPresented: $showDeleteAlert) {
-            Button("Annuler", role: .cancel) { }
+            Button("Annuler", role: .cancel) {}
             Button("Supprimer", role: .destructive) {
                 confirmDeleteProfile()
             }
@@ -315,7 +360,8 @@ struct ProfileView: View {
                         .font(.headline)
                     Spacer()
                     StyledButton(title: "Renommer", systemImage: "pencil", action: renameProfile)
-                    StyledButton(title: "Dupliquer", systemImage: "doc.on.doc", action: duplicateProfile)
+                    StyledButton(
+                        title: "Dupliquer", systemImage: "doc.on.doc", action: duplicateProfile)
                     StyledButton(title: "Supprimer", systemImage: "trash", action: deleteProfile)
                         .foregroundColor(.red)
                 }
@@ -368,13 +414,19 @@ struct ProfileView: View {
             showReferences: profile.showReferences,
             showSkills: profile.showSkills,
             experiences: profile.experiences.map { exp in
-                Experience(company: exp.company, startDate: exp.startDate, endDate: exp.endDate, details: exp.details, isVisible: exp.isVisible)
+                Experience(
+                    company: exp.company, startDate: exp.startDate, endDate: exp.endDate,
+                    details: exp.details, isVisible: exp.isVisible)
             },
             educations: profile.educations.map { edu in
-                Education(institution: edu.institution, degree: edu.degree, startDate: edu.startDate, endDate: edu.endDate, details: edu.details, isVisible: edu.isVisible)
+                Education(
+                    institution: edu.institution, degree: edu.degree, startDate: edu.startDate,
+                    endDate: edu.endDate, details: edu.details, isVisible: edu.isVisible)
             },
             references: profile.references.map { ref in
-                Reference(name: ref.name, position: ref.position, company: ref.company, email: ref.email, phone: ref.phone, isVisible: ref.isVisible)
+                Reference(
+                    name: ref.name, position: ref.position, company: ref.company, email: ref.email,
+                    phone: ref.phone, isVisible: ref.isVisible)
             },
             skills: profile.skills
         )
@@ -521,10 +573,11 @@ struct ExperienceForm: View {
                 )
                 .datePickerStyle(.compact)
             }
-            RichTextEditorWithToolbar(attributedString: Binding(
-                get: { experience.detailsAttributedString },
-                set: { experience.detailsAttributedString = $0 }
-            ))
+            RichTextEditorWithToolbar(
+                attributedString: Binding(
+                    get: { experience.detailsAttributedString },
+                    set: { experience.detailsAttributedString = $0 }
+                ))
         }
         .textFieldStyle(StyledTextField())
     }
@@ -553,10 +606,11 @@ struct EducationForm: View {
                 )
                 .datePickerStyle(.compact)
             }
-            RichTextEditorWithToolbar(attributedString: Binding(
-                get: { education.detailsAttributedString },
-                set: { education.detailsAttributedString = $0 }
-            ))
+            RichTextEditorWithToolbar(
+                attributedString: Binding(
+                    get: { education.detailsAttributedString },
+                    set: { education.detailsAttributedString = $0 }
+                ))
         }
         .textFieldStyle(StyledTextField())
     }
@@ -753,23 +807,34 @@ struct RichTextEditor: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         if let textView = nsView.documentView as? NSTextView {
             textView.textColor = NSColor.labelColor
-        textView.font = NSFont.systemFont(ofSize: 14.0)
+            textView.font = NSFont.systemFont(ofSize: 14.0)
             textView.typingAttributes[.font] = NSFont.systemFont(ofSize: 14.0)
             let mutableString = NSMutableAttributedString(attributedString: attributedString)
-            mutableString.addAttribute(.foregroundColor, value: NSColor.labelColor, range: NSRange(location: 0, length: mutableString.length))
+            mutableString.addAttribute(
+                .foregroundColor, value: NSColor.labelColor,
+                range: NSRange(location: 0, length: mutableString.length))
             // Update font size in the attributed string
-            mutableString.enumerateAttribute(.font, in: NSRange(location: 0, length: mutableString.length), options: []) { value, range, _ in
+            mutableString.enumerateAttribute(
+                .font, in: NSRange(location: 0, length: mutableString.length), options: []
+            ) { value, range, _ in
                 if let font = value as? NSFont {
-                    let newFont = NSFont(descriptor: font.fontDescriptor, size: 14.0) ?? NSFont.systemFont(ofSize: 14.0)
+                    let newFont =
+                        NSFont(descriptor: font.fontDescriptor, size: 14.0)
+                        ?? NSFont.systemFont(ofSize: 14.0)
                     mutableString.addAttribute(.font, value: newFont, range: range)
                 } else {
-                    mutableString.addAttribute(.font, value: NSFont.systemFont(ofSize: 14.0), range: range)
+                    mutableString.addAttribute(
+                        .font, value: NSFont.systemFont(ofSize: 14.0), range: range)
                 }
             }
             if textView.attributedString() != mutableString {
                 textView.textStorage?.setAttributedString(mutableString)
             }
-            let clampedRange = NSRange(location: min(selectedRange.location, mutableString.length), length: min(selectedRange.length, mutableString.length - min(selectedRange.location, mutableString.length)))
+            let clampedRange = NSRange(
+                location: min(selectedRange.location, mutableString.length),
+                length: min(
+                    selectedRange.length,
+                    mutableString.length - min(selectedRange.location, mutableString.length)))
             if textView.selectedRange() != clampedRange {
                 textView.setSelectedRange(clampedRange)
             }
@@ -841,9 +906,14 @@ struct RichTextToolbar: View {
     private func toggleBold() {
         let mutableString = NSMutableAttributedString(attributedString: attributedString)
         let fontManager = NSFontManager.shared
-        let validRange = NSRange(location: min(selectedRange.location, attributedString.length), length: min(selectedRange.length, attributedString.length - min(selectedRange.location, attributedString.length)))
+        let validRange = NSRange(
+            location: min(selectedRange.location, attributedString.length),
+            length: min(
+                selectedRange.length,
+                attributedString.length - min(selectedRange.location, attributedString.length)))
         if validRange.length > 0 {
-            mutableString.enumerateAttribute(.font, in: validRange, options: []) { value, range, _ in
+            mutableString.enumerateAttribute(.font, in: validRange, options: []) {
+                value, range, _ in
                 if let font = value as? NSFont {
                     let newFont = fontManager.convert(font, toHaveTrait: .boldFontMask)
                     mutableString.addAttribute(.font, value: newFont, range: range)
@@ -851,7 +921,9 @@ struct RichTextToolbar: View {
             }
         } else {
             // Apply to current position or whole text if no selection
-            let range = validRange.length > 0 ? validRange : NSRange(location: 0, length: mutableString.length)
+            let range =
+                validRange.length > 0
+                ? validRange : NSRange(location: 0, length: mutableString.length)
             mutableString.enumerateAttribute(.font, in: range, options: []) { value, range, _ in
                 if let font = value as? NSFont {
                     let newFont = fontManager.convert(font, toHaveTrait: .boldFontMask)
@@ -867,9 +939,14 @@ struct RichTextToolbar: View {
     private func toggleItalic() {
         let mutableString = NSMutableAttributedString(attributedString: attributedString)
         let fontManager = NSFontManager.shared
-        let validRange = NSRange(location: min(selectedRange.location, attributedString.length), length: min(selectedRange.length, attributedString.length - min(selectedRange.location, attributedString.length)))
+        let validRange = NSRange(
+            location: min(selectedRange.location, attributedString.length),
+            length: min(
+                selectedRange.length,
+                attributedString.length - min(selectedRange.location, attributedString.length)))
         if validRange.length > 0 {
-            mutableString.enumerateAttribute(.font, in: validRange, options: []) { value, range, _ in
+            mutableString.enumerateAttribute(.font, in: validRange, options: []) {
+                value, range, _ in
                 if let font = value as? NSFont {
                     let newFont = fontManager.convert(font, toHaveTrait: .italicFontMask)
                     mutableString.addAttribute(.font, value: newFont, range: range)
@@ -928,6 +1005,6 @@ struct RichTextEditorWithToolbar: View {
 
 // MARK: - Preview
 #Preview {
-    ProfileView()
+    ProfileView(selectedSection: .constant(nil))
         .modelContainer(for: Profile.self, inMemory: true)
 }

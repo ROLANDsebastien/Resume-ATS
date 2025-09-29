@@ -10,6 +10,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct CandidaturesView: View {
+    @Binding var selectedSection: String?
     @Environment(\.modelContext) private var modelContext
     @Query private var applications: [Application]
     @State private var showingAddApplication = false
@@ -122,6 +123,16 @@ struct CandidaturesView: View {
         }
         .sheet(item: $showingDocumentsFor) { application in
             DocumentsView(application: application)
+        }
+        .navigationTitle("Resume-ATS")
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: {
+                    selectedSection = "Dashboard"
+                }) {
+                    Image(systemName: "chevron.left")
+                }
+            }
         }
     }
 }
@@ -447,6 +458,6 @@ struct DocumentsView: View {
 }
 
 #Preview {
-    CandidaturesView()
+    CandidaturesView(selectedSection: .constant(nil))
         .modelContainer(for: [Profile.self, Application.self, CoverLetter.self], inMemory: true)
 }

@@ -4,6 +4,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
+    @Binding var selectedSection: String?
     @Environment(\.colorScheme) private var systemColorScheme
     @AppStorage("colorScheme") private var colorScheme: Int = 2  // 0: Light, 1: Dark, 2: System
     @AppStorage("autoSave") private var autoSave = true
@@ -205,7 +206,16 @@ struct SettingsView: View {
                 "Cette action supprimera définitivement tous les profils, candidatures et documents joints. Cette action est irréversible."
             )
         }
-
+        .navigationTitle("Resume-ATS")
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: {
+                    selectedSection = "Dashboard"
+                }) {
+                    Image(systemName: "chevron.left")
+                }
+            }
+        }
     }
 
     private func exportProfiles() {
@@ -277,6 +287,6 @@ struct SettingsView: View {
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView()
+        SettingsView(selectedSection: .constant(nil))
     }
 }

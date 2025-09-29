@@ -5,9 +5,9 @@
 //  Created by ROLAND Sébastien on 27/09/2025.
 //
 
-import SwiftUI
 import Charts
 import SwiftData
+import SwiftUI
 
 struct MonthlyStat: Identifiable {
     let id = UUID()
@@ -22,23 +22,29 @@ struct MonthStatusKey: Hashable {
 }
 
 struct StatistiquesView: View {
+    @Binding var selectedSection: String?
     @Query private var applications: [Application]
     @State private var selectedYear: Int = 2025
 
     var monthlyStats: [MonthlyStat] {
         let calendar = Calendar.current
-        
+
         var allMonths: [Date] = []
-        let numberOfMonths = 12 // Display 1 year of data
+        let numberOfMonths = 12  // Display 1 year of data
 
         for i in 0..<numberOfMonths {
-            if let date = calendar.date(byAdding: .month, value: i, to: calendar.date(from: DateComponents(year: selectedYear, month: 1))!) {
+            if let date = calendar.date(
+                byAdding: .month, value: i,
+                to: calendar.date(from: DateComponents(year: selectedYear, month: 1))!)
+            {
                 allMonths.append(date)
             }
         }
 
-        let groupedByMonthAndStatus = Dictionary(grouping: applications) { application -> MonthStatusKey in
-            let monthComponents = calendar.dateComponents([.year, .month], from: application.dateApplied)
+        let groupedByMonthAndStatus = Dictionary(grouping: applications) {
+            application -> MonthStatusKey in
+            let monthComponents = calendar.dateComponents(
+                [.year, .month], from: application.dateApplied)
             return MonthStatusKey(monthComponents: monthComponents, status: application.status)
         }
 
@@ -88,7 +94,7 @@ struct StatistiquesView: View {
                     "Candidature envoyée": .blue,
                     "En attente": .orange,
                     "Retirée": .gray,
-                    "Entretien": .cyan
+                    "Entretien": .cyan,
                 ])
                 .chartXAxis {
                     AxisMarks { value in
@@ -103,10 +109,20 @@ struct StatistiquesView: View {
             }
             .padding()
         }
+        .navigationTitle("Resume-ATS")
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: {
+                    selectedSection = "Dashboard"
+                }) {
+                    Image(systemName: "chevron.left")
+                }
+            }
+        }
     }
 }
 
 #Preview {
-    StatistiquesView()
+    StatistiquesView(selectedSection: .constant(nil))
         .modelContainer(for: [Application.self], inMemory: true)
 }
