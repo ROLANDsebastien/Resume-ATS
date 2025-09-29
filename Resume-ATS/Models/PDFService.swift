@@ -274,39 +274,96 @@ class PDFService {
                 maxWidth: textMaxWidth)
 
             // Afficher chaque info de contact disponible sur une ligne distincte sous le nom
-            var contactInfo: [String] = []
+            var contactInfo: [NSAttributedString] = []
             if let email = profile.email, !email.isEmpty {
-                contactInfo.append("Email: \(email)")
+                let attributedString = NSMutableAttributedString()
+                attributedString.append(NSAttributedString(string: "Email: ", attributes: [
+                    .font: NSFont.boldSystemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                attributedString.append(NSAttributedString(string: email, attributes: [
+                    .font: NSFont.systemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                contactInfo.append(attributedString)
             }
             if let phone = profile.phone, !phone.isEmpty {
-                contactInfo.append("Téléphone: \(phone)")
+                let attributedString = NSMutableAttributedString()
+                attributedString.append(NSAttributedString(string: "Téléphone: ", attributes: [
+                    .font: NSFont.boldSystemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                attributedString.append(NSAttributedString(string: phone, attributes: [
+                    .font: NSFont.systemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                contactInfo.append(attributedString)
             }
             if let location = profile.location, !location.isEmpty {
-                contactInfo.append("Localisation: \(location)")
+                let attributedString = NSMutableAttributedString()
+                attributedString.append(NSAttributedString(string: "Localisation: ", attributes: [
+                    .font: NSFont.boldSystemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                attributedString.append(NSAttributedString(string: location, attributes: [
+                    .font: NSFont.systemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                contactInfo.append(attributedString)
             }
             if let linkedin = profile.linkedin, !linkedin.isEmpty {
-                contactInfo.append("LinkedIn: \(linkedin)")
+                let attributedString = NSMutableAttributedString()
+                attributedString.append(NSAttributedString(string: "LinkedIn: ", attributes: [
+                    .font: NSFont.boldSystemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                attributedString.append(NSAttributedString(string: linkedin, attributes: [
+                    .font: NSFont.systemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                contactInfo.append(attributedString)
             }
             if let github = profile.github, !github.isEmpty {
-                contactInfo.append("GitHub: \(github)")
+                let attributedString = NSMutableAttributedString()
+                attributedString.append(NSAttributedString(string: "GitHub: ", attributes: [
+                    .font: NSFont.boldSystemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                attributedString.append(NSAttributedString(string: github, attributes: [
+                    .font: NSFont.systemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                contactInfo.append(attributedString)
             }
             if let gitlab = profile.gitlab, !gitlab.isEmpty {
-                contactInfo.append("GitLab: \(gitlab)")
+                let attributedString = NSMutableAttributedString()
+                attributedString.append(NSAttributedString(string: "GitLab: ", attributes: [
+                    .font: NSFont.boldSystemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                attributedString.append(NSAttributedString(string: gitlab, attributes: [
+                    .font: NSFont.systemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                contactInfo.append(attributedString)
             }
             if let website = profile.website, !website.isEmpty {
-                contactInfo.append("Site Web: \(website)")
+                let attributedString = NSMutableAttributedString()
+                attributedString.append(NSAttributedString(string: "Site Web: ", attributes: [
+                    .font: NSFont.boldSystemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                attributedString.append(NSAttributedString(string: website, attributes: [
+                    .font: NSFont.systemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray
+                ]))
+                contactInfo.append(attributedString)
             }
             var headerBlockHeight: CGFloat = 0
             if !contactInfo.isEmpty {
                 let infoBlockWidth: CGFloat =
                     (pageWidth - 2 * margin - photoSize - photoPadding) * 0.9
-                for info in contactInfo {
-                    // Police plus petite et largeur limitée, sans espacement vertical
-                    let attributes: [NSAttributedString.Key: Any] = [
-                        .font: NSFont.systemFont(ofSize: 11),
-                        .foregroundColor: NSColor.darkGray,
-                    ]
-                    let attributedText = NSAttributedString(string: info, attributes: attributes)
+                for attributedText in contactInfo {
                     let framesetter = CTFramesetterCreateWithAttributedString(attributedText)
                     let suggestedSize = CTFramesetterSuggestFrameSizeWithConstraints(
                         framesetter, CFRange(location: 0, length: attributedText.length), nil,
