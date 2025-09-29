@@ -319,15 +319,6 @@ struct ProfileView: View {
             .padding(.horizontal)
         }
         .navigationTitle("Resume-ATS")
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    selectedSection = "Dashboard"
-                }) {
-                    Image(systemName: "chevron.left")
-                }
-            }
-        }
         .alert("Renommer le profil", isPresented: $showRenameAlert) {
             TextField("Nouveau nom", text: $renameProfileName)
             Button("Annuler", role: .cancel) {}
@@ -397,6 +388,7 @@ struct ProfileView: View {
         guard let profile = selectedProfile else { return }
         let duplicatedProfile = Profile(
             name: profile.name + " (Copie)",
+            language: profile.language,
             firstName: profile.firstName,
             lastName: profile.lastName,
             email: profile.email,
@@ -642,6 +634,12 @@ struct PersonalInfoForm: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            Picker("Langue du CV", selection: $profile.language) {
+                Text("Français").tag("fr")
+                Text("English").tag("en")
+            }
+            .pickerStyle(.menu)
+
             // Photo section
             if let photoData = profile.photo, let nsImage = NSImage(data: photoData) {
                 VStack(spacing: 8) {

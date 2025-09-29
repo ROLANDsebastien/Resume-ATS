@@ -117,15 +117,6 @@ struct TemplatesView: View {
             }
         }
         .navigationTitle("Resume-ATS")
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    selectedSection = "Dashboard"
-                }) {
-                    Image(systemName: "chevron.left")
-                }
-            }
-        }
 
     }
 
@@ -180,6 +171,7 @@ struct ContentView: View {
                 Text("Select a section")
             }
         }
+        .navigationSplitViewStyle(.balanced)
     }
 }
 

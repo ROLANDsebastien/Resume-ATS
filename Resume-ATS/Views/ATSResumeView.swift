@@ -12,7 +12,43 @@ import SwiftUI
 
 struct ATSResumeView: View {
     var profile: Profile
+    var language: String = "fr"
     var isForPDF: Bool = false
+
+    private func localizedTitle(for key: String) -> String {
+        let enDict: [String: String] = [
+            "professional_summary": "Professional Summary",
+            "professional_experience": "Professional Experience",
+            "education": "Education",
+            "references": "References",
+            "skills": "Skills",
+            "email_prefix": "Email:",
+            "phone_prefix": "Phone:",
+            "location_prefix": "Location:",
+            "github_prefix": "GitHub:",
+            "gitlab_prefix": "GitLab:",
+            "linkedin_prefix": "LinkedIn:",
+            "website_prefix": "Website:",
+            "present": "Present"
+        ]
+        let frDict: [String: String] = [
+            "professional_summary": "Résumé Professionnel",
+            "professional_experience": "Expérience Professionnelle",
+            "education": "Formation",
+            "references": "Références",
+            "skills": "Compétences",
+            "email_prefix": "Email :",
+            "phone_prefix": "Téléphone :",
+            "location_prefix": "Localisation :",
+            "github_prefix": "GitHub :",
+            "gitlab_prefix": "GitLab :",
+            "linkedin_prefix": "LinkedIn :",
+            "website_prefix": "Site Web :",
+            "present": "Présent"
+        ]
+        let dict = language == "en" ? enDict : frDict
+        return dict[key] ?? key
+    }
 
     var body: some View {
         let content = VStack(alignment: .leading, spacing: 20) {
@@ -46,7 +82,7 @@ struct ATSResumeView: View {
 
             // Professional Summary
             if !profile.summaryString.isEmpty {
-                SectionView(title: "Professional Summary") {
+                SectionView(title: localizedTitle(for: "professional_summary")) {
                     Text(AttributedString(profile.normalizedSummaryAttributedString))
                         .lineSpacing(4)
                         .foregroundColor(.black)
@@ -55,7 +91,7 @@ struct ATSResumeView: View {
 
             // Professional Experience
             if profile.showExperiences && !profile.experiences.filter({ $0.isVisible }).isEmpty {
-                SectionView(title: "Professional Experience") {
+                SectionView(title: localizedTitle(for: "professional_experience")) {
                     VStack(alignment: .leading, spacing: 15) {
                         ForEach(profile.experiences.filter({ $0.isVisible })) { experience in
                             VStack(alignment: .leading, spacing: 5) {
@@ -83,7 +119,7 @@ struct ATSResumeView: View {
 
             // Education
             if profile.showEducations && !profile.educations.filter({ $0.isVisible }).isEmpty {
-                SectionView(title: "Education") {
+                SectionView(title: localizedTitle(for: "education")) {
                     VStack(alignment: .leading, spacing: 15) {
                         ForEach(profile.educations.filter({ $0.isVisible })) { education in
                             VStack(alignment: .leading, spacing: 5) {
@@ -112,7 +148,7 @@ struct ATSResumeView: View {
 
             // References
             if profile.showReferences && !profile.references.filter({ $0.isVisible }).isEmpty {
-                SectionView(title: "References") {
+                SectionView(title: localizedTitle(for: "references")) {
                     VStack(alignment: .leading, spacing: 15) {
                         ForEach(profile.references.filter({ $0.isVisible })) { reference in
                             VStack(alignment: .leading, spacing: 5) {
@@ -132,7 +168,7 @@ struct ATSResumeView: View {
 
             // Skills
             if profile.showSkills && !profile.skills.isEmpty {
-                SectionView(title: "Skills") {
+                SectionView(title: localizedTitle(for: "skills")) {
                     Text(profile.skills.joined(separator: ", "))
                         .font(.custom("Arial", size: 11))
                         .foregroundColor(.black)
@@ -162,7 +198,7 @@ struct ATSResumeView: View {
         VStack(alignment: .leading, spacing: 2) {
             if let email = profile.email {
                 HStack(spacing: 0) {
-                    Text("Email:")
+                    Text(localizedTitle(for: "email_prefix"))
                         .font(.custom("Arial", size: 10))
                         .fontWeight(.bold)
                         .foregroundColor(.black)
@@ -173,7 +209,7 @@ struct ATSResumeView: View {
             }
             if let phone = profile.phone {
                 HStack(spacing: 0) {
-                    Text("Phone:")
+                    Text(localizedTitle(for: "phone_prefix"))
                         .font(.custom("Arial", size: 10))
                         .fontWeight(.bold)
                         .foregroundColor(.black)
@@ -184,7 +220,7 @@ struct ATSResumeView: View {
             }
             if let location = profile.location {
                 HStack(spacing: 0) {
-                    Text("Location:")
+                    Text(localizedTitle(for: "location_prefix"))
                         .font(.custom("Arial", size: 10))
                         .fontWeight(.bold)
                         .foregroundColor(.black)
@@ -197,7 +233,7 @@ struct ATSResumeView: View {
             if let github = profile.github, let url = URL(string: github) {
                 let displayValue = url.host != nil ? "\(url.host!)\(url.path)" : github
                 HStack(spacing: 0) {
-                    Text("GitHub:")
+                    Text(localizedTitle(for: "github_prefix"))
                         .font(.custom("Arial", size: 10))
                         .fontWeight(.bold)
                         .foregroundColor(.black)
@@ -209,7 +245,7 @@ struct ATSResumeView: View {
             if let gitlab = profile.gitlab, let url = URL(string: gitlab) {
                 let displayValue = url.host != nil ? "\(url.host!)\(url.path)" : gitlab
                 HStack(spacing: 0) {
-                    Text("GitLab:")
+                    Text(localizedTitle(for: "gitlab_prefix"))
                         .font(.custom("Arial", size: 10))
                         .fontWeight(.bold)
                         .foregroundColor(.black)
@@ -221,7 +257,7 @@ struct ATSResumeView: View {
             if let linkedin = profile.linkedin, let url = URL(string: linkedin) {
                 let displayValue = url.host != nil ? "\(url.host!)\(url.path)" : linkedin
                 HStack(spacing: 0) {
-                    Text("LinkedIn:")
+                    Text(localizedTitle(for: "linkedin_prefix"))
                         .font(.custom("Arial", size: 10))
                         .fontWeight(.bold)
                         .foregroundColor(.black)
@@ -233,7 +269,7 @@ struct ATSResumeView: View {
             if let website = profile.website, let url = URL(string: website) {
                 let displayValue = url.host != nil ? "\(url.host!)\(url.path)" : website
                 HStack(spacing: 0) {
-                    Text("Website:")
+                    Text(localizedTitle(for: "website_prefix"))
                         .font(.custom("Arial", size: 10))
                         .fontWeight(.bold)
                         .foregroundColor(.black)
@@ -254,7 +290,7 @@ struct ATSResumeView: View {
             let endStr = formatter.string(from: endDate)
             return "\(startStr) - \(endStr)"
         } else {
-            return "\(startStr) - Present"
+            return "\(startStr) - \(localizedTitle(for: "present"))"
         }
     }
 }
@@ -277,9 +313,9 @@ struct SectionView<Content: View>: View {
 #Preview {
     ATSResumeView(
         profile: Profile(
-            name: "John Doe", firstName: "John", lastName: "Doe", email: "john@example.com",
+            name: "John Doe", language: "en", firstName: "John", lastName: "Doe", email: "john@example.com",
             showPhotoInPDF: true, summary: NSAttributedString(string: "Experienced developer").rtf(from: NSRange(location: 0, length: 21)) ?? Data(),
             experiences: [
                 Experience(company: "Tech Corp", startDate: Date(), details: NSAttributedString(string: "Developed apps").rtf(from: NSRange(location: 0, length: 14)) ?? Data())
-            ], skills: ["Swift", "iOS"]), isForPDF: false)
+            ], skills: ["Swift", "iOS"]), language: "en", isForPDF: false)
 }

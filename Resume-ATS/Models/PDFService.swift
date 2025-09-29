@@ -14,7 +14,7 @@ class PDFService {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
             "ATS_Resume_\(profile.name).pdf")
 
-        let resumeView = ATSResumeView(profile: profile, isForPDF: true)
+        let resumeView = ATSResumeView(profile: profile, language: profile.language, isForPDF: true)
 
         // Create NSHostingView from SwiftUI view
         let hostingView = NSHostingView(rootView: resumeView)

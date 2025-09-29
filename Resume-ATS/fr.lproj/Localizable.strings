@@ -1,0 +1,13 @@
+"professional_summary" = "Résumé Professionnel";
+"professional_experience" = "Expérience Professionnelle";
+"education" = "Formation";
+"references" = "Références";
+"skills" = "Compétences";
+"email_prefix" = "Email :";
+"phone_prefix" = "Téléphone :";
+"location_prefix" = "Localisation :";
+"github_prefix" = "GitHub :";
+"gitlab_prefix" = "GitLab :";
+"linkedin_prefix" = "LinkedIn :";
+"website_prefix" = "Site Web :";
+"present" = "Présent";

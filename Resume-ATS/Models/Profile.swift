@@ -12,6 +12,7 @@ import AppKit
 @Model
 final class Profile {
     var name: String
+    var language: String = "fr"
     var firstName: String?
     var lastName: String?
     var email: String?
@@ -34,7 +35,7 @@ final class Profile {
      var skills: [String]
 
     init(
-        name: String, firstName: String? = nil, lastName: String? = nil, email: String? = nil,
+        name: String, language: String = "fr", firstName: String? = nil, lastName: String? = nil, email: String? = nil,
         phone: String? = nil, location: String? = nil, github: String? = nil, gitlab: String? = nil,
         linkedin: String? = nil, website: String? = nil, photo: Data? = nil, showPhotoInPDF: Bool = false, summary: Data = Data(),
         showExperiences: Bool = true, showEducations: Bool = true, showReferences: Bool = true, showSkills: Bool = true,
@@ -42,6 +43,7 @@ final class Profile {
         educations: [Education] = [], references: [Reference] = [], skills: [String] = []
     ) {
         self.name = name
+        self.language = language
         self.firstName = firstName
         self.lastName = lastName
         self.email = email
