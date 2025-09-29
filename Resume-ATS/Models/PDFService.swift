@@ -153,9 +153,61 @@ class PDFService {
             ]
             let attributedText = NSAttributedString(string: text, attributes: attributes)
             let framesetter = CTFramesetterCreateWithAttributedString(attributedText)
-            var currentRange = CFRange(location: 0, length: attributedText.length)
+            let currentRange = CFRange(location: 0, length: attributedText.length)
             let suggestedSize = CTFramesetterSuggestFrameSizeWithConstraints(
                 framesetter, CFRange(location: 0, length: attributedText.length), nil,
+                CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude), nil)
+            let textHeight = suggestedSize.height
+
+            // Si le texte ne tient pas sur la page, changer de page
+            if currentY + textHeight > pageHeight - margin {
+                addPageToDocument(context!, pageData)
+                pageIndex += 1
+                let result = createPage()
+                context = result.0
+                pageData = result.1
+                // Sur les pages suivantes, commencer en haut avec la marge
+                currentY = marginTop
+            }
+
+            let textRect = CGRect(
+                x: x, y: pageHeight - currentY - textHeight, width: maxWidth, height: textHeight)
+            let path = CGMutablePath()
+            path.addRect(textRect)
+            let frame = CTFramesetterCreateFrame(framesetter, currentRange, path, nil)
+            CTFrameDraw(frame, context!)
+            currentY += textHeight + 10
+        }
+
+        // Fonction pour dessiner du texte avec attributs et pagination
+        func drawAttributedText(
+            _ attributedString: NSAttributedString, x: CGFloat, maxWidth: CGFloat
+        ) {
+            // Créer une copie mutable pour s'assurer que tous les attributs sont corrects
+            let mutableString = NSMutableAttributedString(attributedString: attributedString)
+
+            // S'assurer que tout le texte a une police et une couleur
+            mutableString.addAttribute(.foregroundColor, value: NSColor.black, range: NSRange(location: 0, length: mutableString.length))
+
+            // Pour chaque partie du texte, s'assurer qu'elle a une police Arial de taille 12
+            mutableString.enumerateAttribute(.font, in: NSRange(location: 0, length: mutableString.length), options: []) { value, range, _ in
+                if let currentFont = value as? NSFont {
+                    let descriptor = currentFont.fontDescriptor
+                    let traits = descriptor.symbolicTraits
+                    let newDescriptor = NSFontDescriptor(name: "Arial", size: 12).withSymbolicTraits(traits)
+                    if let newFont = NSFont(descriptor: newDescriptor, size: 12) {
+                        mutableString.addAttribute(.font, value: newFont, range: range)
+                    }
+                } else {
+                    // Si pas de police, utiliser Arial normale
+                    mutableString.addAttribute(.font, value: NSFont(name: "Arial", size: 12) ?? NSFont.systemFont(ofSize: 12), range: range)
+                }
+            }
+
+            let framesetter = CTFramesetterCreateWithAttributedString(mutableString)
+            let currentRange = CFRange(location: 0, length: mutableString.length)
+            let suggestedSize = CTFramesetterSuggestFrameSizeWithConstraints(
+                framesetter, CFRange(location: 0, length: mutableString.length), nil,
                 CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude), nil)
             let textHeight = suggestedSize.height
 
@@ -282,8 +334,8 @@ class PDFService {
                 drawText(
                     "Résumé Professionnel", font: NSFont.boldSystemFont(ofSize: 18), color: .black,
                     x: margin, maxWidth: pageWidth - 2 * margin)
-                drawText(
-                    profile.summaryString, font: NSFont.systemFont(ofSize: 12), color: .black,
+                drawAttributedText(
+                    profile.normalizedSummaryAttributedString,
                     x: margin, maxWidth: pageWidth - 2 * margin)
             }
 
@@ -359,10 +411,9 @@ class PDFService {
 
                     currentY += lineHeight + 2
 
-                    // Détails de l'expérience (pagination gérée par drawText)
-                    drawText(
-                        experience.detailsString, font: NSFont.systemFont(ofSize: 12),
-                        color: .black,
+                    // Détails de l'expérience (pagination gérée par drawAttributedText)
+                    drawAttributedText(
+                        experience.normalizedDetailsAttributedString,
                         x: margin, maxWidth: pageWidth - 2 * margin)
                 }
             }
@@ -377,8 +428,8 @@ class PDFService {
                         "\(education.institution) - \(education.degree)",
                         font: NSFont.boldSystemFont(ofSize: 14), color: .black, x: margin,
                         maxWidth: pageWidth - 2 * margin)
-                    drawText(
-                        education.detailsString, font: NSFont.systemFont(ofSize: 12), color: .black,
+                    drawAttributedText(
+                        education.normalizedDetailsAttributedString,
                         x: margin, maxWidth: pageWidth - 2 * margin)
                 }
             }

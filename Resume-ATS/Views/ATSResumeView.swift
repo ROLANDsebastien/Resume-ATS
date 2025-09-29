@@ -10,6 +10,42 @@ import SwiftUI
 //  Created by ROLAND Sébastien on 27/09/2025.
 //
 
+// MARK: - Attributed Text View for PDF
+struct AttributedTextView: NSViewRepresentable {
+    let attributedString: NSAttributedString
+    let fontSize: CGFloat
+
+    func makeNSView(context: Context) -> NSTextView {
+        let textView = NSTextView()
+        textView.isEditable = false
+        textView.isSelectable = false
+        textView.backgroundColor = .clear
+        textView.drawsBackground = false
+        textView.textColor = .black
+        textView.font = NSFont.systemFont(ofSize: fontSize)
+        return textView
+    }
+
+    func updateNSView(_ nsView: NSTextView, context: Context) {
+        let mutableString = NSMutableAttributedString(attributedString: attributedString)
+        // Ensure all text is black and has proper font size
+        mutableString.addAttribute(.foregroundColor, value: NSColor.black, range: NSRange(location: 0, length: mutableString.length))
+        mutableString.enumerateAttribute(.font, in: NSRange(location: 0, length: mutableString.length), options: []) { value, range, _ in
+            if let currentFont = value as? NSFont {
+                let descriptor = currentFont.fontDescriptor
+                let traits = descriptor.symbolicTraits
+                let newDescriptor = NSFontDescriptor(name: "Arial", size: fontSize).withSymbolicTraits(traits)
+                if let newFont = NSFont(descriptor: newDescriptor, size: fontSize) {
+                    mutableString.addAttribute(.font, value: newFont, range: range)
+                }
+            } else {
+                mutableString.addAttribute(.font, value: NSFont(name: "Arial", size: fontSize) ?? NSFont.systemFont(ofSize: fontSize), range: range)
+            }
+        }
+        nsView.textStorage?.setAttributedString(mutableString)
+    }
+}
+
 struct ATSResumeView: View {
     var profile: Profile
     var language: String = "fr"
@@ -83,9 +119,8 @@ struct ATSResumeView: View {
             // Professional Summary
             if !profile.summaryString.isEmpty {
                 SectionView(title: localizedTitle(for: "professional_summary")) {
-                    Text(AttributedString(profile.normalizedSummaryAttributedString))
-                        .lineSpacing(4)
-                        .foregroundColor(.black)
+                    AttributedTextView(attributedString: profile.normalizedSummaryAttributedString, fontSize: 11)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
 
@@ -115,9 +150,8 @@ struct ATSResumeView: View {
                                     .font(.custom("Arial", size: 10))
                                     .foregroundColor(.black)
                                 }
-                                Text(AttributedString(experience.normalizedDetailsAttributedString))
-                                    .lineSpacing(4)
-                                    .foregroundColor(.black)
+                                 AttributedTextView(attributedString: experience.normalizedDetailsAttributedString, fontSize: 11)
+                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
                     }
@@ -142,14 +176,10 @@ struct ATSResumeView: View {
                                     .font(.custom("Arial", size: 10))
                                     .foregroundColor(.black)
                                 }
-                                if !education.detailsString.isEmpty {
-                                    Text(
-                                        AttributedString(
-                                            education.normalizedDetailsAttributedString)
-                                    )
-                                    .lineSpacing(4)
-                                    .foregroundColor(.black)
-                                }
+                                 if !education.detailsString.isEmpty {
+                                     AttributedTextView(attributedString: education.normalizedDetailsAttributedString, fontSize: 11)
+                                         .frame(maxWidth: .infinity, alignment: .leading)
+                                 }
                             }
                         }
                     }
