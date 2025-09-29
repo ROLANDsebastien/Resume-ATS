@@ -9,8 +9,6 @@ import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
 
-
-
 struct TemplatesView: View {
     @Binding var selectedSection: String?
     @Environment(\.modelContext) private var modelContext
@@ -31,7 +29,8 @@ struct TemplatesView: View {
                     Text(language == "fr" ? "Sélectionner un profil:" : "Select a profile:")
                         .font(.headline)
                     Picker(language == "fr" ? "Profil" : "Profile", selection: $selectedProfile) {
-                        Text(language == "fr" ? "Choisir un profil" : "Choose a profile").tag(nil as Profile?)
+                        Text(language == "fr" ? "Choisir un profil" : "Choose a profile").tag(
+                            nil as Profile?)
                         ForEach(profiles) { profile in
                             Text(profile.name).tag(profile as Profile?)
                         }
@@ -42,38 +41,40 @@ struct TemplatesView: View {
                 .padding(.horizontal)
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
-                     DashboardTile(
-                         title: language == "fr" ? "Modèle ATS" : "ATS Template",
-                         subtitle: language == "fr" ? "Optimisé pour les filtres ATS" : "Optimized for ATS filters",
-                         systemImage: "doc",
-                         action: {
-                             guard let profile = selectedProfile else { return }
-                             PDFService.generateATSResumePDF(for: profile) { pdfURL in
-                                 if let pdfURL = pdfURL {
-                                     DispatchQueue.main.async {
-                                         NSWorkspace.shared.open(pdfURL)
-                                     }
-                                 }
-                             }
-                         },
-                         isEnabled: selectedProfile != nil
-                     )
+                    DashboardTile(
+                        title: language == "fr" ? "Modèle ATS" : "ATS Template",
+                        subtitle: language == "fr"
+                            ? "Optimisé pour les filtres ATS" : "Optimized for ATS filters",
+                        systemImage: "doc",
+                        action: {
+                            guard let profile = selectedProfile else { return }
+                            PDFService.generateATSResumePDFWithPagination(for: profile) { pdfURL in
+                                if let pdfURL = pdfURL {
+                                    DispatchQueue.main.async {
+                                        NSWorkspace.shared.open(pdfURL)
+                                    }
+                                }
+                            }
+                        },
+                        isEnabled: selectedProfile != nil
+                    )
 
-                     DashboardTile(
-                         title: language == "fr" ? "Modèle Moderne" : "Modern Template",
-                         subtitle: language == "fr" ? "Design contemporain" : "Contemporary design",
-                         systemImage: "doc.fill"
-                     ) {
-                         // Action to select modern template
-                     }
+                    DashboardTile(
+                        title: language == "fr" ? "Modèle Moderne" : "Modern Template",
+                        subtitle: language == "fr" ? "Design contemporain" : "Contemporary design",
+                        systemImage: "doc.fill"
+                    ) {
+                        // Action to select modern template
+                    }
 
-                     DashboardTile(
-                         title: language == "fr" ? "Modèle Créatif" : "Creative Template",
-                         subtitle: language == "fr" ? "Pour postes créatifs" : "For creative positions",
-                         systemImage: "paintbrush"
-                     ) {
-                         // Action to select creative template
-                     }
+                    DashboardTile(
+                        title: language == "fr" ? "Modèle Créatif" : "Creative Template",
+                        subtitle: language == "fr"
+                            ? "Pour postes créatifs" : "For creative positions",
+                        systemImage: "paintbrush"
+                    ) {
+                        // Action to select creative template
+                    }
                 }
                 .padding(.horizontal)
             }
@@ -109,16 +110,22 @@ struct ContentView: View {
                     Label(appLanguage == "fr" ? "Profil" : "Profile", systemImage: "person")
                 }
                 NavigationLink(value: "Candidatures") {
-                    Label(appLanguage == "fr" ? "Candidatures" : "Applications", systemImage: "briefcase")
+                    Label(
+                        appLanguage == "fr" ? "Candidatures" : "Applications",
+                        systemImage: "briefcase")
                 }
                 NavigationLink(value: "Lettres") {
-                    Label(appLanguage == "fr" ? "Lettres de Motivation" : "Cover Letters", systemImage: "doc.text")
+                    Label(
+                        appLanguage == "fr" ? "Lettres de Motivation" : "Cover Letters",
+                        systemImage: "doc.text")
                 }
                 NavigationLink(value: "Templates") {
                     Label(appLanguage == "fr" ? "Templates" : "Templates", systemImage: "doc")
                 }
                 NavigationLink(value: "Statistiques") {
-                    Label(appLanguage == "fr" ? "Statistiques" : "Statistics", systemImage: "chart.bar")
+                    Label(
+                        appLanguage == "fr" ? "Statistiques" : "Statistics",
+                        systemImage: "chart.bar")
                 }
                 NavigationLink(value: "Settings") {
                     Label(appLanguage == "fr" ? "Réglages" : "Settings", systemImage: "gear")

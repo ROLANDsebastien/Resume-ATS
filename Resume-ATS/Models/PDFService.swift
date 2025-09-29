@@ -63,12 +63,17 @@ class PDFService {
         completion(tempURL)
     }
 
-    static func generateStatisticsPDF(applications: [Application], language: String, selectedYear: Int, completion: @escaping (URL?) -> Void) {
+    static func generateStatisticsPDF(
+        applications: [Application], language: String, selectedYear: Int,
+        completion: @escaping (URL?) -> Void
+    ) {
         print("Generating statistics PDF")
 
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("Statistics_Report.pdf")
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "Statistics_Report.pdf")
 
-        let statsView = StatisticsPDFView(applications: applications, language: language, selectedYear: selectedYear)
+        let statsView = StatisticsPDFView(
+            applications: applications, language: language, selectedYear: selectedYear)
 
         let hostingView = NSHostingView(rootView: statsView)
         hostingView.frame = CGRect(x: 0, y: 0, width: 595, height: 842)
@@ -82,4 +87,325 @@ class PDFService {
         completion(tempURL)
     }
 
+    /// Nouvelle fonction : Génération PDF paginée pour le CV ATS
+    static func generateATSResumePDFWithPagination(
+        for profile: Profile, completion: @escaping (URL?) -> Void
+    ) {
+        print("Génération PDF paginée pour le profil : \(profile.name)")
+
+        // Taille A4 en points
+        let pageWidth: CGFloat = 595
+        let pageHeight: CGFloat = 842
+        let margin: CGFloat = 40
+
+        // Créer le document PDF
+        let pdfDocument = PDFDocument()
+
+        // Variables pour la pagination
+        var currentY: CGFloat = 0
+        var pageIndex = 0
+        let photoSize: CGFloat = 120
+        let photoPadding: CGFloat = 20
+        let photoCornerRadius: CGFloat = 10
+        let headerHeight: CGFloat = max(photoSize + photoPadding, 140)
+        let marginTop: CGFloat = margin
+
+        // Créer la première page
+        func createPage() -> (CGContext?, NSMutableData) {
+            var pageRect = CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight)
+            let data = NSMutableData()
+            guard let consumer = CGDataConsumer(data: data as CFMutableData),
+                let context = CGContext(consumer: consumer, mediaBox: &pageRect, nil)
+            else {
+                return (nil as CGContext?, data)
+            }
+            context.beginPDFPage(nil)
+            // Fond blanc
+            context.setFillColor(NSColor.white.cgColor)
+            context.fill(pageRect)
+            return (context, data)
+        }
+
+        var (context, pageData) = createPage()
+        guard context != nil else {
+            completion(nil)
+            return
+        }
+
+        // Fonction utilitaire pour changer de page
+        func addPageToDocument(_ context: CGContext, _ pageData: NSMutableData) {
+            context.endPDFPage()
+            context.closePDF()
+            if let pdfPageDoc = PDFDocument(data: pageData as Data),
+                let pdfPage = pdfPageDoc.page(at: 0)
+            {
+                pdfDocument.insert(pdfPage, at: pdfDocument.pageCount)
+            }
+        }
+
+        // Fonction pour dessiner du texte avec pagination
+        func drawText(
+            _ text: String, font: NSFont, color: NSColor, x: CGFloat, maxWidth: CGFloat
+        ) {
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: color,
+            ]
+            let attributedText = NSAttributedString(string: text, attributes: attributes)
+            let framesetter = CTFramesetterCreateWithAttributedString(attributedText)
+            var currentRange = CFRange(location: 0, length: attributedText.length)
+            let suggestedSize = CTFramesetterSuggestFrameSizeWithConstraints(
+                framesetter, CFRange(location: 0, length: attributedText.length), nil,
+                CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude), nil)
+            let textHeight = suggestedSize.height
+
+            // Si le texte ne tient pas sur la page, changer de page
+            if currentY + textHeight > pageHeight - margin {
+                addPageToDocument(context!, pageData)
+                pageIndex += 1
+                let result = createPage()
+                context = result.0
+                pageData = result.1
+                // Sur les pages suivantes, commencer en haut avec la marge
+                currentY = marginTop
+            }
+
+            let textRect = CGRect(
+                x: x, y: pageHeight - currentY - textHeight, width: maxWidth, height: textHeight)
+            let path = CGMutablePath()
+            path.addRect(textRect)
+            let frame = CTFramesetterCreateFrame(framesetter, currentRange, path, nil)
+            CTFrameDraw(frame, context!)
+            currentY += textHeight + 10
+        }
+
+        // --- HEADER : PHOTO + NOM/CONTACT ---
+        // Dessiner la photo de profil arrondie en haut à droite (uniquement sur la première page)
+        if pageIndex == 0, profile.showPhotoInPDF, let photoData = profile.photo,
+            let image = NSImage(data: photoData)
+        {
+            let imageRect = CGRect(
+                x: pageWidth - margin - photoSize,
+                y: pageHeight - margin - photoSize,
+                width: photoSize,
+                height: photoSize
+            )
+            context?.saveGState()
+            let path = CGPath(
+                roundedRect: imageRect, cornerWidth: photoCornerRadius,
+                cornerHeight: photoCornerRadius, transform: nil)
+            context?.addPath(path)
+            context?.clip()
+            if let cgImage = image.cgImage(
+                forProposedRect: nil as UnsafeMutablePointer<NSRect>?,
+                context: nil as NSGraphicsContext?, hints: nil as [NSImageRep.HintKey: Any]?)
+            {
+                context?.draw(cgImage, in: imageRect)
+            }
+            context?.restoreGState()
+        }
+
+        // Nom et prénom à gauche de la photo
+        let textStartX: CGFloat = margin
+        let textMaxWidth: CGFloat = pageWidth - 2 * margin - photoSize - photoPadding
+
+        // Header uniquement sur la première page
+        if pageIndex == 0 {
+            currentY = marginTop
+            if let first = profile.firstName, let last = profile.lastName {
+                drawText(
+                    "\(first) \(last)", font: NSFont.boldSystemFont(ofSize: 24), color: .black,
+                    x: textStartX, maxWidth: textMaxWidth)
+            }
+            drawText(
+                profile.name, font: NSFont.systemFont(ofSize: 14), color: .black, x: textStartX,
+                maxWidth: textMaxWidth)
+
+            // Afficher chaque info de contact disponible sur une ligne distincte sous le nom
+            var contactInfo: [String] = []
+            if let email = profile.email, !email.isEmpty {
+                contactInfo.append("Email: \(email)")
+            }
+            if let phone = profile.phone, !phone.isEmpty {
+                contactInfo.append("Téléphone: \(phone)")
+            }
+            if let location = profile.location, !location.isEmpty {
+                contactInfo.append("Localisation: \(location)")
+            }
+            if let linkedin = profile.linkedin, !linkedin.isEmpty {
+                contactInfo.append("LinkedIn: \(linkedin)")
+            }
+            if let github = profile.github, !github.isEmpty {
+                contactInfo.append("GitHub: \(github)")
+            }
+            if let gitlab = profile.gitlab, !gitlab.isEmpty {
+                contactInfo.append("GitLab: \(gitlab)")
+            }
+            if let website = profile.website, !website.isEmpty {
+                contactInfo.append("Site Web: \(website)")
+            }
+            var headerBlockHeight: CGFloat = 0
+            if !contactInfo.isEmpty {
+                let infoBlockWidth: CGFloat =
+                    (pageWidth - 2 * margin - photoSize - photoPadding) * 0.9
+                for info in contactInfo {
+                    // Police plus petite et largeur limitée, sans espacement vertical
+                    let attributes: [NSAttributedString.Key: Any] = [
+                        .font: NSFont.systemFont(ofSize: 11),
+                        .foregroundColor: NSColor.darkGray,
+                    ]
+                    let attributedText = NSAttributedString(string: info, attributes: attributes)
+                    let framesetter = CTFramesetterCreateWithAttributedString(attributedText)
+                    let suggestedSize = CTFramesetterSuggestFrameSizeWithConstraints(
+                        framesetter, CFRange(location: 0, length: attributedText.length), nil,
+                        CGSize(width: infoBlockWidth, height: CGFloat.greatestFiniteMagnitude), nil)
+                    let textHeight = suggestedSize.height
+                    let textRect = CGRect(
+                        x: textStartX, y: pageHeight - currentY - textHeight, width: infoBlockWidth,
+                        height: textHeight)
+                    let path = CGMutablePath()
+                    path.addRect(textRect)
+                    let frame = CTFramesetterCreateFrame(
+                        framesetter, CFRange(location: 0, length: 0), path, nil)
+                    CTFrameDraw(frame, context!)
+                    currentY += textHeight  // pas d'espacement supplémentaire
+                    headerBlockHeight += textHeight
+                }
+                // Positionner le début du contenu sous le header (nom + infos + sans marge)
+                currentY = headerHeight + headerBlockHeight
+            } else {
+                currentY = marginTop
+            }
+
+            // Résumé professionnel
+            if !profile.summaryString.isEmpty {
+                drawText(
+                    "Résumé Professionnel", font: NSFont.boldSystemFont(ofSize: 18), color: .black,
+                    x: margin, maxWidth: pageWidth - 2 * margin)
+                drawText(
+                    profile.summaryString, font: NSFont.systemFont(ofSize: 12), color: .black,
+                    x: margin, maxWidth: pageWidth - 2 * margin)
+            }
+
+            // Expériences professionnelles
+            if profile.showExperiences && !profile.experiences.filter({ $0.isVisible }).isEmpty {
+                drawText(
+                    "Expérience Professionnelle", font: NSFont.boldSystemFont(ofSize: 18),
+                    color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
+                for experience in profile.experiences.filter({ $0.isVisible }) {
+                    // Ligne entreprise + poste à gauche, date à droite sur la même ligne
+                    let leftText =
+                        experience.company
+                        + (experience.position != nil && !experience.position!.isEmpty
+                            ? " - \(experience.position!)" : "")
+                    let dateText: String = {
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "MM/yyyy"
+                        let startStr = formatter.string(from: experience.startDate)
+                        if let endDate = experience.endDate {
+                            let endStr = formatter.string(from: endDate)
+                            return "\(startStr) - \(endStr)"
+                        } else {
+                            return "\(startStr) - Présent"
+                        }
+                    }()
+
+                    // Mesurer la hauteur de la ligne
+                    let attributesLeft: [NSAttributedString.Key: Any] = [
+                        .font: NSFont.boldSystemFont(ofSize: 14),
+                        .foregroundColor: NSColor.black,
+                    ]
+                    let attributesRight: [NSAttributedString.Key: Any] = [
+                        .font: NSFont.systemFont(ofSize: 13),
+                        .foregroundColor: NSColor.black,
+                    ]
+                    let leftAttr = NSAttributedString(string: leftText, attributes: attributesLeft)
+                    let rightAttr = NSAttributedString(
+                        string: dateText, attributes: attributesRight)
+                    let leftSize = leftAttr.size()
+                    let rightSize = rightAttr.size()
+                    let lineHeight = max(leftSize.height, rightSize.height)
+
+                    // Pagination si besoin
+                    if currentY + lineHeight > pageHeight - margin {
+                        addPageToDocument(context!, pageData)
+                        pageIndex += 1
+                        let result = createPage()
+                        context = result.0
+                        pageData = result.1
+                        currentY = marginTop
+                    }
+
+                    // Dessiner le texte à gauche et la date à droite sur la même ligne en utilisant CTFrameDraw
+                    let yPos = pageHeight - currentY - lineHeight
+                    let leftRect = CGRect(
+                        x: margin, y: yPos, width: pageWidth / 2, height: lineHeight)
+                    let leftPath = CGMutablePath()
+                    leftPath.addRect(leftRect)
+                    let leftFramesetter = CTFramesetterCreateWithAttributedString(leftAttr)
+                    let leftFrame = CTFramesetterCreateFrame(
+                        leftFramesetter, CFRange(location: 0, length: 0), leftPath, nil)
+                    CTFrameDraw(leftFrame, context!)
+
+                    let rightRect = CGRect(
+                        x: pageWidth - margin - rightSize.width, y: yPos, width: rightSize.width,
+                        height: lineHeight)
+                    let rightPath = CGMutablePath()
+                    rightPath.addRect(rightRect)
+                    let rightFramesetter = CTFramesetterCreateWithAttributedString(rightAttr)
+                    let rightFrame = CTFramesetterCreateFrame(
+                        rightFramesetter, CFRange(location: 0, length: 0), rightPath, nil)
+                    CTFrameDraw(rightFrame, context!)
+
+                    currentY += lineHeight + 2
+
+                    // Détails de l'expérience (pagination gérée par drawText)
+                    drawText(
+                        experience.detailsString, font: NSFont.systemFont(ofSize: 12),
+                        color: .black,
+                        x: margin, maxWidth: pageWidth - 2 * margin)
+                }
+            }
+
+            // Formation
+            if profile.showEducations && !profile.educations.filter({ $0.isVisible }).isEmpty {
+                drawText(
+                    "Formation", font: NSFont.boldSystemFont(ofSize: 18), color: .black, x: margin,
+                    maxWidth: pageWidth - 2 * margin)
+                for education in profile.educations.filter({ $0.isVisible }) {
+                    drawText(
+                        "\(education.institution) - \(education.degree)",
+                        font: NSFont.boldSystemFont(ofSize: 14), color: .black, x: margin,
+                        maxWidth: pageWidth - 2 * margin)
+                    drawText(
+                        education.detailsString, font: NSFont.systemFont(ofSize: 12), color: .black,
+                        x: margin, maxWidth: pageWidth - 2 * margin)
+                }
+            }
+
+            // Compétences
+            if profile.showSkills && !profile.skills.isEmpty {
+                drawText(
+                    "Compétences", font: NSFont.boldSystemFont(ofSize: 18), color: .black,
+                    x: margin,
+                    maxWidth: pageWidth - 2 * margin)
+                drawText(
+                    profile.skills.joined(separator: ", "), font: NSFont.systemFont(ofSize: 12),
+                    color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
+            }
+
+            // Ajouter la dernière page
+            if let ctx = context {
+                addPageToDocument(ctx, pageData)
+            }
+
+            // Sauvegarder le PDF
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
+                "ATS_Resume_Paginated_\(profile.name).pdf")
+            pdfDocument.write(to: tempURL)
+
+            print("PDF paginé généré avec succès")
+            completion(tempURL)
+        }
+    }
 }
