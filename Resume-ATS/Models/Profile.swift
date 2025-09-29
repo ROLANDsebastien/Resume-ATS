@@ -5,9 +5,9 @@
 //  Created by ROLAND Sébastien on 21/09/2025.
 //
 
+import AppKit
 import Foundation
 import SwiftData
-import AppKit
 
 @Model
 final class Profile {
@@ -32,13 +32,16 @@ final class Profile {
     @Relationship(deleteRule: .cascade) var experiences: [Experience]
     @Relationship(deleteRule: .cascade) var educations: [Education]
     @Relationship(deleteRule: .cascade) var references: [Reference]
-     var skills: [String]
+    var skills: [String]
 
     init(
-        name: String, language: String = "fr", firstName: String? = nil, lastName: String? = nil, email: String? = nil,
+        name: String, language: String = "fr", firstName: String? = nil, lastName: String? = nil,
+        email: String? = nil,
         phone: String? = nil, location: String? = nil, github: String? = nil, gitlab: String? = nil,
-        linkedin: String? = nil, website: String? = nil, photo: Data? = nil, showPhotoInPDF: Bool = false, summary: Data = Data(),
-        showExperiences: Bool = true, showEducations: Bool = true, showReferences: Bool = true, showSkills: Bool = true,
+        linkedin: String? = nil, website: String? = nil, photo: Data? = nil,
+        showPhotoInPDF: Bool = false, summary: Data = Data(),
+        showExperiences: Bool = true, showEducations: Bool = true, showReferences: Bool = true,
+        showSkills: Bool = true,
         experiences: [Experience] = [],
         educations: [Education] = [], references: [Reference] = [], skills: [String] = []
     ) {
@@ -71,7 +74,8 @@ final class Profile {
             if summary.isEmpty {
                 return NSAttributedString(string: "")
             }
-            return NSAttributedString(rtf: summary, documentAttributes: nil) ?? NSAttributedString(string: "")
+            return NSAttributedString(rtf: summary, documentAttributes: nil)
+                ?? NSAttributedString(string: "")
         }
         set {
             summary = newValue.rtf(from: NSRange(location: 0, length: newValue.length)) ?? Data()
@@ -84,11 +88,13 @@ final class Profile {
 
     var normalizedSummaryAttributedString: NSAttributedString {
         let attr = summaryAttributedString.mutableCopy() as! NSMutableAttributedString
-        attr.enumerateAttribute(.font, in: NSRange(location: 0, length: attr.length), options: []) { value, range, _ in
+        attr.enumerateAttribute(.font, in: NSRange(location: 0, length: attr.length), options: []) {
+            value, range, _ in
             if let currentFont = value as? NSFont {
                 let descriptor = currentFont.fontDescriptor
                 let traits = descriptor.symbolicTraits
-                let newDescriptor = NSFontDescriptor(name: "Arial", size: 11).withSymbolicTraits(traits)
+                let newDescriptor = NSFontDescriptor(name: "Arial", size: 11).withSymbolicTraits(
+                    traits)
                 if let newFont = NSFont(descriptor: newDescriptor, size: 11) {
                     attr.addAttribute(.font, value: newFont, range: range)
                 }
@@ -101,14 +107,19 @@ final class Profile {
 @Model
 final class Experience {
     var company: String
+    var position: String?
     var startDate: Date
     var endDate: Date?
     var details: Data
     var isVisible: Bool = true
     var profile: Profile?
 
-    init(company: String, startDate: Date, endDate: Date? = nil, details: Data = Data(), isVisible: Bool = true) {
+    init(
+        company: String, position: String? = nil, startDate: Date, endDate: Date? = nil,
+        details: Data = Data(), isVisible: Bool = true
+    ) {
         self.company = company
+        self.position = position
         self.startDate = startDate
         self.endDate = endDate
         self.details = details
@@ -120,7 +131,8 @@ final class Experience {
             if details.isEmpty {
                 return NSAttributedString(string: "")
             }
-            return NSAttributedString(rtf: details, documentAttributes: nil) ?? NSAttributedString(string: "")
+            return NSAttributedString(rtf: details, documentAttributes: nil)
+                ?? NSAttributedString(string: "")
         }
         set {
             details = newValue.rtf(from: NSRange(location: 0, length: newValue.length)) ?? Data()
@@ -133,11 +145,13 @@ final class Experience {
 
     var normalizedDetailsAttributedString: NSAttributedString {
         let attr = detailsAttributedString.mutableCopy() as! NSMutableAttributedString
-        attr.enumerateAttribute(.font, in: NSRange(location: 0, length: attr.length), options: []) { value, range, _ in
+        attr.enumerateAttribute(.font, in: NSRange(location: 0, length: attr.length), options: []) {
+            value, range, _ in
             if let currentFont = value as? NSFont {
                 let descriptor = currentFont.fontDescriptor
                 let traits = descriptor.symbolicTraits
-                let newDescriptor = NSFontDescriptor(name: "Arial", size: 11).withSymbolicTraits(traits)
+                let newDescriptor = NSFontDescriptor(name: "Arial", size: 11).withSymbolicTraits(
+                    traits)
                 if let newFont = NSFont(descriptor: newDescriptor, size: 11) {
                     attr.addAttribute(.font, value: newFont, range: range)
                 }
@@ -174,7 +188,8 @@ final class Education {
             if details.isEmpty {
                 return NSAttributedString(string: "")
             }
-            return NSAttributedString(rtf: details, documentAttributes: nil) ?? NSAttributedString(string: "")
+            return NSAttributedString(rtf: details, documentAttributes: nil)
+                ?? NSAttributedString(string: "")
         }
         set {
             details = newValue.rtf(from: NSRange(location: 0, length: newValue.length)) ?? Data()
@@ -187,11 +202,13 @@ final class Education {
 
     var normalizedDetailsAttributedString: NSAttributedString {
         let attr = detailsAttributedString.mutableCopy() as! NSMutableAttributedString
-        attr.enumerateAttribute(.font, in: NSRange(location: 0, length: attr.length), options: []) { value, range, _ in
+        attr.enumerateAttribute(.font, in: NSRange(location: 0, length: attr.length), options: []) {
+            value, range, _ in
             if let currentFont = value as? NSFont {
                 let descriptor = currentFont.fontDescriptor
                 let traits = descriptor.symbolicTraits
-                let newDescriptor = NSFontDescriptor(name: "Arial", size: 11).withSymbolicTraits(traits)
+                let newDescriptor = NSFontDescriptor(name: "Arial", size: 11).withSymbolicTraits(
+                    traits)
                 if let newFont = NSFont(descriptor: newDescriptor, size: 11) {
                     attr.addAttribute(.font, value: newFont, range: range)
                 }
@@ -211,7 +228,10 @@ final class Reference {
     var isVisible: Bool = true
     var profile: Profile?
 
-    init(name: String, position: String, company: String, email: String, phone: String, isVisible: Bool = true) {
+    init(
+        name: String, position: String, company: String, email: String, phone: String,
+        isVisible: Bool = true
+    ) {
         self.name = name
         self.position = position
         self.company = company

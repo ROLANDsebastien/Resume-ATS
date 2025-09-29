@@ -37,6 +37,7 @@ class DataService {
 
     struct SerializableExperience: Codable {
         let company: String
+        let position: String?
         let startDate: Date
         let endDate: Date?
         let details: Data
@@ -114,6 +115,7 @@ class DataService {
                 experiences: profile.experiences.map { exp in
                     SerializableExperience(
                         company: exp.company,
+                        position: exp.position,
                         startDate: exp.startDate,
                         endDate: exp.endDate,
                         details: exp.details,
@@ -292,6 +294,7 @@ class DataService {
             for exp in serializableProfile.experiences {
                 let experience = Experience(
                     company: exp.company,
+                    position: exp.position,
                     startDate: exp.startDate,
                     endDate: exp.endDate,
                     details: exp.details,

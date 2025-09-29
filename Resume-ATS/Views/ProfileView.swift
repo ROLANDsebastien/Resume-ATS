@@ -3,7 +3,13 @@ import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
 
-// MARK: - Main Profile View
+// MARK: - Skill Item
+struct SkillItem: Identifiable {
+    let id = UUID()
+    var text: String
+}
+
+// MARK: - Profile View
 struct ProfileView: View {
     @Binding var selectedSection: String?
     @Environment(\.modelContext) private var modelContext
@@ -66,7 +72,8 @@ struct ProfileView: View {
             "rename_profile": "Rename profile",
             "cancel": "Cancel",
             "delete_profile": "Delete profile",
-            "delete_confirm": "Are you sure you want to delete this profile? This action is irreversible."
+            "delete_confirm":
+                "Are you sure you want to delete this profile? This action is irreversible.",
         ]
         let frDict: [String: String] = [
             "personal_info": "Informations Personnelles",
@@ -113,7 +120,8 @@ struct ProfileView: View {
             "rename_profile": "Renommer le profil",
             "cancel": "Annuler",
             "delete_profile": "Supprimer le profil",
-            "delete_confirm": "Êtes-vous sûr de vouloir supprimer ce profil ? Cette action est irréversible."
+            "delete_confirm":
+                "Êtes-vous sûr de vouloir supprimer ce profil ? Cette action est irréversible.",
         ]
         let dict = effectiveLanguage == "en" ? enDict : frDict
         return dict[key] ?? key
@@ -133,7 +141,7 @@ struct ProfileView: View {
                 if let profile = selectedProfile {
                     VStack(spacing: 20) {
                         StyledSection(title: localizedTitle(for: "personal_info")) {
-                             PersonalInfoForm(profile: profile, language: effectiveLanguage)
+                            PersonalInfoForm(profile: profile, language: effectiveLanguage)
                         }
 
                         StyledSection(title: localizedTitle(for: "summary")) {
@@ -144,36 +152,36 @@ struct ProfileView: View {
                                 ))
                         }
 
-                         StyledSection(title: localizedTitle(for: "experiences")) {
-                             VStack(alignment: .leading, spacing: 12) {
-                                 // Section visibility toggle
-                                 HStack {
-                                     Text(localizedTitle(for: "show_section"))
-                                         .font(.subheadline)
-                                         .foregroundColor(.secondary)
-                                     Spacer()
-                                     Toggle(
-                                         "",
-                                         isOn: Binding(
-                                             get: { profile.showExperiences },
-                                             set: { profile.showExperiences = $0 }
-                                         )
-                                     )
-                                     .labelsHidden()
-                                     .toggleStyle(.switch)
-                                 }
+                        StyledSection(title: localizedTitle(for: "experiences")) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Section visibility toggle
+                                HStack {
+                                    Text(localizedTitle(for: "show_section"))
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Toggle(
+                                        "",
+                                        isOn: Binding(
+                                            get: { profile.showExperiences },
+                                            set: { profile.showExperiences = $0 }
+                                        )
+                                    )
+                                    .labelsHidden()
+                                    .toggleStyle(.switch)
+                                }
 
                                 if profile.showExperiences {
                                     ForEach(profile.experiences) { experience in
                                         VStack(alignment: .leading, spacing: 8) {
                                             HStack {
-                                                 Toggle(
-                                                     localizedTitle(for: "visible_cv"),
-                                                     isOn: Binding(
-                                                         get: { experience.isVisible },
-                                                         set: { experience.isVisible = $0 }
-                                                     )
-                                                 )
+                                                Toggle(
+                                                    localizedTitle(for: "visible_cv"),
+                                                    isOn: Binding(
+                                                        get: { experience.isVisible },
+                                                        set: { experience.isVisible = $0 }
+                                                    )
+                                                )
                                                 .toggleStyle(.switch)
                                                 Spacer()
                                                 Button(action: {
@@ -192,7 +200,8 @@ struct ProfileView: View {
                                                 }
                                                 .buttonStyle(.plain)
                                             }
-                                             ExperienceForm(experience: experience, language: effectiveLanguage)
+                                            ExperienceForm(
+                                                experience: experience, language: effectiveLanguage)
                                         }
                                         .padding(.vertical, 8)
                                         .padding(.horizontal, 12)
@@ -202,13 +211,15 @@ struct ProfileView: View {
                                             Divider().background(Color.secondary.opacity(0.3))
                                         }
                                     }
-                                     StyledButton(
-                                         title: localizedTitle(for: "add_experience"), systemImage: "plus",
-                                         action: {
+                                    StyledButton(
+                                        title: localizedTitle(for: "add_experience"),
+                                        systemImage: "plus",
+                                        action: {
                                             DispatchQueue.main.async {
                                                 profile.experiences.append(
                                                     Experience(
-                                                        company: "", startDate: Date(),
+                                                        company: "",
+                                                        startDate: Date(),
                                                         details: Data()))
                                             }
                                         })
@@ -216,36 +227,36 @@ struct ProfileView: View {
                             }
                         }
 
-                         StyledSection(title: localizedTitle(for: "educations")) {
-                             VStack(alignment: .leading, spacing: 12) {
-                                 // Section visibility toggle
-                                 HStack {
-                                     Text(localizedTitle(for: "show_section"))
-                                         .font(.subheadline)
-                                         .foregroundColor(.secondary)
-                                     Spacer()
-                                     Toggle(
-                                         "",
-                                         isOn: Binding(
-                                             get: { profile.showEducations },
-                                             set: { profile.showEducations = $0 }
-                                         )
-                                     )
-                                     .labelsHidden()
-                                     .toggleStyle(.switch)
-                                 }
+                        StyledSection(title: localizedTitle(for: "educations")) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Section visibility toggle
+                                HStack {
+                                    Text(localizedTitle(for: "show_section"))
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Toggle(
+                                        "",
+                                        isOn: Binding(
+                                            get: { profile.showEducations },
+                                            set: { profile.showEducations = $0 }
+                                        )
+                                    )
+                                    .labelsHidden()
+                                    .toggleStyle(.switch)
+                                }
 
                                 if profile.showEducations {
                                     ForEach(profile.educations) { education in
                                         VStack(alignment: .leading, spacing: 8) {
                                             HStack {
-                                                 Toggle(
-                                                     localizedTitle(for: "visible_cv"),
-                                                     isOn: Binding(
-                                                         get: { education.isVisible },
-                                                         set: { education.isVisible = $0 }
-                                                     )
-                                                 )
+                                                Toggle(
+                                                    localizedTitle(for: "visible_cv"),
+                                                    isOn: Binding(
+                                                        get: { education.isVisible },
+                                                        set: { education.isVisible = $0 }
+                                                    )
+                                                )
                                                 .toggleStyle(.switch)
                                                 Spacer()
                                                 Button(action: {
@@ -264,7 +275,8 @@ struct ProfileView: View {
                                                 }
                                                 .buttonStyle(.plain)
                                             }
-                                             EducationForm(education: education, language: effectiveLanguage)
+                                            EducationForm(
+                                                education: education, language: effectiveLanguage)
                                         }
                                         .padding(.vertical, 8)
                                         .padding(.horizontal, 12)
@@ -274,9 +286,10 @@ struct ProfileView: View {
                                             Divider().background(Color.secondary.opacity(0.3))
                                         }
                                     }
-                                     StyledButton(
-                                         title: localizedTitle(for: "add_education"), systemImage: "plus",
-                                         action: {
+                                    StyledButton(
+                                        title: localizedTitle(for: "add_education"),
+                                        systemImage: "plus",
+                                        action: {
                                             DispatchQueue.main.async {
                                                 profile.educations.append(
                                                     Education(
@@ -289,36 +302,36 @@ struct ProfileView: View {
                             }
                         }
 
-                         StyledSection(title: localizedTitle(for: "references")) {
-                             VStack(alignment: .leading, spacing: 12) {
-                                 // Section visibility toggle
-                                 HStack {
-                                     Text(localizedTitle(for: "show_section"))
-                                         .font(.subheadline)
-                                         .foregroundColor(.secondary)
-                                     Spacer()
-                                     Toggle(
-                                         "",
-                                         isOn: Binding(
-                                             get: { profile.showReferences },
-                                             set: { profile.showReferences = $0 }
-                                         )
-                                     )
-                                     .labelsHidden()
-                                     .toggleStyle(.switch)
-                                 }
+                        StyledSection(title: localizedTitle(for: "references")) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Section visibility toggle
+                                HStack {
+                                    Text(localizedTitle(for: "show_section"))
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Toggle(
+                                        "",
+                                        isOn: Binding(
+                                            get: { profile.showReferences },
+                                            set: { profile.showReferences = $0 }
+                                        )
+                                    )
+                                    .labelsHidden()
+                                    .toggleStyle(.switch)
+                                }
 
                                 if profile.showReferences {
                                     ForEach(profile.references) { reference in
                                         VStack(alignment: .leading, spacing: 8) {
                                             HStack {
-                                                 Toggle(
-                                                     localizedTitle(for: "visible_cv"),
-                                                     isOn: Binding(
-                                                         get: { reference.isVisible },
-                                                         set: { reference.isVisible = $0 }
-                                                     )
-                                                 )
+                                                Toggle(
+                                                    localizedTitle(for: "visible_cv"),
+                                                    isOn: Binding(
+                                                        get: { reference.isVisible },
+                                                        set: { reference.isVisible = $0 }
+                                                    )
+                                                )
                                                 .toggleStyle(.switch)
                                                 Spacer()
                                                 Button(action: {
@@ -337,7 +350,8 @@ struct ProfileView: View {
                                                 }
                                                 .buttonStyle(.plain)
                                             }
-                                             ReferenceForm(reference: reference, language: effectiveLanguage)
+                                            ReferenceForm(
+                                                reference: reference, language: effectiveLanguage)
                                         }
                                         .padding(.vertical, 8)
                                         .padding(.horizontal, 12)
@@ -347,9 +361,10 @@ struct ProfileView: View {
                                             Divider().background(Color.secondary.opacity(0.3))
                                         }
                                     }
-                                     StyledButton(
-                                         title: localizedTitle(for: "add_reference"), systemImage: "plus",
-                                         action: {
+                                    StyledButton(
+                                        title: localizedTitle(for: "add_reference"),
+                                        systemImage: "plus",
+                                        action: {
                                             DispatchQueue.main.async {
                                                 profile.references.append(
                                                     Reference(
@@ -362,38 +377,52 @@ struct ProfileView: View {
                             }
                         }
 
-                         StyledSection(title: localizedTitle(for: "skills")) {
-                             VStack(alignment: .leading, spacing: 12) {
-                                 // Section visibility toggle
-                                 HStack {
-                                     Text(localizedTitle(for: "show_section"))
-                                         .font(.subheadline)
-                                         .foregroundColor(.secondary)
-                                     Spacer()
-                                     Toggle(
-                                         "",
-                                         isOn: Binding(
-                                             get: { profile.showSkills },
-                                             set: { profile.showSkills = $0 }
-                                         )
-                                     )
-                                     .labelsHidden()
-                                     .toggleStyle(.switch)
-                                 }
+                        StyledSection(title: localizedTitle(for: "skills")) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Section visibility toggle
+                                HStack {
+                                    Text(localizedTitle(for: "show_section"))
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Toggle(
+                                        "",
+                                        isOn: Binding(
+                                            get: { profile.showSkills },
+                                            set: { profile.showSkills = $0 }
+                                        )
+                                    )
+                                    .labelsHidden()
+                                    .toggleStyle(.switch)
+                                }
 
                                 if profile.showSkills {
-                                    ForEach(profile.skills.indices, id: \.self) { index in
+                                    let skillItems = profile.skills.enumerated().map {
+                                        index, text in
+                                        SkillItem(text: text)
+                                    }
+                                    ForEach(skillItems) { item in
                                         HStack {
-                                             TextField(
-                                                 localizedTitle(for: "skills"),
-                                                 text: Binding(
-                                                     get: { profile.skills[index] },
-                                                     set: { profile.skills[index] = $0 })
-                                             )
+                                            TextField(
+                                                localizedTitle(for: "skills"),
+                                                text: Binding(
+                                                    get: { item.text },
+                                                    set: { newValue in
+                                                        if let index = profile.skills.firstIndex(
+                                                            of: item.text)
+                                                        {
+                                                            profile.skills[index] = newValue
+                                                        }
+                                                    })
+                                            )
                                             .textFieldStyle(StyledTextField())
                                             Button(action: {
                                                 DispatchQueue.main.async {
-                                                    profile.skills.remove(at: index)
+                                                    if let index = profile.skills.firstIndex(
+                                                        of: item.text)
+                                                    {
+                                                        profile.skills.remove(at: index)
+                                                    }
                                                 }
                                             }) {
                                                 Image(systemName: "trash.fill")
@@ -402,9 +431,10 @@ struct ProfileView: View {
                                             .buttonStyle(.plain)
                                         }
                                     }
-                                     StyledButton(
-                                         title: localizedTitle(for: "add_skill"), systemImage: "plus",
-                                         action: {
+                                    StyledButton(
+                                        title: localizedTitle(for: "add_skill"),
+                                        systemImage: "plus",
+                                        action: {
                                             DispatchQueue.main.async { profile.skills.append("") }
                                         })
                                 }
@@ -414,8 +444,8 @@ struct ProfileView: View {
                 } else {
                     VStack {
                         Spacer()
-                         Text(localizedTitle(for: "select_section"))
-                             .foregroundColor(.secondary)
+                        Text(localizedTitle(for: "select_section"))
+                            .foregroundColor(.secondary)
                         Spacer()
                     }
                 }
@@ -434,20 +464,20 @@ struct ProfileView: View {
             }
         }
         .alert(localizedTitle(for: "rename_profile"), isPresented: $showRenameAlert) {
-             TextField(localizedTitle(for: "new_profile_name"), text: $renameProfileName)
-             Button(localizedTitle(for: "cancel"), role: .cancel) {}
-             Button(localizedTitle(for: "rename")) {
+            TextField(localizedTitle(for: "new_profile_name"), text: $renameProfileName)
+            Button(localizedTitle(for: "cancel"), role: .cancel) {}
+            Button(localizedTitle(for: "rename")) {
                 confirmRenameProfile()
             }
         }
         .alert(localizedTitle(for: "delete_profile"), isPresented: $showDeleteAlert) {
-             Button(localizedTitle(for: "cancel"), role: .cancel) {}
-             Button(localizedTitle(for: "delete"), role: .destructive) {
+            Button(localizedTitle(for: "cancel"), role: .cancel) {}
+            Button(localizedTitle(for: "delete"), role: .destructive) {
                 confirmDeleteProfile()
             }
-         } message: {
-             Text(localizedTitle(for: "delete_confirm"))
-         }
+        } message: {
+            Text(localizedTitle(for: "delete_confirm"))
+        }
     }
 
     private var profileSelector: some View {
@@ -461,19 +491,26 @@ struct ProfileView: View {
                 }
             } else {
                 HStack {
-                     Text(localizedTitle(for: "profile_selected") + selectedProfile!.name)
-                         .font(.headline)
+                    Text(localizedTitle(for: "profile_selected") + selectedProfile!.name)
+                        .font(.headline)
                     Spacer()
-                     StyledButton(title: localizedTitle(for: "rename"), systemImage: "pencil", action: renameProfile)
-                     StyledButton(
-                         title: localizedTitle(for: "duplicate"), systemImage: "doc.on.doc", action: duplicateProfile)
-                     StyledButton(title: localizedTitle(for: "delete"), systemImage: "trash", action: deleteProfile)
-                        .foregroundColor(.red)
+                    StyledButton(
+                        title: localizedTitle(for: "rename"), systemImage: "pencil",
+                        action: renameProfile)
+                    StyledButton(
+                        title: localizedTitle(for: "duplicate"), systemImage: "doc.on.doc",
+                        action: duplicateProfile)
+                    StyledButton(
+                        title: localizedTitle(for: "delete"), systemImage: "trash",
+                        action: deleteProfile
+                    )
+                    .foregroundColor(.red)
                 }
             }
 
             Picker(effectiveLanguage == "fr" ? "Profil" : "Profile", selection: $selectedProfile) {
-                Text(effectiveLanguage == "fr" ? "Nouveau Profil" : "New Profile").tag(nil as Profile?)
+                Text(effectiveLanguage == "fr" ? "Nouveau Profil" : "New Profile").tag(
+                    nil as Profile?)
                 ForEach(profiles) { profile in
                     Text(profile.name).tag(profile as Profile?)
                 }
@@ -521,7 +558,8 @@ struct ProfileView: View {
             showSkills: profile.showSkills,
             experiences: profile.experiences.map { exp in
                 Experience(
-                    company: exp.company, startDate: exp.startDate, endDate: exp.endDate,
+                    company: exp.company, position: exp.position, startDate: exp.startDate,
+                    endDate: exp.endDate,
                     details: exp.details, isVisible: exp.isVisible)
             },
             educations: profile.educations.map { edu in
@@ -665,13 +703,15 @@ struct ExperienceForm: View {
     private func localizedTitle(for key: String) -> String {
         let enDict: [String: String] = [
             "company": "Company",
+            "position": "Position",
             "start_date": "Start Date",
-            "end_date": "End Date"
+            "end_date": "End Date",
         ]
         let frDict: [String: String] = [
             "company": "Entreprise",
+            "position": "Poste",
             "start_date": "Date de début",
-            "end_date": "Date de fin"
+            "end_date": "Date de fin",
         ]
         let dict = language == "en" ? enDict : frDict
         return dict[key] ?? key
@@ -679,22 +719,31 @@ struct ExperienceForm: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-             TextField(localizedTitle(for: "company"), text: $experience.company)
-                 .foregroundColor(.primary)
-             HStack {
-                 DatePicker(
-                     localizedTitle(for: "start_date"), selection: $experience.startDate, displayedComponents: .date
-                 )
-                 .datePickerStyle(.compact)
-                 Spacer()
-                 DatePicker(
-                     localizedTitle(for: "end_date"),
-                     selection: Binding(
-                         get: { experience.endDate ?? Date() }, set: { experience.endDate = $0 }),
-                     displayedComponents: .date
-                 )
-                 .datePickerStyle(.compact)
-             }
+            TextField(localizedTitle(for: "company"), text: $experience.company)
+                .foregroundColor(.primary)
+            TextField(
+                localizedTitle(for: "position"),
+                text: Binding(
+                    get: { experience.position ?? "" },
+                    set: { experience.position = $0.isEmpty ? nil : $0 }
+                )
+            )
+            .foregroundColor(.primary)
+            HStack {
+                DatePicker(
+                    localizedTitle(for: "start_date"), selection: $experience.startDate,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
+                Spacer()
+                DatePicker(
+                    localizedTitle(for: "end_date"),
+                    selection: Binding(
+                        get: { experience.endDate ?? Date() }, set: { experience.endDate = $0 }),
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
+            }
             RichTextEditorWithToolbar(
                 attributedString: Binding(
                     get: { experience.detailsAttributedString },
@@ -714,13 +763,13 @@ struct EducationForm: View {
             "institution": "Institution",
             "degree": "Degree",
             "start_date": "Start Date",
-            "end_date": "End Date"
+            "end_date": "End Date",
         ]
         let frDict: [String: String] = [
             "institution": "Institution",
             "degree": "Diplôme",
             "start_date": "Date de début",
-            "end_date": "Date de fin"
+            "end_date": "Date de fin",
         ]
         let dict = language == "en" ? enDict : frDict
         return dict[key] ?? key
@@ -728,24 +777,25 @@ struct EducationForm: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-             TextField(localizedTitle(for: "institution"), text: $education.institution)
-                 .foregroundColor(.primary)
-             TextField(localizedTitle(for: "degree"), text: $education.degree)
-                 .foregroundColor(.primary)
-             HStack {
-                 DatePicker(
-                     localizedTitle(for: "start_date"), selection: $education.startDate, displayedComponents: .date
-                 )
-                 .datePickerStyle(.compact)
-                 Spacer()
-                 DatePicker(
-                     localizedTitle(for: "end_date"),
-                     selection: Binding(
-                         get: { education.endDate ?? Date() }, set: { education.endDate = $0 }),
-                     displayedComponents: .date
-                 )
-                 .datePickerStyle(.compact)
-             }
+            TextField(localizedTitle(for: "institution"), text: $education.institution)
+                .foregroundColor(.primary)
+            TextField(localizedTitle(for: "degree"), text: $education.degree)
+                .foregroundColor(.primary)
+            HStack {
+                DatePicker(
+                    localizedTitle(for: "start_date"), selection: $education.startDate,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
+                Spacer()
+                DatePicker(
+                    localizedTitle(for: "end_date"),
+                    selection: Binding(
+                        get: { education.endDate ?? Date() }, set: { education.endDate = $0 }),
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
+            }
             RichTextEditorWithToolbar(
                 attributedString: Binding(
                     get: { education.detailsAttributedString },
@@ -766,14 +816,14 @@ struct ReferenceForm: View {
             "position": "Position",
             "company": "Company",
             "email": "Email",
-            "phone": "Phone"
+            "phone": "Phone",
         ]
         let frDict: [String: String] = [
             "name": "Nom",
             "position": "Poste",
             "company": "Entreprise",
             "email": "Email",
-            "phone": "Téléphone"
+            "phone": "Téléphone",
         ]
         let dict = language == "en" ? enDict : frDict
         return dict[key] ?? key
@@ -781,16 +831,16 @@ struct ReferenceForm: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-             TextField(localizedTitle(for: "name"), text: $reference.name)
-                 .foregroundColor(.primary)
-             TextField(localizedTitle(for: "position"), text: $reference.position)
-                 .foregroundColor(.primary)
-             TextField(localizedTitle(for: "company"), text: $reference.company)
-             TextField(localizedTitle(for: "email"), text: $reference.email)
-                 .foregroundColor(.primary)
-             TextField(localizedTitle(for: "phone"), text: $reference.phone)
-                 .foregroundColor(.primary)
-         }
+            TextField(localizedTitle(for: "name"), text: $reference.name)
+                .foregroundColor(.primary)
+            TextField(localizedTitle(for: "position"), text: $reference.position)
+                .foregroundColor(.primary)
+            TextField(localizedTitle(for: "company"), text: $reference.company)
+            TextField(localizedTitle(for: "email"), text: $reference.email)
+                .foregroundColor(.primary)
+            TextField(localizedTitle(for: "phone"), text: $reference.phone)
+                .foregroundColor(.primary)
+        }
         .textFieldStyle(StyledTextField())
     }
 }
@@ -817,7 +867,7 @@ struct PersonalInfoForm: View {
             "website": "Website",
             "show_photo_pdf": "Show photo in PDF",
             "select_photo": "Select a photo",
-            "drag_photo": "Drag a photo here"
+            "drag_photo": "Drag a photo here",
         ]
         let frDict: [String: String] = [
             "cv_language": "Langue du CV",
@@ -834,7 +884,7 @@ struct PersonalInfoForm: View {
             "website": "Site Web",
             "show_photo_pdf": "Afficher la photo dans le PDF",
             "select_photo": "Sélectionner une photo",
-            "drag_photo": "Glissez une photo ici"
+            "drag_photo": "Glissez une photo ici",
         ]
         let dict = language == "en" ? enDict : frDict
         return dict[key] ?? key
@@ -870,7 +920,7 @@ struct PersonalInfoForm: View {
                 .frame(maxWidth: .infinity, alignment: .center)
             } else {
                 VStack(spacing: 8) {
-                     Button(localizedTitle(for: "select_photo")) {
+                    Button(localizedTitle(for: "select_photo")) {
                         selectPhoto()
                     }
                     .buttonStyle(.bordered)
@@ -879,11 +929,11 @@ struct PersonalInfoForm: View {
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(Color.gray, lineWidth: 2)
                             .frame(width: 100, height: 100)
-                         Text(localizedTitle(for: "drag_photo"))
-                             .font(.caption)
-                             .foregroundColor(.gray)
-                             .multilineTextAlignment(.center)
-                             .padding(4)
+                        Text(localizedTitle(for: "drag_photo"))
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(4)
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     .onDrop(of: [.image], isTargeted: nil) { providers in

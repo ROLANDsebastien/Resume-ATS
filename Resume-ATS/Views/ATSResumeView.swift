@@ -29,7 +29,7 @@ struct ATSResumeView: View {
             "gitlab_prefix": "GitLab:",
             "linkedin_prefix": "LinkedIn:",
             "website_prefix": "Website:",
-            "present": "Present"
+            "present": "Present",
         ]
         let frDict: [String: String] = [
             "professional_summary": "Résumé Professionnel",
@@ -44,7 +44,7 @@ struct ATSResumeView: View {
             "gitlab_prefix": "GitLab :",
             "linkedin_prefix": "LinkedIn :",
             "website_prefix": "Site Web :",
-            "present": "Présent"
+            "present": "Présent",
         ]
         let dict = language == "en" ? enDict : frDict
         return dict[key] ?? key
@@ -96,9 +96,16 @@ struct ATSResumeView: View {
                         ForEach(profile.experiences.filter({ $0.isVisible })) { experience in
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack {
-                                    Text(experience.company)
-                                        .font(.custom("Arial", size: 12))
-                                        .foregroundColor(.black)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(experience.company)
+                                            .font(.custom("Arial", size: 12))
+                                            .foregroundColor(.black)
+                                        if let position = experience.position, !position.isEmpty {
+                                            Text(position)
+                                                .font(.custom("Arial", size: 11))
+                                                .foregroundColor(.black)
+                                        }
+                                    }
                                     Spacer()
                                     Text(
                                         dateRange(
@@ -136,7 +143,10 @@ struct ATSResumeView: View {
                                     .foregroundColor(.black)
                                 }
                                 if !education.detailsString.isEmpty {
-                                    Text(AttributedString(education.normalizedDetailsAttributedString))
+                                    Text(
+                                        AttributedString(
+                                            education.normalizedDetailsAttributedString)
+                                    )
                                     .lineSpacing(4)
                                     .foregroundColor(.black)
                                 }
@@ -313,9 +323,15 @@ struct SectionView<Content: View>: View {
 #Preview {
     ATSResumeView(
         profile: Profile(
-            name: "John Doe", language: "en", firstName: "John", lastName: "Doe", email: "john@example.com",
-            showPhotoInPDF: true, summary: NSAttributedString(string: "Experienced developer").rtf(from: NSRange(location: 0, length: 21)) ?? Data(),
+            name: "John Doe", language: "en", firstName: "John", lastName: "Doe",
+            email: "john@example.com",
+            showPhotoInPDF: true,
+            summary: NSAttributedString(string: "Experienced developer").rtf(
+                from: NSRange(location: 0, length: 21)) ?? Data(),
             experiences: [
-                Experience(company: "Tech Corp", startDate: Date(), details: NSAttributedString(string: "Developed apps").rtf(from: NSRange(location: 0, length: 14)) ?? Data())
+                Experience(
+                    company: "Tech Corp", position: nil, startDate: Date(),
+                    details: NSAttributedString(string: "Developed apps").rtf(
+                        from: NSRange(location: 0, length: 14)) ?? Data())
             ], skills: ["Swift", "iOS"]), language: "en", isForPDF: false)
 }
