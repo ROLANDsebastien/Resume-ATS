@@ -197,13 +197,11 @@ class PDFService {
         func cleanPhoneForATS(_ phoneString: String) -> String {
             // Garder seulement les chiffres et le + au début
             var result = ""
-            var hasPlus = false
 
             for char in phoneString {
                 if char == "+" && result.isEmpty {
                     // Garder le + seulement s'il est au début
                     result.append(char)
-                    hasPlus = true
                 } else if char.isNumber {
                     // Garder les chiffres
                     result.append(char)
