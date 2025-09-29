@@ -198,6 +198,7 @@ struct EditApplicationView: View {
     @State private var dateApplied: Date
     @State private var status: Application.Status
     @State private var notes: String
+    @State private var source: String
     @State private var selectedCoverLetter: CoverLetter?
 
     init(application: Application, language: String) {
@@ -208,6 +209,7 @@ struct EditApplicationView: View {
         _dateApplied = State(initialValue: application.dateApplied)
         _status = State(initialValue: application.status)
         _notes = State(initialValue: application.notes)
+        _source = State(initialValue: application.source ?? "")
         _selectedCoverLetter = State(initialValue: application.coverLetter)
     }
 
@@ -228,6 +230,7 @@ struct EditApplicationView: View {
                     }
                 }
                 TextField(language == "fr" ? "Notes" : "Notes", text: $notes)
+                TextField(language == "fr" ? "Source" : "Source", text: $source)
                 Picker(language == "fr" ? "Lettre de Motivation" : "Cover Letter", selection: $selectedCoverLetter) {
                     Text(language == "fr" ? "Aucune" : "None").tag(nil as CoverLetter?)
                     ForEach(coverLetters) { coverLetter in
@@ -247,6 +250,7 @@ struct EditApplicationView: View {
                     application.dateApplied = dateApplied
                     application.status = status
                     application.notes = notes
+                    application.source = source.isEmpty ? nil : source
                     application.coverLetter = selectedCoverLetter
                     dismiss()
                 }
@@ -271,6 +275,7 @@ struct AddApplicationView: View {
     @State private var dateApplied = Date()
     @State private var status: Application.Status = .applied
     @State private var notes = ""
+    @State private var source = ""
     @State private var selectedCoverLetter: CoverLetter? = nil
 
     init(language: String) {
@@ -294,6 +299,7 @@ struct AddApplicationView: View {
                     }
                 }
                 TextField(language == "fr" ? "Notes" : "Notes", text: $notes)
+                TextField(language == "fr" ? "Source" : "Source", text: $source)
                 Picker(language == "fr" ? "Lettre de Motivation" : "Cover Letter", selection: $selectedCoverLetter) {
                     Text(language == "fr" ? "Aucune" : "None").tag(nil as CoverLetter?)
                     ForEach(coverLetters) { coverLetter in
@@ -314,6 +320,7 @@ struct AddApplicationView: View {
                         dateApplied: dateApplied,
                         status: status,
                         notes: notes,
+                        source: source.isEmpty ? nil : source,
                         coverLetter: selectedCoverLetter
                     )
                     modelContext.insert(newApplication)

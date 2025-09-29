@@ -15,19 +15,21 @@ final class Application {
     var dateApplied: Date
     var status: Status
     var notes: String
+    var source: String?
     var documentBookmarks: [Data]?
     var profile: Profile?
     var coverLetter: CoverLetter?
 
     init(
         company: String, position: String, dateApplied: Date = Date(), status: Status = .applied,
-        notes: String = "", documentBookmarks: [Data]? = nil, coverLetter: CoverLetter? = nil
+        notes: String = "", source: String? = nil, documentBookmarks: [Data]? = nil, coverLetter: CoverLetter? = nil
     ) {
         self.company = company
         self.position = position
         self.dateApplied = dateApplied
         self.status = status
         self.notes = notes
+        self.source = source
         self.documentBookmarks = documentBookmarks
         self.coverLetter = coverLetter
     }

@@ -67,6 +67,7 @@ class DataService {
         let dateApplied: Date
         let status: String
         let notes: String
+        let source: String?
         let documentPaths: [String]?  // Chemins relatifs des documents dans l'archive
         let profileName: String  // Ajout pour lier à un profil
     }
@@ -179,6 +180,7 @@ class DataService {
                 dateApplied: application.dateApplied,
                 status: application.status.rawValue,
                 notes: application.notes,
+                source: application.source,
                 documentPaths: documentPaths,
                 profileName: application.profile?.name ?? ""
             )
@@ -381,6 +383,7 @@ class DataService {
                 dateApplied: serializableApp.dateApplied,
                 status: status,
                 notes: serializableApp.notes,
+                source: serializableApp.source,
                 documentBookmarks: bookmarks
             )
 

@@ -63,4 +63,23 @@ class PDFService {
         completion(tempURL)
     }
 
+    static func generateStatisticsPDF(applications: [Application], language: String, selectedYear: Int, completion: @escaping (URL?) -> Void) {
+        print("Generating statistics PDF")
+
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("Statistics_Report.pdf")
+
+        let statsView = StatisticsPDFView(applications: applications, language: language, selectedYear: selectedYear)
+
+        let hostingView = NSHostingView(rootView: statsView)
+        hostingView.frame = CGRect(x: 0, y: 0, width: 595, height: 842)
+
+        let pdfData = hostingView.dataWithPDF(inside: hostingView.bounds)
+
+        let pdfDocument = PDFDocument(data: pdfData)
+        pdfDocument?.write(to: tempURL)
+
+        print("Statistics PDF generated successfully")
+        completion(tempURL)
+    }
+
 }
