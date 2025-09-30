@@ -1039,9 +1039,12 @@ struct RichTextEditor: NSViewRepresentable {
         let textView = NSTextView()
         textView.isRichText = true
         textView.allowsUndo = true
-        textView.isAutomaticQuoteSubstitutionEnabled = false
-        textView.isAutomaticDashSubstitutionEnabled = false
-        textView.isAutomaticTextReplacementEnabled = false
+        textView.isAutomaticQuoteSubstitutionEnabled = true
+        textView.isAutomaticDashSubstitutionEnabled = true
+        textView.isAutomaticTextReplacementEnabled = true
+        if #available(macOS 15.0, *) {
+            textView.writingToolsBehavior = .default
+        }
         textView.usesRuler = false
         textView.usesInspectorBar = false
         textView.delegate = context.coordinator
@@ -1062,37 +1065,8 @@ struct RichTextEditor: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         if let textView = nsView.documentView as? NSTextView {
-            textView.textColor = NSColor.labelColor
-            textView.font = NSFont.systemFont(ofSize: 14.0)
-            textView.typingAttributes[.font] = NSFont.systemFont(ofSize: 14.0)
-            let mutableString = NSMutableAttributedString(attributedString: attributedString)
-            mutableString.addAttribute(
-                .foregroundColor, value: NSColor.labelColor,
-                range: NSRange(location: 0, length: mutableString.length))
-            // Update font size in the attributed string
-            mutableString.enumerateAttribute(
-                .font, in: NSRange(location: 0, length: mutableString.length), options: []
-            ) { value, range, _ in
-                if let font = value as? NSFont {
-                    let newFont =
-                        NSFont(descriptor: font.fontDescriptor, size: 14.0)
-                        ?? NSFont.systemFont(ofSize: 14.0)
-                    mutableString.addAttribute(.font, value: newFont, range: range)
-                } else {
-                    mutableString.addAttribute(
-                        .font, value: NSFont.systemFont(ofSize: 14.0), range: range)
-                }
-            }
-            if textView.attributedString() != mutableString {
-                textView.textStorage?.setAttributedString(mutableString)
-            }
-            let clampedRange = NSRange(
-                location: min(selectedRange.location, mutableString.length),
-                length: min(
-                    selectedRange.length,
-                    mutableString.length - min(selectedRange.location, mutableString.length)))
-            if textView.selectedRange() != clampedRange {
-                textView.setSelectedRange(clampedRange)
+            if textView.attributedString() != attributedString {
+                textView.textStorage?.setAttributedString(attributedString)
             }
         }
     }
