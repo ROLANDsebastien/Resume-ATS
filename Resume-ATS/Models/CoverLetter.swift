@@ -14,15 +14,13 @@ final class CoverLetter {
     var title: String
     var content: Data
     var creationDate: Date
-    var profile: Profile?
 
     init(
-        title: String, content: Data = Data(), creationDate: Date = Date(), profile: Profile? = nil
+        title: String, content: Data = Data(), creationDate: Date = Date()
     ) {
         self.title = title
         self.content = content
         self.creationDate = creationDate
-        self.profile = profile
     }
 
     var contentAttributedString: NSAttributedString {

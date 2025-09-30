@@ -62,6 +62,12 @@ class DataService {
         let isVisible: Bool
     }
 
+    struct SerializableCoverLetter: Codable {
+        let title: String
+        let content: Data
+        let creationDate: Date
+    }
+
     struct SerializableApplication: Codable {
         let company: String
         let position: String
@@ -71,16 +77,20 @@ class DataService {
         let source: String?
         let documentPaths: [String]?  // Chemins relatifs des documents dans l'archive
         let profileName: String  // Ajout pour lier à un profil
+        let coverLetterTitle: String?  // Ajout pour lier à une lettre
     }
 
     struct ExportData: Codable {
         let profiles: [SerializableProfile]
+        let coverLetters: [SerializableCoverLetter]
         let applications: [SerializableApplication]
         let exportDate: Date
         let version: String
     }
 
-    static func exportProfiles(_ profiles: [Profile], applications: [Application]) -> URL? {
+    static func exportProfiles(
+        _ profiles: [Profile], coverLetters: [CoverLetter], applications: [Application]
+    ) -> URL? {
         let fileManager = FileManager.default
 
         // Créer un dossier temporaire pour l'export
@@ -145,6 +155,14 @@ class DataService {
                 skills: profile.skills
             )
         }
+        // Sérialiser les lettres de motivation
+        let serializableCoverLetters = coverLetters.map { coverLetter in
+            SerializableCoverLetter(
+                title: coverLetter.title,
+                content: coverLetter.content,
+                creationDate: coverLetter.creationDate
+            )
+        }
 
         // Traiter les applications et copier les documents
         var serializableApplications: [SerializableApplication] = []
@@ -184,13 +202,15 @@ class DataService {
                 notes: application.notes,
                 source: application.source,
                 documentPaths: documentPaths,
-                profileName: application.profile?.name ?? ""
+                profileName: application.profile?.name ?? "",
+                coverLetterTitle: application.coverLetter?.title
             )
             serializableApplications.append(serializableApp)
         }
 
         let exportData = ExportData(
             profiles: serializableProfiles,
+            coverLetters: serializableCoverLetters,
             applications: serializableApplications,
             exportDate: Date(),
             version: "1.1"
@@ -259,6 +279,10 @@ class DataService {
         // Récupérer les profils existants pour éviter les doublons
         let existingProfiles = try context.fetch(FetchDescriptor<Profile>())
         let existingProfileNames = Set(existingProfiles.map { $0.name })
+
+        // Récupérer les lettres existantes pour éviter les doublons
+        let existingCoverLetters = try context.fetch(FetchDescriptor<CoverLetter>())
+        let existingCoverLetterTitles = Set(existingCoverLetters.map { $0.title })
 
         // Récupérer les candidatures existantes pour éviter les doublons
         let existingApplications = try context.fetch(FetchDescriptor<Application>())
@@ -337,10 +361,27 @@ class DataService {
             context.insert(profile)
         }
 
+        // Importer les lettres de motivation non existantes
+        for serializableCoverLetter in exportData.coverLetters
+        where !existingCoverLetterTitles.contains(serializableCoverLetter.title) {
+            let coverLetter = CoverLetter(
+                title: serializableCoverLetter.title,
+                content: serializableCoverLetter.content,
+                creationDate: serializableCoverLetter.creationDate
+            )
+            context.insert(coverLetter)
+        }
+
         // Créer une map pour un accès rapide aux profils par nom
         var profileMap: [String: Profile] = [:]
         for profile in context.insertedModelsArray.compactMap({ $0 as? Profile }) {
             profileMap[profile.name] = profile
+        }
+
+        // Créer une map pour un accès rapide aux lettres par titre
+        var coverLetterMap: [String: CoverLetter] = [:]
+        for coverLetter in context.insertedModelsArray.compactMap({ $0 as? CoverLetter }) {
+            coverLetterMap[coverLetter.title] = coverLetter
         }
 
         // Importer les applications
@@ -393,6 +434,11 @@ class DataService {
             // Lier l'application au bon profil
             if !serializableApp.profileName.isEmpty {
                 application.profile = profileMap[serializableApp.profileName]
+            }
+
+            // Lier l'application à la bonne lettre
+            if let coverLetterTitle = serializableApp.coverLetterTitle {
+                application.coverLetter = coverLetterMap[coverLetterTitle]
             }
 
             context.insert(application)
