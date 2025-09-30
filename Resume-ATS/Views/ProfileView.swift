@@ -1118,6 +1118,15 @@ struct RichTextToolbar: View {
             }
             .buttonStyle(.bordered)
 
+            if #available(macOS 15.0, *) {
+                Button(action: {
+                    NSApp.sendAction(Selector(("showWritingTools:")), to: nil, from: nil)
+                }) {
+                    Image(systemName: "wand.and.stars")
+                }
+                .buttonStyle(.bordered)
+            }
+
             Button(action: { insertBullet() }) {
                 Image(systemName: "list.bullet")
             }
