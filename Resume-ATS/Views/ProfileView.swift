@@ -598,11 +598,11 @@ struct ProfileView: View {
 // MARK: - Reusable Styled Components
 extension Color {
     fileprivate static var darkBackground: Color {
-        Color.gray.opacity(0.1)
+        Color(.textBackgroundColor)
     }
 
     fileprivate static var sectionBackground: Color {
-        Color.gray.opacity(0.1)
+        Color(.textBackgroundColor)
     }
 }
 
@@ -1050,6 +1050,9 @@ struct RichTextEditor: NSViewRepresentable {
         textView.delegate = context.coordinator
         textView.textColor = NSColor.labelColor
         textView.font = NSFont.systemFont(ofSize: 20.0)
+        textView.typingAttributes = [
+            .foregroundColor: NSColor.labelColor, .font: NSFont.systemFont(ofSize: 20.0),
+        ]
         textView.drawsBackground = false
         textView.backgroundColor = NSColor.clear
 
@@ -1066,7 +1069,11 @@ struct RichTextEditor: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         if let textView = nsView.documentView as? NSTextView {
             if textView.attributedString() != attributedString {
-                textView.textStorage?.setAttributedString(attributedString)
+                let mutable = NSMutableAttributedString(attributedString: attributedString)
+                mutable.addAttribute(
+                    .foregroundColor, value: NSColor.labelColor,
+                    range: NSRange(location: 0, length: mutable.length))
+                textView.textStorage?.setAttributedString(mutable)
             }
         }
     }
@@ -1085,8 +1092,12 @@ struct RichTextEditor: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             if let textView = notification.object as? NSTextView {
                 let newString = textView.attributedString()
+                let mutable = NSMutableAttributedString(attributedString: newString)
+                mutable.addAttribute(
+                    .foregroundColor, value: NSColor.labelColor,
+                    range: NSRange(location: 0, length: mutable.length))
                 DispatchQueue.main.async {
-                    self.parent.attributedString = newString
+                    self.parent.attributedString = mutable
                 }
             }
         }
@@ -1120,7 +1131,8 @@ struct RichTextToolbar: View {
 
             if #available(macOS 15.0, *) {
                 Button(action: {
-                    NSApp.sendAction(Selector(("showWritingTools:")), to: nil, from: nil)
+                    NSApp.sendAction(
+                        #selector(NSResponder.showWritingTools(_:)), to: nil, from: nil)
                 }) {
                     Image(systemName: "wand.and.stars")
                 }
@@ -1138,7 +1150,7 @@ struct RichTextToolbar: View {
             .buttonStyle(.bordered)
         }
         .padding(4)
-        .background(Color.gray.opacity(0.1))
+        .background(Color(.textBackgroundColor))
         .cornerRadius(6)
     }
 
