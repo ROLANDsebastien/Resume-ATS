@@ -29,7 +29,7 @@ struct DashboardTile: View {
                     .foregroundColor(.secondary)
             }
             .frame(maxWidth: .infinity, minHeight: 120)
-            .background(Color.gray.opacity(0.1))
+            .background(.regularMaterial)
             .cornerRadius(12)
             .shadow(radius: isHovered && isEnabled ? 8 : 4)
             .scaleEffect(isHovered && isEnabled ? 1.02 : 1.0)

@@ -178,7 +178,7 @@ struct ApplicationRow: View {
             Spacer()
         }
         .padding(EdgeInsets(top: 10, leading: 20, bottom: 10, trailing: 20))
-        .background(Color.gray.opacity(0.1))
+        .background(.regularMaterial)
         .cornerRadius(8)
         .swipeActions {
             Button(role: .destructive, action: onDelete) {

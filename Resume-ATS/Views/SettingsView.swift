@@ -20,17 +20,7 @@ struct SettingsView: View {
     @State private var errorMessage = ""
     @State private var showingClearDataConfirmation = false
 
-    private var backgroundColor: Color {
-        systemColorScheme == .dark
-            ? Color(red: 24 / 255, green: 24 / 255, blue: 38 / 255)
-            : Color(NSColor.windowBackgroundColor)
-    }
 
-    private var sectionBackground: Color {
-        systemColorScheme == .dark
-            ? Color(red: 44 / 255, green: 44 / 255, blue: 60 / 255)
-            : Color(NSColor.controlBackgroundColor)
-    }
 
     var body: some View {
         ScrollView {
@@ -121,7 +111,7 @@ struct SettingsView: View {
                         }
                     }
                     .padding()
-                    .background(sectionBackground)
+                    .background(.regularMaterial)
                     .cornerRadius(10)
                 }
 
@@ -156,7 +146,7 @@ struct SettingsView: View {
                         }
                     }
                     .padding()
-                    .background(sectionBackground)
+                    .background(.regularMaterial)
                     .cornerRadius(10)
                 }
 
@@ -237,7 +227,7 @@ struct SettingsView: View {
                         }
                     }
                     .padding()
-                    .background(sectionBackground)
+                    .background(.regularMaterial)
                     .cornerRadius(10)
                 }
 
