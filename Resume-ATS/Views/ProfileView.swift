@@ -596,15 +596,7 @@ struct ProfileView: View {
 }
 
 // MARK: - Reusable Styled Components
-extension Color {
-    fileprivate static var darkBackground: Color {
-        Color(.textBackgroundColor)
-    }
 
-    fileprivate static var sectionBackground: Color {
-        Color(.textBackgroundColor)
-    }
-}
 
 private struct StyledSection<Content: View>: View {
     let title: String
@@ -635,7 +627,7 @@ private struct StyledSection<Content: View>: View {
             }
         }
         .padding()
-        .background(Color.sectionBackground)
+        .background(.regularMaterial)
         .cornerRadius(10)
     }
 }
@@ -665,10 +657,9 @@ private struct StyledButton: View {
 
 private struct StyledTextField: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
-            .padding(10)
-            .background(Color.darkBackground)
-            .cornerRadius(8)
+                    configuration
+                        .padding(10)
+                        .background(.thinMaterial)            .cornerRadius(8)
             .foregroundColor(.primary)
     }
 }
@@ -678,7 +669,7 @@ private struct StyledTextEditorModifier: ViewModifier {
         content
             .padding(10)
             .scrollContentBackground(.hidden)
-            .background(Color.darkBackground)
+            .background(.thinMaterial)
             .cornerRadius(8)
             .foregroundColor(.primary)
             .frame(minHeight: 100)
@@ -689,7 +680,7 @@ private struct StyledPickerModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(10)
-            .background(Color.sectionBackground)
+            .background(.thinMaterial)
             .cornerRadius(8)
             .foregroundColor(.primary)
     }
@@ -1150,7 +1141,7 @@ struct RichTextToolbar: View {
             .buttonStyle(.bordered)
         }
         .padding(4)
-        .background(Color(.textBackgroundColor))
+        .background(.thinMaterial)
         .cornerRadius(6)
     }
 
@@ -1248,7 +1239,7 @@ struct RichTextEditorWithToolbar: View {
             RichTextToolbar(attributedString: $attributedString, selectedRange: $selectedRange)
             RichTextEditor(attributedString: $attributedString, selectedRange: $selectedRange)
                 .frame(minHeight: 100)
-                .background(Color.darkBackground)
+                .background(.thinMaterial)
                 .cornerRadius(8)
         }
     }

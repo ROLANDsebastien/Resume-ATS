@@ -82,7 +82,7 @@ class DataService {
 
     struct ExportData: Codable {
         let profiles: [SerializableProfile]
-        let coverLetters: [SerializableCoverLetter]
+        let coverLetters: [SerializableCoverLetter]?
         let applications: [SerializableApplication]
         let exportDate: Date
         let version: String
@@ -362,24 +362,33 @@ class DataService {
         }
 
         // Importer les lettres de motivation non existantes
-        for serializableCoverLetter in exportData.coverLetters
-        where !existingCoverLetterTitles.contains(serializableCoverLetter.title) {
-            let coverLetter = CoverLetter(
-                title: serializableCoverLetter.title,
-                content: serializableCoverLetter.content,
-                creationDate: serializableCoverLetter.creationDate
-            )
-            context.insert(coverLetter)
+        if let serializableCoverLetters = exportData.coverLetters {
+            for serializableCoverLetter in serializableCoverLetters
+                where !existingCoverLetterTitles.contains(serializableCoverLetter.title)
+            {
+                let coverLetter = CoverLetter(
+                    title: serializableCoverLetter.title,
+                    content: serializableCoverLetter.content,
+                    creationDate: serializableCoverLetter.creationDate
+                )
+                context.insert(coverLetter)
+            }
         }
 
         // Créer une map pour un accès rapide aux profils par nom
         var profileMap: [String: Profile] = [:]
+        for profile in existingProfiles {
+            profileMap[profile.name] = profile
+        }
         for profile in context.insertedModelsArray.compactMap({ $0 as? Profile }) {
             profileMap[profile.name] = profile
         }
 
         // Créer une map pour un accès rapide aux lettres par titre
         var coverLetterMap: [String: CoverLetter] = [:]
+        for coverLetter in existingCoverLetters {
+            coverLetterMap[coverLetter.title] = coverLetter
+        }
         for coverLetter in context.insertedModelsArray.compactMap({ $0 as? CoverLetter }) {
             coverLetterMap[coverLetter.title] = coverLetter
         }
@@ -402,20 +411,35 @@ class DataService {
                 bookmarks = []
                 for path in documentPaths {
                     let tempDocumentURL = documentsDir.appendingPathComponent(path)
-                    if fileManager.fileExists(atPath: tempDocumentURL.path) {
-                        // Copier vers le dossier permanent
-                        let permanentURL = appDocumentsDir.appendingPathComponent(path)
-                        do {
-                            try fileManager.copyItem(at: tempDocumentURL, to: permanentURL)
-                            let bookmark = try permanentURL.bookmarkData(
-                                options: .withSecurityScope, includingResourceValuesForKeys: nil,
-                                relativeTo: nil)
-                            bookmarks?.append(bookmark)
-                        } catch {
-                            print(
-                                "Erreur lors de la copie ou création du bookmark pour \(path): \(error)"
-                            )
+                    let permanentURL = appDocumentsDir.appendingPathComponent(path)
+
+                    // Ensure the source file exists
+                    guard fileManager.fileExists(atPath: tempDocumentURL.path) else {
+                        print("Document source file not found after extraction: \(path)")
+                        continue
+                    }
+
+                    // Try to copy the item
+                    do {
+                        try fileManager.copyItem(at: tempDocumentURL, to: permanentURL)
+                    } catch let error as NSError {
+                        // If the error is that the file already exists, we can ignore it.
+                        // Cocoa error code 516 is "file exists".
+                        if !(error.domain == NSCocoaErrorDomain && error.code == 516) {
+                            // If it's a different error, print it and skip this document.
+                            print("Failed to copy document \(path): \(error)")
+                            continue
                         }
+                    }
+
+                    // At this point, the file is guaranteed to be at permanentURL. Create the bookmark.
+                    do {
+                        let bookmark = try permanentURL.bookmarkData(
+                            options: .withSecurityScope, includingResourceValuesForKeys: nil,
+                            relativeTo: nil)
+                        bookmarks?.append(bookmark)
+                    } catch {
+                        print("Failed to create bookmark for document \(path): \(error)")
                     }
                 }
             }
