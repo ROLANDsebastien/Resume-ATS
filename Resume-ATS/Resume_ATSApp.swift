@@ -1,8 +1,20 @@
 import SwiftData
 import SwiftUI
 
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return true
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        NSApplication.shared.terminate(nil)
+    }
+}
+
 @main
 struct Resume_ATSApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Profile.self,
@@ -26,6 +38,7 @@ struct Resume_ATSApp: App {
                 .preferredColorScheme(colorScheme == 0 ? .light : (colorScheme == 1 ? .dark : nil))
         }
         .modelContainer(sharedModelContainer)
+        .windowToolbarStyle(.unified)
         .commands {
             CommandGroup(replacing: .appTermination) {
                 Button("Quitter") {

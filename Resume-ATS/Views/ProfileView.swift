@@ -882,7 +882,7 @@ private struct SectionOrderItem: View {
 private struct StyledSection<Content: View>: View {
     let title: String
     @ViewBuilder let content: Content
-    @State private var isExpanded: Bool = true
+    @State private var isExpanded: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
