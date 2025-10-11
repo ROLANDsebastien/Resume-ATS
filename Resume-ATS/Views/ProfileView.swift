@@ -31,8 +31,6 @@ struct ProfileView: View {
             "certifications": "Certifications",
             "languages": "Languages",
             "section_order": "Section Order",
-            "move_up": "Move Up",
-            "move_down": "Move Down",
             "show_section": "Show this section in the CV",
             "visible_cv": "Visible in CV",
             "add_experience": "Add an experience",
@@ -91,8 +89,6 @@ struct ProfileView: View {
             "certifications": "Certifications",
             "languages": "Langues",
             "section_order": "Ordre des sections",
-            "move_up": "Monter",
-            "move_down": "Descendre",
             "show_section": "Afficher cette section dans le CV",
             "visible_cv": "Visible dans le CV",
             "add_experience": "Ajouter une expérience",
@@ -163,35 +159,22 @@ struct ProfileView: View {
                         }
 
                         StyledSection(title: localizedTitle(for: "section_order")) {
-                            VStack(spacing: 8) {
+                            VStack(spacing: 4) {
                                 ForEach(profile.sectionsOrder.indices, id: \.self) { index in
-                                    let section = profile.sectionsOrder[index]
-                                    HStack {
-                                        Text(localizedTitle(for: section.rawValue))
-                                        Spacer()
-                                        Button(action: {
-                                            if index > 0 {
-                                                profile.sectionsOrder.swapAt(index, index - 1)
+                                    SectionOrderItem(
+                                        section: profile.sectionsOrder[index],
+                                        index: index,
+                                        totalCount: profile.sectionsOrder.count,
+                                        language: effectiveLanguage,
+                                        onMove: { draggedSection, targetIndex in
+                                            if let fromIndex = profile.sectionsOrder.firstIndex(
+                                                of: draggedSection)
+                                            {
+                                                profile.sectionsOrder.move(
+                                                    fromOffsets: IndexSet([fromIndex]),
+                                                    toOffset: targetIndex)
                                             }
-                                        }) {
-                                            Image(systemName: "arrow.up")
-                                        }
-                                        .disabled(index == 0)
-                                        .buttonStyle(.plain)
-                                        Button(action: {
-                                            if index < profile.sectionsOrder.count - 1 {
-                                                profile.sectionsOrder.swapAt(index, index + 1)
-                                            }
-                                        }) {
-                                            Image(systemName: "arrow.down")
-                                        }
-                                        .disabled(index == profile.sectionsOrder.count - 1)
-                                        .buttonStyle(.plain)
-                                    }
-                                    .padding(.vertical, 4)
-                                    .padding(.horizontal, 8)
-                                    .background(Color.gray.opacity(0.1))
-                                    .cornerRadius(4)
+                                        })
                                 }
                             }
                             .frame(maxHeight: 300)
@@ -808,6 +791,93 @@ struct ProfileView: View {
 }
 
 // MARK: - Reusable Styled Components
+
+private struct SectionOrderItem: View {
+    let section: SectionType
+    let index: Int
+    let totalCount: Int
+    let language: String
+    let onMove: (SectionType, Int) -> Void
+
+    @State private var isTargeted = false
+
+    private func localizedTitle(for key: String) -> String {
+        let enDict: [String: String] = [
+            "summary": "Summary",
+            "experiences": "Experiences",
+            "educations": "Educations",
+            "references": "References",
+            "certifications": "Certifications",
+            "languages": "Languages",
+            "skills": "Skills",
+        ]
+        let frDict: [String: String] = [
+            "summary": "Résumé",
+            "experiences": "Expériences",
+            "educations": "Formations",
+            "references": "Références",
+            "certifications": "Certifications",
+            "languages": "Langues",
+            "skills": "Compétences",
+        ]
+        let dict = language == "en" ? enDict : frDict
+        return dict[key] ?? key
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Drop zone above
+            if index > 0 {
+                Rectangle()
+                    .fill(isTargeted ? Color.blue.opacity(0.3) : Color.clear)
+                    .frame(height: 2)
+                    .onDrop(of: [.text], isTargeted: $isTargeted) { providers, _ in
+                        handleDrop(providers: providers, targetIndex: index)
+                    }
+            }
+
+            // The actual item
+            HStack {
+                Image(systemName: "line.horizontal.3")
+                    .foregroundColor(.secondary)
+                Text(localizedTitle(for: section.rawValue))
+                Spacer()
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 8)
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(4)
+            .onDrag {
+                NSItemProvider(object: section.rawValue as NSString)
+            }
+
+            // Drop zone below
+            if index < totalCount - 1 {
+                Rectangle()
+                    .fill(isTargeted ? Color.blue.opacity(0.3) : Color.clear)
+                    .frame(height: 2)
+                    .onDrop(of: [.text], isTargeted: $isTargeted) { providers, _ in
+                        handleDrop(providers: providers, targetIndex: index + 1)
+                    }
+            }
+        }
+    }
+
+    private func handleDrop(providers: [NSItemProvider], targetIndex: Int) -> Bool {
+        guard let provider = providers.first else { return false }
+        _ = provider.loadObject(ofClass: NSString.self) { string, error in
+            if let sectionRaw = string as? String,
+                let draggedSection = SectionType(rawValue: sectionRaw)
+            {
+                // Find the current index of the dragged section
+                DispatchQueue.main.async {
+                    onMove(draggedSection, targetIndex)
+                }
+            }
+        }
+        return true
+    }
+}
 
 private struct StyledSection<Content: View>: View {
     let title: String
