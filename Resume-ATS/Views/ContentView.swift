@@ -40,7 +40,7 @@ struct TemplatesView: View {
                 }
                 .padding(.horizontal)
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 40), GridItem(.flexible(), spacing: 40), GridItem(.flexible())], spacing: 60) {
                     DashboardTile(
                         title: language == "fr" ? "Modèle ATS" : "ATS Template",
                         subtitle: language == "fr"
@@ -76,7 +76,7 @@ struct TemplatesView: View {
                         // Action to select creative template
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 20)
             }
         }
         .navigationTitle("Resume-ATS")

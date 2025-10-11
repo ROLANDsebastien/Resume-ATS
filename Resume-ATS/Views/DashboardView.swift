@@ -12,14 +12,14 @@ struct DashboardView: View {
     var language: String
 
     var body: some View {
-        ScrollView {
+        List {
             VStack(spacing: 30) {
                 Text(language == "fr" ? "Dashboard" : "Dashboard")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.top)
 
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 50) {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 40), GridItem(.flexible(), spacing: 40), GridItem(.flexible())], spacing: 60) {
                      DashboardTile(
                          title: language == "fr" ? "Profil" : "Profile",
                          subtitle: language == "fr" ? "Gérer votre profil" : "Manage your profile",
@@ -68,9 +68,11 @@ struct DashboardView: View {
                          selectedSection = "Settings"
                       }
                 }
-                .padding(.horizontal, 40)
+                .padding(.horizontal, 20)
             }
+            .listRowSeparator(.hidden)
         }
+        .listStyle(.plain)
     }
 }
 

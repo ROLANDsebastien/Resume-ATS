@@ -27,7 +27,7 @@ struct CoverLettersView: View {
                     .fontWeight(.bold)
                     .padding(.top)
 
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
+                    LazyVGrid(columns: [GridItem(.flexible())], spacing: 60) {
                         NavigationLink(destination: AddCoverLetterView(language: language)) {
                             VStack(spacing: 10) {
                                 Image(systemName: "plus")
@@ -52,7 +52,7 @@ struct CoverLettersView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, 20)
 
                     if !coverLetters.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {

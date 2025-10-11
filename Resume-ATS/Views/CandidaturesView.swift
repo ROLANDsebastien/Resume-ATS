@@ -52,7 +52,7 @@ struct CandidaturesView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 20)
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 40) {
                     DashboardTile(
                         title: language == "fr" ? "Nouvelle Candidature" : "New Application",
                         subtitle: language == "fr"
@@ -89,7 +89,7 @@ struct CandidaturesView: View {
                         selectedStatus = .rejected
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 20)
                 .padding(.bottom, 20)
             }
             .listRowInsets(EdgeInsets())
