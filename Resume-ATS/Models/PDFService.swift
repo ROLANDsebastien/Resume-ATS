@@ -513,234 +513,268 @@ class PDFService {
                 currentY = marginTop
             }
 
-            // Résumé professionnel
-            if !profile.summaryString.isEmpty {
-                drawText(
-                    localizedTitle(for: "professional_summary", language: profile.language),
-                    font: NSFont.boldSystemFont(ofSize: 18), color: .black,
-                    x: margin, maxWidth: pageWidth - 2 * margin)
-                drawAttributedText(
-                    profile.normalizedSummaryAttributedString,
-                    x: margin, maxWidth: pageWidth - 2 * margin)
-            }
-
-            // Expériences professionnelles
-            if profile.showExperiences && !profile.experiences.filter({ $0.isVisible }).isEmpty {
-                drawText(
-                    localizedTitle(for: "professional_experience", language: profile.language),
-                    font: NSFont.boldSystemFont(ofSize: 18),
-                    color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
-                for experience in profile.experiences.filter({ $0.isVisible }) {
-                    // Ligne entreprise + poste à gauche, date à droite sur la même ligne
-                    let leftText =
-                        experience.company
-                        + (experience.position != nil && !experience.position!.isEmpty
-                            ? " - \(experience.position!)" : "")
-                    let dateText: String = {
-                        let formatter = DateFormatter()
-                        formatter.dateFormat = "MM/yyyy"
-                        let startStr = formatter.string(from: experience.startDate)
-                        if let endDate = experience.endDate {
-                            let endStr = formatter.string(from: endDate)
-                            return "\(startStr) - \(endStr)"
-                        } else {
-                            return
-                                "\(startStr) - \(localizedTitle(for: "present", language: profile.language))"
-                        }
-                    }()
-
-                    // Mesurer la hauteur de la ligne
-                    let attributesLeft: [NSAttributedString.Key: Any] = [
-                        .font: NSFont.boldSystemFont(ofSize: 12),
-                        .foregroundColor: NSColor.black,
-                    ]
-                    let attributesRight: [NSAttributedString.Key: Any] = [
-                        .font: NSFont.systemFont(ofSize: 11),
-                        .foregroundColor: NSColor.black,
-                    ]
-                    let leftAttr = NSAttributedString(string: leftText, attributes: attributesLeft)
-                    let rightAttr = NSAttributedString(
-                        string: dateText, attributes: attributesRight)
-                    let leftSize = leftAttr.size()
-                    let rightSize = rightAttr.size()
-                    let lineHeight = max(leftSize.height, rightSize.height)
-
-                    // Pagination si besoin
-                    if currentY + lineHeight > pageHeight - margin {
-                        addPageToDocument(context!, pageData)
-                        pageIndex += 1
-                        let result = createPage()
-                        context = result.0
-                        pageData = result.1
-                        currentY = marginTop
-                    }
-
-                    // Dessiner le texte à gauche et la date à droite sur la même ligne en utilisant CTFrameDraw
-                    let yPos = pageHeight - currentY - lineHeight
-                    let leftRect = CGRect(
-                        x: margin, y: yPos, width: pageWidth / 2, height: lineHeight)
-                    let leftPath = CGMutablePath()
-                    leftPath.addRect(leftRect)
-                    let leftFramesetter = CTFramesetterCreateWithAttributedString(leftAttr)
-                    let leftFrame = CTFramesetterCreateFrame(
-                        leftFramesetter, CFRange(location: 0, length: 0), leftPath, nil)
-                    CTFrameDraw(leftFrame, context!)
-
-                    let rightRect = CGRect(
-                        x: pageWidth - margin - rightSize.width, y: yPos, width: rightSize.width,
-                        height: lineHeight)
-                    let rightPath = CGMutablePath()
-                    rightPath.addRect(rightRect)
-                    let rightFramesetter = CTFramesetterCreateWithAttributedString(rightAttr)
-                    let rightFrame = CTFramesetterCreateFrame(
-                        rightFramesetter, CFRange(location: 0, length: 0), rightPath, nil)
-                    CTFrameDraw(rightFrame, context!)
-
-                    currentY += lineHeight + 2
-
-                    // Détails de l'expérience (pagination gérée par drawAttributedText)
-                    drawAttributedText(
-                        experience.normalizedDetailsAttributedString,
-                        x: margin, maxWidth: pageWidth - 2 * margin)
-                }
-            }
-
-            // Formation
-            if profile.showEducations && !profile.educations.filter({ $0.isVisible }).isEmpty {
-                drawText(
-                    localizedTitle(for: "education", language: profile.language),
-                    font: NSFont.boldSystemFont(ofSize: 18), color: .black, x: margin,
-                    maxWidth: pageWidth - 2 * margin)
-                for education in profile.educations.filter({ $0.isVisible }) {
-                    drawText(
-                        "\(education.institution) - \(education.degree)",
-                        font: NSFont.boldSystemFont(ofSize: 12), color: .black, x: margin,
-                        maxWidth: pageWidth - 2 * margin)
-                    drawAttributedText(
-                        education.normalizedDetailsAttributedString,
-                        x: margin, maxWidth: pageWidth - 2 * margin)
-                }
-            }
-
-            // Compétences
-            if profile.showSkills && !profile.skills.isEmpty {
-                drawText(
-                    localizedTitle(for: "skills", language: profile.language),
-                    font: NSFont.boldSystemFont(ofSize: 18), color: .black,
-                    x: margin,
-                    maxWidth: pageWidth - 2 * margin)
-                for skillGroup in profile.skills {
-                    drawText(
-                        skillGroup.title, font: NSFont.boldSystemFont(ofSize: 12), color: .black,
-                        x: margin, maxWidth: pageWidth - 2 * margin)
-                    drawText(
-                        skillGroup.skills.joined(separator: ", "),
-                        font: NSFont.systemFont(ofSize: 12),
-                        color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
-                }
-            }
-
-            // Certifications
-            if profile.showCertifications
-                && !profile.certifications.filter({ $0.isVisible }).isEmpty
-            {
-                drawText(
-                    localizedTitle(for: "certifications", language: profile.language),
-                    font: NSFont.boldSystemFont(ofSize: 18), color: .black,
-                    x: margin,
-                    maxWidth: pageWidth - 2 * margin)
-                for certification in profile.certifications.filter({ $0.isVisible }) {
-                    // Name and date on same line: name left bold, date right normal
-                    let leftText = certification.name
-                    let dateText: String? = {
-                        if let date = certification.date {
-                            let formatter = DateFormatter()
-                            formatter.dateFormat = "MM/yyyy"
-                            return formatter.string(from: date)
-                        }
-                        return nil
-                    }()
-                    if let dateText = dateText {
-                        let attributesLeft: [NSAttributedString.Key: Any] = [
-                            .font: NSFont.boldSystemFont(ofSize: 12),
-                            .foregroundColor: NSColor.black,
-                        ]
-                        let attributesRight: [NSAttributedString.Key: Any] = [
-                            .font: NSFont.systemFont(ofSize: 11),
-                            .foregroundColor: NSColor.black,
-                        ]
-                        let leftAttr = NSAttributedString(
-                            string: leftText, attributes: attributesLeft)
-                        let rightAttr = NSAttributedString(
-                            string: dateText, attributes: attributesRight)
-                        let leftSize = leftAttr.size()
-                        let rightSize = rightAttr.size()
-                        let lineHeight = max(leftSize.height, rightSize.height)
-                        // Pagination si besoin
-                        if currentY + lineHeight > pageHeight - margin {
-                            addPageToDocument(context!, pageData)
-                            pageIndex += 1
-                            let result = createPage()
-                            context = result.0
-                            pageData = result.1
-                            currentY = marginTop
-                        }
-                        let yPos = pageHeight - currentY - lineHeight
-                        let leftRect = CGRect(
-                            x: margin, y: yPos, width: pageWidth / 2, height: lineHeight)
-                        let leftPath = CGMutablePath()
-                        leftPath.addRect(leftRect)
-                        let leftFramesetter = CTFramesetterCreateWithAttributedString(leftAttr)
-                        let leftFrame = CTFramesetterCreateFrame(
-                            leftFramesetter, CFRange(location: 0, length: 0), leftPath, nil)
-                        CTFrameDraw(leftFrame, context!)
-                        let rightRect = CGRect(
-                            x: pageWidth - margin - rightSize.width, y: yPos,
-                            width: rightSize.width, height: lineHeight)
-                        let rightPath = CGMutablePath()
-                        rightPath.addRect(rightRect)
-                        let rightFramesetter = CTFramesetterCreateWithAttributedString(rightAttr)
-                        let rightFrame = CTFramesetterCreateFrame(
-                            rightFramesetter, CFRange(location: 0, length: 0), rightPath, nil)
-                        CTFrameDraw(rightFrame, context!)
-                        currentY += lineHeight + 2
-                    } else {
-                        // Just draw name if no date
+            for section in profile.sectionsOrder {
+                switch section {
+                case .summary:
+                    if !profile.summaryString.isEmpty {
                         drawText(
-                            leftText, font: NSFont.boldSystemFont(ofSize: 12), color: .black,
+                            localizedTitle(for: "professional_summary", language: profile.language),
+                            font: NSFont.boldSystemFont(ofSize: 18), color: .black,
+                            x: margin, maxWidth: pageWidth - 2 * margin)
+                        drawAttributedText(
+                            profile.normalizedSummaryAttributedString,
                             x: margin, maxWidth: pageWidth - 2 * margin)
                     }
-                    // Certification number below
-                    if let number = certification.certificationNumber, !number.isEmpty {
-                        let numberText = "ID: \(number)"
+                case .experiences:
+                    if profile.showExperiences
+                        && !profile.experiences.filter({ $0.isVisible }).isEmpty
+                    {
                         drawText(
-                            numberText, font: NSFont.systemFont(ofSize: 11), color: .black,
-                            x: margin, maxWidth: pageWidth - 2 * margin)
+                            localizedTitle(
+                                for: "professional_experience", language: profile.language),
+                            font: NSFont.boldSystemFont(ofSize: 18),
+                            color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
+                        for experience in profile.experiences.filter({ $0.isVisible }) {
+                            // Ligne entreprise + poste à gauche, date à droite sur la même ligne
+                            let leftText =
+                                experience.company
+                                + (experience.position != nil && !experience.position!.isEmpty
+                                    ? " - \(experience.position!)" : "")
+                            let dateText: String = {
+                                let formatter = DateFormatter()
+                                formatter.dateFormat = "MM/yyyy"
+                                let startStr = formatter.string(from: experience.startDate)
+                                if let endDate = experience.endDate {
+                                    let endStr = formatter.string(from: endDate)
+                                    return "\(startStr) - \(endStr)"
+                                } else {
+                                    return
+                                        "\(startStr) - \(localizedTitle(for: "present", language: profile.language))"
+                                }
+                            }()
+
+                            // Mesurer la hauteur de la ligne
+                            let attributesLeft: [NSAttributedString.Key: Any] = [
+                                .font: NSFont.boldSystemFont(ofSize: 12),
+                                .foregroundColor: NSColor.black,
+                            ]
+                            let attributesRight: [NSAttributedString.Key: Any] = [
+                                .font: NSFont.systemFont(ofSize: 11),
+                                .foregroundColor: NSColor.black,
+                            ]
+                            let leftAttr = NSAttributedString(
+                                string: leftText, attributes: attributesLeft)
+                            let rightAttr = NSAttributedString(
+                                string: dateText, attributes: attributesRight)
+                            let leftSize = leftAttr.size()
+                            let rightSize = rightAttr.size()
+                            let lineHeight = max(leftSize.height, rightSize.height)
+
+                            // Pagination si besoin
+                            if currentY + lineHeight > pageHeight - margin {
+                                addPageToDocument(context!, pageData)
+                                pageIndex += 1
+                                let result = createPage()
+                                context = result.0
+                                pageData = result.1
+                                currentY = marginTop
+                            }
+
+                            // Dessiner le texte à gauche et la date à droite sur la même ligne en utilisant CTFrameDraw
+                            let yPos = pageHeight - currentY - lineHeight
+                            let leftRect = CGRect(
+                                x: margin, y: yPos, width: pageWidth / 2, height: lineHeight)
+                            let leftPath = CGMutablePath()
+                            leftPath.addRect(leftRect)
+                            let leftFramesetter = CTFramesetterCreateWithAttributedString(leftAttr)
+                            let leftFrame = CTFramesetterCreateFrame(
+                                leftFramesetter, CFRange(location: 0, length: 0), leftPath, nil)
+                            CTFrameDraw(leftFrame, context!)
+
+                            let rightRect = CGRect(
+                                x: pageWidth - margin - rightSize.width, y: yPos,
+                                width: rightSize.width,
+                                height: lineHeight)
+                            let rightPath = CGMutablePath()
+                            rightPath.addRect(rightRect)
+                            let rightFramesetter = CTFramesetterCreateWithAttributedString(
+                                rightAttr)
+                            let rightFrame = CTFramesetterCreateFrame(
+                                rightFramesetter, CFRange(location: 0, length: 0), rightPath, nil)
+                            CTFrameDraw(rightFrame, context!)
+
+                            currentY += lineHeight + 2
+
+                            // Détails de l'expérience (pagination gérée par drawAttributedText)
+                            drawAttributedText(
+                                experience.normalizedDetailsAttributedString,
+                                x: margin, maxWidth: pageWidth - 2 * margin)
+                        }
                     }
-                    // Web link below
-                    if let webLink = certification.webLink, !webLink.isEmpty {
+                case .educations:
+                    if profile.showEducations
+                        && !profile.educations.filter({ $0.isVisible }).isEmpty
+                    {
                         drawText(
-                            webLink, font: NSFont.systemFont(ofSize: 11), color: .black, x: margin,
+                            localizedTitle(for: "education", language: profile.language),
+                            font: NSFont.boldSystemFont(ofSize: 18), color: .black, x: margin,
                             maxWidth: pageWidth - 2 * margin)
+                        for education in profile.educations.filter({ $0.isVisible }) {
+                            drawText(
+                                "\(education.institution) - \(education.degree)",
+                                font: NSFont.boldSystemFont(ofSize: 12), color: .black, x: margin,
+                                maxWidth: pageWidth - 2 * margin)
+                            drawAttributedText(
+                                education.normalizedDetailsAttributedString,
+                                x: margin, maxWidth: pageWidth - 2 * margin)
+                        }
                     }
-                }
-            }
-
-            // Langues
-            if profile.showLanguages && !profile.languages.filter({ $0.isVisible }).isEmpty {
-                drawText(
-                    localizedTitle(for: "languages", language: profile.language),
-                    font: NSFont.boldSystemFont(ofSize: 18), color: .black,
-                    x: margin,
-                    maxWidth: pageWidth - 2 * margin)
-                for language in profile.languages.filter({ $0.isVisible }) {
-                    var langText = language.name
-                    if let level = language.level, !level.isEmpty {
-                        langText += " - \(level)"
+                case .references:
+                    // References rendering - assuming similar structure, but since not in original, add placeholder
+                    if profile.showReferences
+                        && !profile.references.filter({ $0.isVisible }).isEmpty
+                    {
+                        drawText(
+                            localizedTitle(for: "references", language: profile.language),
+                            font: NSFont.boldSystemFont(ofSize: 18), color: .black, x: margin,
+                            maxWidth: pageWidth - 2 * margin)
+                        for reference in profile.references.filter({ $0.isVisible }) {
+                            drawText(
+                                "\(reference.name) - \(reference.position) at \(reference.company)",
+                                font: NSFont.boldSystemFont(ofSize: 12), color: .black, x: margin,
+                                maxWidth: pageWidth - 2 * margin)
+                            drawText(
+                                "Email: \(reference.email), Phone: \(reference.phone)",
+                                font: NSFont.systemFont(ofSize: 11), color: .black, x: margin,
+                                maxWidth: pageWidth - 2 * margin)
+                        }
                     }
-                    drawText(
-                        langText, font: NSFont.systemFont(ofSize: 12),
-                        color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
+                case .skills:
+                    if profile.showSkills && !profile.skills.isEmpty {
+                        drawText(
+                            localizedTitle(for: "skills", language: profile.language),
+                            font: NSFont.boldSystemFont(ofSize: 18), color: .black,
+                            x: margin,
+                            maxWidth: pageWidth - 2 * margin)
+                        for skillGroup in profile.skills {
+                            drawText(
+                                skillGroup.title, font: NSFont.boldSystemFont(ofSize: 12),
+                                color: .black,
+                                x: margin, maxWidth: pageWidth - 2 * margin)
+                            drawText(
+                                skillGroup.skills.joined(separator: ", "),
+                                font: NSFont.systemFont(ofSize: 12),
+                                color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
+                        }
+                    }
+                case .certifications:
+                    if profile.showCertifications
+                        && !profile.certifications.filter({ $0.isVisible }).isEmpty
+                    {
+                        drawText(
+                            localizedTitle(for: "certifications", language: profile.language),
+                            font: NSFont.boldSystemFont(ofSize: 18), color: .black,
+                            x: margin,
+                            maxWidth: pageWidth - 2 * margin)
+                        for certification in profile.certifications.filter({ $0.isVisible }) {
+                            // Name and date on same line: name left bold, date right normal
+                            let leftText = certification.name
+                            let dateText: String? = {
+                                if let date = certification.date {
+                                    let formatter = DateFormatter()
+                                    formatter.dateFormat = "MM/yyyy"
+                                    return formatter.string(from: date)
+                                }
+                                return nil
+                            }()
+                            if let dateText = dateText {
+                                let attributesLeft: [NSAttributedString.Key: Any] = [
+                                    .font: NSFont.boldSystemFont(ofSize: 12),
+                                    .foregroundColor: NSColor.black,
+                                ]
+                                let attributesRight: [NSAttributedString.Key: Any] = [
+                                    .font: NSFont.systemFont(ofSize: 11),
+                                    .foregroundColor: NSColor.black,
+                                ]
+                                let leftAttr = NSAttributedString(
+                                    string: leftText, attributes: attributesLeft)
+                                let rightAttr = NSAttributedString(
+                                    string: dateText, attributes: attributesRight)
+                                let leftSize = leftAttr.size()
+                                let rightSize = rightAttr.size()
+                                let lineHeight = max(leftSize.height, rightSize.height)
+                                // Pagination si besoin
+                                if currentY + lineHeight > pageHeight - margin {
+                                    addPageToDocument(context!, pageData)
+                                    pageIndex += 1
+                                    let result = createPage()
+                                    context = result.0
+                                    pageData = result.1
+                                    currentY = marginTop
+                                }
+                                let yPos = pageHeight - currentY - lineHeight
+                                let leftRect = CGRect(
+                                    x: margin, y: yPos, width: pageWidth / 2, height: lineHeight)
+                                let leftPath = CGMutablePath()
+                                leftPath.addRect(leftRect)
+                                let leftFramesetter = CTFramesetterCreateWithAttributedString(
+                                    leftAttr)
+                                let leftFrame = CTFramesetterCreateFrame(
+                                    leftFramesetter, CFRange(location: 0, length: 0), leftPath, nil)
+                                CTFrameDraw(leftFrame, context!)
+                                let rightRect = CGRect(
+                                    x: pageWidth - margin - rightSize.width, y: yPos,
+                                    width: rightSize.width, height: lineHeight)
+                                let rightPath = CGMutablePath()
+                                rightPath.addRect(rightRect)
+                                let rightFramesetter = CTFramesetterCreateWithAttributedString(
+                                    rightAttr)
+                                let rightFrame = CTFramesetterCreateFrame(
+                                    rightFramesetter, CFRange(location: 0, length: 0), rightPath,
+                                    nil)
+                                CTFrameDraw(rightFrame, context!)
+                                currentY += lineHeight + 2
+                            } else {
+                                // Just draw name if no date
+                                drawText(
+                                    leftText, font: NSFont.boldSystemFont(ofSize: 12),
+                                    color: .black,
+                                    x: margin, maxWidth: pageWidth - 2 * margin)
+                            }
+                            // Certification number below
+                            if let number = certification.certificationNumber, !number.isEmpty {
+                                let numberText = "ID: \(number)"
+                                drawText(
+                                    numberText, font: NSFont.systemFont(ofSize: 11), color: .black,
+                                    x: margin, maxWidth: pageWidth - 2 * margin)
+                            }
+                            // Web link below
+                            if let webLink = certification.webLink, !webLink.isEmpty {
+                                drawText(
+                                    webLink, font: NSFont.systemFont(ofSize: 11), color: .black,
+                                    x: margin,
+                                    maxWidth: pageWidth - 2 * margin)
+                            }
+                        }
+                    }
+                case .languages:
+                    if profile.showLanguages && !profile.languages.filter({ $0.isVisible }).isEmpty
+                    {
+                        drawText(
+                            localizedTitle(for: "languages", language: profile.language),
+                            font: NSFont.boldSystemFont(ofSize: 18), color: .black,
+                            x: margin,
+                            maxWidth: pageWidth - 2 * margin)
+                        for language in profile.languages.filter({ $0.isVisible }) {
+                            var langText = language.name
+                            if let level = language.level, !level.isEmpty {
+                                langText += " - \(level)"
+                            }
+                            drawText(
+                                langText, font: NSFont.systemFont(ofSize: 12),
+                                color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
+                        }
+                    }
                 }
             }
 

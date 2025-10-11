@@ -30,6 +30,9 @@ struct ProfileView: View {
             "skills": "Skills",
             "certifications": "Certifications",
             "languages": "Languages",
+            "section_order": "Section Order",
+            "move_up": "Move Up",
+            "move_down": "Move Down",
             "show_section": "Show this section in the CV",
             "visible_cv": "Visible in CV",
             "add_experience": "Add an experience",
@@ -87,6 +90,9 @@ struct ProfileView: View {
             "skills": "Compétences",
             "certifications": "Certifications",
             "languages": "Langues",
+            "section_order": "Ordre des sections",
+            "move_up": "Monter",
+            "move_down": "Descendre",
             "show_section": "Afficher cette section dans le CV",
             "visible_cv": "Visible dans le CV",
             "add_experience": "Ajouter une expérience",
@@ -156,448 +162,44 @@ struct ProfileView: View {
                             PersonalInfoForm(profile: profile, language: effectiveLanguage)
                         }
 
-                        StyledSection(title: localizedTitle(for: "summary")) {
-                            RichTextEditorWithToolbar(
-                                attributedString: Binding(
-                                    get: { profile.summaryAttributedString },
-                                    set: { profile.summaryAttributedString = $0 }
-                                ))
-                        }
-
-                        StyledSection(title: localizedTitle(for: "experiences")) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                // Section visibility toggle
-                                HStack {
-                                    Text(localizedTitle(for: "show_section"))
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    Toggle(
-                                        "",
-                                        isOn: Binding(
-                                            get: { profile.showExperiences },
-                                            set: { profile.showExperiences = $0 }
-                                        )
-                                    )
-                                    .labelsHidden()
-                                    .toggleStyle(.switch)
-                                }
-
-                                if profile.showExperiences {
-                                    ForEach(profile.experiences) { experience in
-                                        VStack(alignment: .leading, spacing: 8) {
-                                            HStack {
-                                                Toggle(
-                                                    localizedTitle(for: "visible_cv"),
-                                                    isOn: Binding(
-                                                        get: { experience.isVisible },
-                                                        set: { experience.isVisible = $0 }
-                                                    )
-                                                )
-                                                .toggleStyle(.switch)
-                                                Spacer()
-                                                Button(action: {
-                                                    DispatchQueue.main.async {
-                                                        if let index = profile.experiences
-                                                            .firstIndex(where: {
-                                                                $0.id == experience.id
-                                                            })
-                                                        {
-                                                            profile.experiences.remove(at: index)
-                                                        }
-                                                    }
-                                                }) {
-                                                    Image(systemName: "trash.fill")
-                                                        .foregroundColor(.red)
-                                                }
-                                                .buttonStyle(.plain)
+                        StyledSection(title: localizedTitle(for: "section_order")) {
+                            VStack(spacing: 8) {
+                                ForEach(profile.sectionsOrder.indices, id: \.self) { index in
+                                    let section = profile.sectionsOrder[index]
+                                    HStack {
+                                        Text(localizedTitle(for: section.rawValue))
+                                        Spacer()
+                                        Button(action: {
+                                            if index > 0 {
+                                                profile.sectionsOrder.swapAt(index, index - 1)
                                             }
-                                            ExperienceForm(
-                                                experience: experience, language: effectiveLanguage)
+                                        }) {
+                                            Image(systemName: "arrow.up")
                                         }
-                                        .padding(.vertical, 8)
-                                        .padding(.horizontal, 12)
-                                        .background(Color.gray.opacity(0.05))
-                                        .cornerRadius(8)
-                                        if experience.id != profile.experiences.last?.id {
-                                            Divider().background(Color.secondary.opacity(0.3))
+                                        .disabled(index == 0)
+                                        .buttonStyle(.plain)
+                                        Button(action: {
+                                            if index < profile.sectionsOrder.count - 1 {
+                                                profile.sectionsOrder.swapAt(index, index + 1)
+                                            }
+                                        }) {
+                                            Image(systemName: "arrow.down")
                                         }
+                                        .disabled(index == profile.sectionsOrder.count - 1)
+                                        .buttonStyle(.plain)
                                     }
-                                    StyledButton(
-                                        title: localizedTitle(for: "add_experience"),
-                                        systemImage: "plus",
-                                        action: {
-                                            DispatchQueue.main.async {
-                                                profile.experiences.append(
-                                                    Experience(
-                                                        company: "",
-                                                        startDate: Date(),
-                                                        details: Data()))
-                                            }
-                                        })
+                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, 8)
+                                    .background(Color.gray.opacity(0.1))
+                                    .cornerRadius(4)
                                 }
                             }
+                            .frame(maxHeight: 300)
                         }
 
-                        StyledSection(title: localizedTitle(for: "educations")) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                // Section visibility toggle
-                                HStack {
-                                    Text(localizedTitle(for: "show_section"))
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    Toggle(
-                                        "",
-                                        isOn: Binding(
-                                            get: { profile.showEducations },
-                                            set: { profile.showEducations = $0 }
-                                        )
-                                    )
-                                    .labelsHidden()
-                                    .toggleStyle(.switch)
-                                }
-
-                                if profile.showEducations {
-                                    ForEach(profile.educations) { education in
-                                        VStack(alignment: .leading, spacing: 8) {
-                                            HStack {
-                                                Toggle(
-                                                    localizedTitle(for: "visible_cv"),
-                                                    isOn: Binding(
-                                                        get: { education.isVisible },
-                                                        set: { education.isVisible = $0 }
-                                                    )
-                                                )
-                                                .toggleStyle(.switch)
-                                                Spacer()
-                                                Button(action: {
-                                                    DispatchQueue.main.async {
-                                                        if let index = profile.educations
-                                                            .firstIndex(where: {
-                                                                $0.id == education.id
-                                                            })
-                                                        {
-                                                            profile.educations.remove(at: index)
-                                                        }
-                                                    }
-                                                }) {
-                                                    Image(systemName: "trash.fill")
-                                                        .foregroundColor(.red)
-                                                }
-                                                .buttonStyle(.plain)
-                                            }
-                                            EducationForm(
-                                                education: education, language: effectiveLanguage)
-                                        }
-                                        .padding(.vertical, 8)
-                                        .padding(.horizontal, 12)
-                                        .background(Color.gray.opacity(0.05))
-                                        .cornerRadius(8)
-                                        if education.id != profile.educations.last?.id {
-                                            Divider().background(Color.secondary.opacity(0.3))
-                                        }
-                                    }
-                                    StyledButton(
-                                        title: localizedTitle(for: "add_education"),
-                                        systemImage: "plus",
-                                        action: {
-                                            DispatchQueue.main.async {
-                                                profile.educations.append(
-                                                    Education(
-                                                        institution: "", degree: "",
-                                                        startDate: Date(),
-                                                        details: Data()))
-                                            }
-                                        })
-                                }
-                            }
-                        }
-
-                        StyledSection(title: localizedTitle(for: "references")) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                // Section visibility toggle
-                                HStack {
-                                    Text(localizedTitle(for: "show_section"))
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    Toggle(
-                                        "",
-                                        isOn: Binding(
-                                            get: { profile.showReferences },
-                                            set: { profile.showReferences = $0 }
-                                        )
-                                    )
-                                    .labelsHidden()
-                                    .toggleStyle(.switch)
-                                }
-
-                                if profile.showReferences {
-                                    ForEach(profile.references) { reference in
-                                        VStack(alignment: .leading, spacing: 8) {
-                                            HStack {
-                                                Toggle(
-                                                    localizedTitle(for: "visible_cv"),
-                                                    isOn: Binding(
-                                                        get: { reference.isVisible },
-                                                        set: { reference.isVisible = $0 }
-                                                    )
-                                                )
-                                                .toggleStyle(.switch)
-                                                Spacer()
-                                                Button(action: {
-                                                    DispatchQueue.main.async {
-                                                        if let index = profile.references
-                                                            .firstIndex(where: {
-                                                                $0.id == reference.id
-                                                            })
-                                                        {
-                                                            profile.references.remove(at: index)
-                                                        }
-                                                    }
-                                                }) {
-                                                    Image(systemName: "trash.fill")
-                                                        .foregroundColor(.red)
-                                                }
-                                                .buttonStyle(.plain)
-                                            }
-                                            ReferenceForm(
-                                                reference: reference, language: effectiveLanguage)
-                                        }
-                                        .padding(.vertical, 8)
-                                        .padding(.horizontal, 12)
-                                        .background(Color.gray.opacity(0.05))
-                                        .cornerRadius(8)
-                                        if reference.id != profile.references.last?.id {
-                                            Divider().background(Color.secondary.opacity(0.3))
-                                        }
-                                    }
-                                    StyledButton(
-                                        title: localizedTitle(for: "add_reference"),
-                                        systemImage: "plus",
-                                        action: {
-                                            DispatchQueue.main.async {
-                                                profile.references.append(
-                                                    Reference(
-                                                        name: "", position: "", company: "",
-                                                        email: "",
-                                                        phone: ""))
-                                            }
-                                        })
-                                }
-                            }
-                        }
-
-                        StyledSection(title: localizedTitle(for: "certifications")) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                // Section visibility toggle
-                                HStack {
-                                    Text(localizedTitle(for: "show_section"))
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    Toggle(
-                                        "",
-                                        isOn: Binding(
-                                            get: { profile.showCertifications },
-                                            set: { profile.showCertifications = $0 }
-                                        )
-                                    )
-                                    .labelsHidden()
-                                    .toggleStyle(.switch)
-                                }
-
-                                if profile.showCertifications {
-                                    ForEach(profile.certifications) { certification in
-                                        VStack(alignment: .leading, spacing: 8) {
-                                            HStack {
-                                                Toggle(
-                                                    localizedTitle(for: "visible_cv"),
-                                                    isOn: Binding(
-                                                        get: { certification.isVisible },
-                                                        set: { certification.isVisible = $0 }
-                                                    )
-                                                )
-                                                .toggleStyle(.switch)
-                                                Spacer()
-                                                Button(action: {
-                                                    DispatchQueue.main.async {
-                                                        if let index = profile.certifications
-                                                            .firstIndex(where: {
-                                                                $0.id == certification.id
-                                                            })
-                                                        {
-                                                            profile.certifications.remove(at: index)
-                                                        }
-                                                    }
-                                                }) {
-                                                    Image(systemName: "trash.fill")
-                                                        .foregroundColor(.red)
-                                                }
-                                                .buttonStyle(.plain)
-                                            }
-                                            CertificationForm(
-                                                certification: certification,
-                                                language: effectiveLanguage)
-                                        }
-                                        .padding(.vertical, 8)
-                                        .padding(.horizontal, 12)
-                                        .background(Color.gray.opacity(0.05))
-                                        .cornerRadius(8)
-                                        if certification.id != profile.certifications.last?.id {
-                                            Divider().background(Color.secondary.opacity(0.3))
-                                        }
-                                    }
-                                    StyledButton(
-                                        title: localizedTitle(for: "add_certification"),
-                                        systemImage: "plus",
-                                        action: {
-                                            DispatchQueue.main.async {
-                                                profile.certifications.append(
-                                                    Certification(
-                                                        name: "", date: Date(),
-                                                        certificationNumber: nil))
-                                            }
-                                        })
-                                }
-                            }
-                        }
-
-                        StyledSection(title: localizedTitle(for: "languages")) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                // Section visibility toggle
-                                HStack {
-                                    Text(localizedTitle(for: "show_section"))
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    Toggle(
-                                        "",
-                                        isOn: Binding(
-                                            get: { profile.showLanguages },
-                                            set: { profile.showLanguages = $0 }
-                                        )
-                                    )
-                                    .labelsHidden()
-                                    .toggleStyle(.switch)
-                                }
-
-                                if profile.showLanguages {
-                                    ForEach(profile.languages) { languageItem in
-                                        VStack(alignment: .leading, spacing: 8) {
-                                            HStack {
-                                                Toggle(
-                                                    localizedTitle(for: "visible_cv"),
-                                                    isOn: Binding(
-                                                        get: { languageItem.isVisible },
-                                                        set: { languageItem.isVisible = $0 }
-                                                    )
-                                                )
-                                                .toggleStyle(.switch)
-                                                Spacer()
-                                                Button(action: {
-                                                    DispatchQueue.main.async {
-                                                        if let index = profile.languages
-                                                            .firstIndex(where: {
-                                                                $0.id == languageItem.id
-                                                            })
-                                                        {
-                                                            profile.languages.remove(at: index)
-                                                        }
-                                                    }
-                                                }) {
-                                                    Image(systemName: "trash.fill")
-                                                        .foregroundColor(.red)
-                                                }
-                                                .buttonStyle(.plain)
-                                            }
-                                            LanguageForm(
-                                                languageItem: languageItem,
-                                                language: effectiveLanguage)
-                                        }
-                                        .padding(.vertical, 8)
-                                        .padding(.horizontal, 12)
-                                        .background(Color.gray.opacity(0.05))
-                                        .cornerRadius(8)
-                                        if languageItem.id != profile.languages.last?.id {
-                                            Divider().background(Color.secondary.opacity(0.3))
-                                        }
-                                    }
-                                    StyledButton(
-                                        title: localizedTitle(for: "add_language"),
-                                        systemImage: "plus",
-                                        action: {
-                                            DispatchQueue.main.async {
-                                                profile.languages.append(
-                                                    Language(name: "", level: nil))
-                                            }
-                                        })
-                                }
-                            }
-                        }
-
-                        StyledSection(title: localizedTitle(for: "skills")) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                // Section visibility toggle
-                                HStack {
-                                    Text(localizedTitle(for: "show_section"))
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    Toggle(
-                                        "",
-                                        isOn: Binding(
-                                            get: { profile.showSkills },
-                                            set: { profile.showSkills = $0 }
-                                        )
-                                    )
-                                    .labelsHidden()
-                                    .toggleStyle(.switch)
-                                }
-
-                                if profile.showSkills {
-                                    ForEach(profile.skills) { skillGroup in
-                                        VStack(alignment: .leading, spacing: 8) {
-                                            HStack {
-                                                Spacer()
-                                                Button(action: {
-                                                    DispatchQueue.main.async {
-                                                        if let index = profile.skills
-                                                            .firstIndex(where: {
-                                                                $0.id == skillGroup.id
-                                                            })
-                                                        {
-                                                            profile.skills.remove(at: index)
-                                                        }
-                                                    }
-                                                }) {
-                                                    Image(systemName: "trash.fill")
-                                                        .foregroundColor(.red)
-                                                }
-                                                .buttonStyle(.plain)
-                                            }
-                                            SkillGroupForm(
-                                                skillGroup: skillGroup, language: effectiveLanguage)
-                                        }
-                                        .padding(.vertical, 8)
-                                        .padding(.horizontal, 12)
-                                        .background(Color.gray.opacity(0.05))
-                                        .cornerRadius(8)
-                                        if skillGroup.id != profile.skills.last?.id {
-                                            Divider().background(Color.secondary.opacity(0.3))
-                                        }
-                                    }
-                                    StyledButton(
-                                        title: localizedTitle(for: "add_skill_group"),
-                                        systemImage: "plus",
-                                        action: {
-                                            DispatchQueue.main.async {
-                                                profile.skills.append(
-                                                    SkillGroup(title: "", skills: []))
-                                            }
-                                        })
-                                }
+                        ForEach(profile.sectionsOrder, id: \.self) { section in
+                            StyledSection(title: localizedTitle(for: section.rawValue)) {
+                                sectionView(for: section, profile: profile)
                             }
                         }
                     }
@@ -637,6 +239,443 @@ struct ProfileView: View {
             }
         } message: {
             Text(localizedTitle(for: "delete_confirm"))
+        }
+    }
+
+    @ViewBuilder
+    private func sectionView(for section: SectionType, profile: Profile) -> some View {
+        switch section {
+        case .summary:
+            RichTextEditorWithToolbar(
+                attributedString: Binding(
+                    get: { profile.summaryAttributedString },
+                    set: { profile.summaryAttributedString = $0 }
+                ))
+        case .experiences:
+            VStack(alignment: .leading, spacing: 12) {
+                // Section visibility toggle
+                HStack {
+                    Text(localizedTitle(for: "show_section"))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { profile.showExperiences },
+                            set: { profile.showExperiences = $0 }
+                        )
+                    )
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+
+                if profile.showExperiences {
+                    ForEach(profile.experiences) { experience in
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Toggle(
+                                    localizedTitle(for: "visible_cv"),
+                                    isOn: Binding(
+                                        get: { experience.isVisible },
+                                        set: { experience.isVisible = $0 }
+                                    )
+                                )
+                                .toggleStyle(.switch)
+                                Spacer()
+                                Button(action: {
+                                    DispatchQueue.main.async {
+                                        if let index = profile.experiences
+                                            .firstIndex(where: {
+                                                $0.id == experience.id
+                                            })
+                                        {
+                                            profile.experiences.remove(at: index)
+                                        }
+                                    }
+                                }) {
+                                    Image(systemName: "trash.fill")
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            ExperienceForm(
+                                experience: experience, language: effectiveLanguage)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.gray.opacity(0.05))
+                        .cornerRadius(8)
+                        if experience.id != profile.experiences.last?.id {
+                            Divider().background(Color.secondary.opacity(0.3))
+                        }
+                    }
+                    StyledButton(
+                        title: localizedTitle(for: "add_experience"),
+                        systemImage: "plus",
+                        action: {
+                            DispatchQueue.main.async {
+                                profile.experiences.append(
+                                    Experience(
+                                        company: "",
+                                        startDate: Date(),
+                                        details: Data()))
+                            }
+                        })
+                }
+            }
+        case .educations:
+            VStack(alignment: .leading, spacing: 12) {
+                // Section visibility toggle
+                HStack {
+                    Text(localizedTitle(for: "show_section"))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { profile.showEducations },
+                            set: { profile.showEducations = $0 }
+                        )
+                    )
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+
+                if profile.showEducations {
+                    ForEach(profile.educations) { education in
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Toggle(
+                                    localizedTitle(for: "visible_cv"),
+                                    isOn: Binding(
+                                        get: { education.isVisible },
+                                        set: { education.isVisible = $0 }
+                                    )
+                                )
+                                .toggleStyle(.switch)
+                                Spacer()
+                                Button(action: {
+                                    DispatchQueue.main.async {
+                                        if let index = profile.educations
+                                            .firstIndex(where: {
+                                                $0.id == education.id
+                                            })
+                                        {
+                                            profile.educations.remove(at: index)
+                                        }
+                                    }
+                                }) {
+                                    Image(systemName: "trash.fill")
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            EducationForm(
+                                education: education, language: effectiveLanguage)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.gray.opacity(0.05))
+                        .cornerRadius(8)
+                        if education.id != profile.educations.last?.id {
+                            Divider().background(Color.secondary.opacity(0.3))
+                        }
+                    }
+                    StyledButton(
+                        title: localizedTitle(for: "add_education"),
+                        systemImage: "plus",
+                        action: {
+                            DispatchQueue.main.async {
+                                profile.educations.append(
+                                    Education(
+                                        institution: "", degree: "",
+                                        startDate: Date(),
+                                        details: Data()))
+                            }
+                        })
+                }
+            }
+        case .references:
+            VStack(alignment: .leading, spacing: 12) {
+                // Section visibility toggle
+                HStack {
+                    Text(localizedTitle(for: "show_section"))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { profile.showReferences },
+                            set: { profile.showReferences = $0 }
+                        )
+                    )
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+
+                if profile.showReferences {
+                    ForEach(profile.references) { reference in
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Toggle(
+                                    localizedTitle(for: "visible_cv"),
+                                    isOn: Binding(
+                                        get: { reference.isVisible },
+                                        set: { reference.isVisible = $0 }
+                                    )
+                                )
+                                .toggleStyle(.switch)
+                                Spacer()
+                                Button(action: {
+                                    DispatchQueue.main.async {
+                                        if let index = profile.references
+                                            .firstIndex(where: {
+                                                $0.id == reference.id
+                                            })
+                                        {
+                                            profile.references.remove(at: index)
+                                        }
+                                    }
+                                }) {
+                                    Image(systemName: "trash.fill")
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            ReferenceForm(
+                                reference: reference, language: effectiveLanguage)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.gray.opacity(0.05))
+                        .cornerRadius(8)
+                        if reference.id != profile.references.last?.id {
+                            Divider().background(Color.secondary.opacity(0.3))
+                        }
+                    }
+                    StyledButton(
+                        title: localizedTitle(for: "add_reference"),
+                        systemImage: "plus",
+                        action: {
+                            DispatchQueue.main.async {
+                                profile.references.append(
+                                    Reference(
+                                        name: "", position: "", company: "",
+                                        email: "",
+                                        phone: ""))
+                            }
+                        })
+                }
+            }
+        case .certifications:
+            VStack(alignment: .leading, spacing: 12) {
+                // Section visibility toggle
+                HStack {
+                    Text(localizedTitle(for: "show_section"))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { profile.showCertifications },
+                            set: { profile.showCertifications = $0 }
+                        )
+                    )
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+
+                if profile.showCertifications {
+                    ForEach(profile.certifications) { certification in
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Toggle(
+                                    localizedTitle(for: "visible_cv"),
+                                    isOn: Binding(
+                                        get: { certification.isVisible },
+                                        set: { certification.isVisible = $0 }
+                                    )
+                                )
+                                .toggleStyle(.switch)
+                                Spacer()
+                                Button(action: {
+                                    DispatchQueue.main.async {
+                                        if let index = profile.certifications
+                                            .firstIndex(where: {
+                                                $0.id == certification.id
+                                            })
+                                        {
+                                            profile.certifications.remove(at: index)
+                                        }
+                                    }
+                                }) {
+                                    Image(systemName: "trash.fill")
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            CertificationForm(
+                                certification: certification,
+                                language: effectiveLanguage)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.gray.opacity(0.05))
+                        .cornerRadius(8)
+                        if certification.id != profile.certifications.last?.id {
+                            Divider().background(Color.secondary.opacity(0.3))
+                        }
+                    }
+                    StyledButton(
+                        title: localizedTitle(for: "add_certification"),
+                        systemImage: "plus",
+                        action: {
+                            DispatchQueue.main.async {
+                                profile.certifications.append(
+                                    Certification(
+                                        name: "", date: Date(),
+                                        certificationNumber: nil))
+                            }
+                        })
+                }
+            }
+        case .languages:
+            VStack(alignment: .leading, spacing: 12) {
+                // Section visibility toggle
+                HStack {
+                    Text(localizedTitle(for: "show_section"))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { profile.showLanguages },
+                            set: { profile.showLanguages = $0 }
+                        )
+                    )
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+
+                if profile.showLanguages {
+                    ForEach(profile.languages) { languageItem in
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Toggle(
+                                    localizedTitle(for: "visible_cv"),
+                                    isOn: Binding(
+                                        get: { languageItem.isVisible },
+                                        set: { languageItem.isVisible = $0 }
+                                    )
+                                )
+                                .toggleStyle(.switch)
+                                Spacer()
+                                Button(action: {
+                                    DispatchQueue.main.async {
+                                        if let index = profile.languages
+                                            .firstIndex(where: {
+                                                $0.id == languageItem.id
+                                            })
+                                        {
+                                            profile.languages.remove(at: index)
+                                        }
+                                    }
+                                }) {
+                                    Image(systemName: "trash.fill")
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            LanguageForm(
+                                languageItem: languageItem,
+                                language: effectiveLanguage)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.gray.opacity(0.05))
+                        .cornerRadius(8)
+                        if languageItem.id != profile.languages.last?.id {
+                            Divider().background(Color.secondary.opacity(0.3))
+                        }
+                    }
+                    StyledButton(
+                        title: localizedTitle(for: "add_language"),
+                        systemImage: "plus",
+                        action: {
+                            DispatchQueue.main.async {
+                                profile.languages.append(
+                                    Language(name: "", level: nil))
+                            }
+                        })
+                }
+            }
+        case .skills:
+            VStack(alignment: .leading, spacing: 12) {
+                // Section visibility toggle
+                HStack {
+                    Text(localizedTitle(for: "show_section"))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { profile.showSkills },
+                            set: { profile.showSkills = $0 }
+                        )
+                    )
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+
+                if profile.showSkills {
+                    ForEach(profile.skills) { skillGroup in
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Spacer()
+                                Button(action: {
+                                    DispatchQueue.main.async {
+                                        if let index = profile.skills
+                                            .firstIndex(where: {
+                                                $0.id == skillGroup.id
+                                            })
+                                        {
+                                            profile.skills.remove(at: index)
+                                        }
+                                    }
+                                }) {
+                                    Image(systemName: "trash.fill")
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            SkillGroupForm(
+                                skillGroup: skillGroup, language: effectiveLanguage)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.gray.opacity(0.05))
+                        .cornerRadius(8)
+                        if skillGroup.id != profile.skills.last?.id {
+                            Divider().background(Color.secondary.opacity(0.3))
+                        }
+                    }
+                    StyledButton(
+                        title: localizedTitle(for: "add_skill_group"),
+                        systemImage: "plus",
+                        action: {
+                            DispatchQueue.main.async {
+                                profile.skills.append(
+                                    SkillGroup(title: "", skills: []))
+                            }
+                        })
+                }
+            }
         }
     }
 
@@ -718,6 +757,7 @@ struct ProfileView: View {
             showSkills: profile.showSkills,
             showCertifications: profile.showCertifications,
             showLanguages: profile.showLanguages,
+            sectionsOrder: profile.sectionsOrder,
             experiences: profile.experiences.map { exp in
                 Experience(
                     company: exp.company, position: exp.position, startDate: exp.startDate,

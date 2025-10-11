@@ -9,6 +9,16 @@ import AppKit
 import Foundation
 import SwiftData
 
+enum SectionType: String, Codable, CaseIterable {
+    case summary
+    case experiences
+    case educations
+    case references
+    case certifications
+    case languages
+    case skills
+}
+
 @Model
 final class Profile {
     var name: String
@@ -31,6 +41,11 @@ final class Profile {
     var showSkills: Bool = true
     var showCertifications: Bool = true
     var showLanguages: Bool = true
+    var sectionsOrder: [SectionType] = [
+        SectionType.summary, SectionType.experiences, SectionType.educations,
+        SectionType.references, SectionType.certifications, SectionType.languages,
+        SectionType.skills,
+    ]
     @Relationship(deleteRule: .cascade) var experiences: [Experience]
     @Relationship(deleteRule: .cascade) var educations: [Education]
     @Relationship(deleteRule: .cascade) var references: [Reference]
@@ -46,6 +61,11 @@ final class Profile {
         showPhotoInPDF: Bool = false, summary: Data = Data(),
         showExperiences: Bool = true, showEducations: Bool = true, showReferences: Bool = true,
         showSkills: Bool = true, showCertifications: Bool = true, showLanguages: Bool = true,
+        sectionsOrder: [SectionType] = [
+            SectionType.summary, SectionType.experiences, SectionType.educations,
+            SectionType.references, SectionType.certifications, SectionType.languages,
+            SectionType.skills,
+        ],
         experiences: [Experience] = [],
         educations: [Education] = [], references: [Reference] = [], skills: [SkillGroup] = [],
         certifications: [Certification] = [], languages: [Language] = []
@@ -70,6 +90,7 @@ final class Profile {
         self.showSkills = showSkills
         self.showCertifications = showCertifications
         self.showLanguages = showLanguages
+        self.sectionsOrder = sectionsOrder
         self.experiences = experiences
         self.educations = educations
         self.references = references
