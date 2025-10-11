@@ -10,6 +10,25 @@ import Foundation
 import SwiftData
 
 class DataService {
+    struct SerializableSkillGroup: Codable {
+        let title: String
+        let skills: [String]
+    }
+
+    struct SerializableCertification: Codable {
+        let name: String
+        let date: Date?
+        let certificationNumber: String?
+        let webLink: String?
+        let isVisible: Bool
+    }
+
+    struct SerializableLanguage: Codable {
+        let name: String
+        let level: String?
+        let isVisible: Bool
+    }
+
     // Serializable structs
     struct SerializableProfile: Codable {
         let name: String
@@ -29,10 +48,14 @@ class DataService {
         let showEducations: Bool
         let showReferences: Bool
         let showSkills: Bool
+        let showCertifications: Bool
+        let showLanguages: Bool
         let experiences: [SerializableExperience]
         let educations: [SerializableEducation]
         let references: [SerializableReference]
-        let skills: [String]
+        let skills: [SerializableSkillGroup]
+        let certifications: [SerializableCertification]
+        let languages: [SerializableLanguage]
     }
 
     struct SerializableExperience: Codable {
@@ -122,6 +145,8 @@ class DataService {
                 showEducations: profile.showEducations,
                 showReferences: profile.showReferences,
                 showSkills: profile.showSkills,
+                showCertifications: profile.showCertifications,
+                showLanguages: profile.showLanguages,
                 experiences: profile.experiences.map { exp in
                     SerializableExperience(
                         company: exp.company,
@@ -152,7 +177,19 @@ class DataService {
                         isVisible: ref.isVisible
                     )
                 },
-                skills: profile.skills
+                skills: profile.skills.map { skillGroup in
+                    SerializableSkillGroup(title: skillGroup.title, skills: skillGroup.skills)
+                },
+                certifications: profile.certifications.map { cert in
+                    SerializableCertification(
+                        name: cert.name, date: cert.date,
+                        certificationNumber: cert.certificationNumber, webLink: cert.webLink,
+                        isVisible: cert.isVisible)
+                },
+                languages: profile.languages.map { lang in
+                    SerializableLanguage(
+                        name: lang.name, level: lang.level, isVisible: lang.isVisible)
+                }
             )
         }
         // Sérialiser les lettres de motivation
@@ -311,7 +348,9 @@ class DataService {
                 showExperiences: serializableProfile.showExperiences,
                 showEducations: serializableProfile.showEducations,
                 showReferences: serializableProfile.showReferences,
-                showSkills: serializableProfile.showSkills
+                showSkills: serializableProfile.showSkills,
+                showCertifications: serializableProfile.showCertifications,
+                showLanguages: serializableProfile.showLanguages
             )
 
             // Add experiences
@@ -356,7 +395,39 @@ class DataService {
                 profile.references.append(reference)
             }
 
-            profile.skills = serializableProfile.skills
+            // Add skills
+            for skillGroup in serializableProfile.skills {
+                let newSkillGroup = SkillGroup(
+                    title: skillGroup.title,
+                    skills: skillGroup.skills
+                )
+                newSkillGroup.profile = profile
+                profile.skills.append(newSkillGroup)
+            }
+
+            // Add certifications
+            for cert in serializableProfile.certifications {
+                let newCertification = Certification(
+                    name: cert.name,
+                    date: cert.date,
+                    certificationNumber: cert.certificationNumber,
+                    webLink: cert.webLink,
+                    isVisible: cert.isVisible
+                )
+                newCertification.profile = profile
+                profile.certifications.append(newCertification)
+            }
+
+            // Add languages
+            for lang in serializableProfile.languages {
+                let newLanguage = Language(
+                    name: lang.name,
+                    level: lang.level,
+                    isVisible: lang.isVisible
+                )
+                newLanguage.profile = profile
+                profile.languages.append(newLanguage)
+            }
 
             context.insert(profile)
         }
@@ -364,8 +435,7 @@ class DataService {
         // Importer les lettres de motivation non existantes
         if let serializableCoverLetters = exportData.coverLetters {
             for serializableCoverLetter in serializableCoverLetters
-                where !existingCoverLetterTitles.contains(serializableCoverLetter.title)
-            {
+            where !existingCoverLetterTitles.contains(serializableCoverLetter.title) {
                 let coverLetter = CoverLetter(
                     title: serializableCoverLetter.title,
                     content: serializableCoverLetter.content,

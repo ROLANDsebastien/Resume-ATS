@@ -3,12 +3,6 @@ import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
 
-// MARK: - Skill Item
-struct SkillItem: Identifiable {
-    let id = UUID()
-    var text: String
-}
-
 // MARK: - Profile View
 struct ProfileView: View {
     @Binding var selectedSection: String?
@@ -34,12 +28,17 @@ struct ProfileView: View {
             "educations": "Educations",
             "references": "References",
             "skills": "Skills",
+            "certifications": "Certifications",
+            "languages": "Languages",
             "show_section": "Show this section in the CV",
             "visible_cv": "Visible in CV",
             "add_experience": "Add an experience",
             "add_education": "Add an education",
             "add_reference": "Add a reference",
             "add_skill": "Add a skill",
+            "add_certification": "Add a certification",
+            "add_language": "Add a language",
+            "add_skill_group": "Add a skill group",
             "first_name": "First Name",
             "last_name": "Last Name",
             "email": "Email",
@@ -74,6 +73,10 @@ struct ProfileView: View {
             "delete_profile": "Delete profile",
             "delete_confirm":
                 "Are you sure you want to delete this profile? This action is irreversible.",
+            "level": "Level",
+            "date": "Date",
+            "certification_number": "Certification Number",
+            "web_link": "Web Link",
         ]
         let frDict: [String: String] = [
             "personal_info": "Informations Personnelles",
@@ -82,12 +85,17 @@ struct ProfileView: View {
             "educations": "Formations",
             "references": "Références",
             "skills": "Compétences",
+            "certifications": "Certifications",
+            "languages": "Langues",
             "show_section": "Afficher cette section dans le CV",
             "visible_cv": "Visible dans le CV",
             "add_experience": "Ajouter une expérience",
             "add_education": "Ajouter une formation",
             "add_reference": "Ajouter une référence",
             "add_skill": "Ajouter une compétence",
+            "add_certification": "Ajouter une certification",
+            "add_language": "Ajouter une langue",
+            "add_skill_group": "Ajouter un groupe de compétences",
             "first_name": "Prénom",
             "last_name": "Nom",
             "email": "Email",
@@ -122,6 +130,10 @@ struct ProfileView: View {
             "delete_profile": "Supprimer le profil",
             "delete_confirm":
                 "Êtes-vous sûr de vouloir supprimer ce profil ? Cette action est irréversible.",
+            "level": "Niveau",
+            "date": "Date",
+            "certification_number": "Numéro de certification",
+            "web_link": "Lien Web",
         ]
         let dict = effectiveLanguage == "en" ? enDict : frDict
         return dict[key] ?? key
@@ -377,6 +389,154 @@ struct ProfileView: View {
                             }
                         }
 
+                        StyledSection(title: localizedTitle(for: "certifications")) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Section visibility toggle
+                                HStack {
+                                    Text(localizedTitle(for: "show_section"))
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Toggle(
+                                        "",
+                                        isOn: Binding(
+                                            get: { profile.showCertifications },
+                                            set: { profile.showCertifications = $0 }
+                                        )
+                                    )
+                                    .labelsHidden()
+                                    .toggleStyle(.switch)
+                                }
+
+                                if profile.showCertifications {
+                                    ForEach(profile.certifications) { certification in
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            HStack {
+                                                Toggle(
+                                                    localizedTitle(for: "visible_cv"),
+                                                    isOn: Binding(
+                                                        get: { certification.isVisible },
+                                                        set: { certification.isVisible = $0 }
+                                                    )
+                                                )
+                                                .toggleStyle(.switch)
+                                                Spacer()
+                                                Button(action: {
+                                                    DispatchQueue.main.async {
+                                                        if let index = profile.certifications
+                                                            .firstIndex(where: {
+                                                                $0.id == certification.id
+                                                            })
+                                                        {
+                                                            profile.certifications.remove(at: index)
+                                                        }
+                                                    }
+                                                }) {
+                                                    Image(systemName: "trash.fill")
+                                                        .foregroundColor(.red)
+                                                }
+                                                .buttonStyle(.plain)
+                                            }
+                                            CertificationForm(
+                                                certification: certification,
+                                                language: effectiveLanguage)
+                                        }
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .background(Color.gray.opacity(0.05))
+                                        .cornerRadius(8)
+                                        if certification.id != profile.certifications.last?.id {
+                                            Divider().background(Color.secondary.opacity(0.3))
+                                        }
+                                    }
+                                    StyledButton(
+                                        title: localizedTitle(for: "add_certification"),
+                                        systemImage: "plus",
+                                        action: {
+                                            DispatchQueue.main.async {
+                                                profile.certifications.append(
+                                                    Certification(
+                                                        name: "", date: Date(),
+                                                        certificationNumber: nil))
+                                            }
+                                        })
+                                }
+                            }
+                        }
+
+                        StyledSection(title: localizedTitle(for: "languages")) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Section visibility toggle
+                                HStack {
+                                    Text(localizedTitle(for: "show_section"))
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Toggle(
+                                        "",
+                                        isOn: Binding(
+                                            get: { profile.showLanguages },
+                                            set: { profile.showLanguages = $0 }
+                                        )
+                                    )
+                                    .labelsHidden()
+                                    .toggleStyle(.switch)
+                                }
+
+                                if profile.showLanguages {
+                                    ForEach(profile.languages) { languageItem in
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            HStack {
+                                                Toggle(
+                                                    localizedTitle(for: "visible_cv"),
+                                                    isOn: Binding(
+                                                        get: { languageItem.isVisible },
+                                                        set: { languageItem.isVisible = $0 }
+                                                    )
+                                                )
+                                                .toggleStyle(.switch)
+                                                Spacer()
+                                                Button(action: {
+                                                    DispatchQueue.main.async {
+                                                        if let index = profile.languages
+                                                            .firstIndex(where: {
+                                                                $0.id == languageItem.id
+                                                            })
+                                                        {
+                                                            profile.languages.remove(at: index)
+                                                        }
+                                                    }
+                                                }) {
+                                                    Image(systemName: "trash.fill")
+                                                        .foregroundColor(.red)
+                                                }
+                                                .buttonStyle(.plain)
+                                            }
+                                            LanguageForm(
+                                                languageItem: languageItem,
+                                                language: effectiveLanguage)
+                                        }
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .background(Color.gray.opacity(0.05))
+                                        .cornerRadius(8)
+                                        if languageItem.id != profile.languages.last?.id {
+                                            Divider().background(Color.secondary.opacity(0.3))
+                                        }
+                                    }
+                                    StyledButton(
+                                        title: localizedTitle(for: "add_language"),
+                                        systemImage: "plus",
+                                        action: {
+                                            DispatchQueue.main.async {
+                                                profile.languages.append(
+                                                    Language(name: "", level: nil))
+                                            }
+                                        })
+                                }
+                            }
+                        }
+
                         StyledSection(title: localizedTitle(for: "skills")) {
                             VStack(alignment: .leading, spacing: 12) {
                                 // Section visibility toggle
@@ -397,45 +557,45 @@ struct ProfileView: View {
                                 }
 
                                 if profile.showSkills {
-                                    let skillItems = profile.skills.enumerated().map {
-                                        index, text in
-                                        SkillItem(text: text)
-                                    }
-                                    ForEach(skillItems) { item in
-                                        HStack {
-                                            TextField(
-                                                localizedTitle(for: "skills"),
-                                                text: Binding(
-                                                    get: { item.text },
-                                                    set: { newValue in
-                                                        if let index = profile.skills.firstIndex(
-                                                            of: item.text)
+                                    ForEach(profile.skills) { skillGroup in
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            HStack {
+                                                Spacer()
+                                                Button(action: {
+                                                    DispatchQueue.main.async {
+                                                        if let index = profile.skills
+                                                            .firstIndex(where: {
+                                                                $0.id == skillGroup.id
+                                                            })
                                                         {
-                                                            profile.skills[index] = newValue
+                                                            profile.skills.remove(at: index)
                                                         }
-                                                    })
-                                            )
-                                            .textFieldStyle(StyledTextField())
-                                            Button(action: {
-                                                DispatchQueue.main.async {
-                                                    if let index = profile.skills.firstIndex(
-                                                        of: item.text)
-                                                    {
-                                                        profile.skills.remove(at: index)
                                                     }
+                                                }) {
+                                                    Image(systemName: "trash.fill")
+                                                        .foregroundColor(.red)
                                                 }
-                                            }) {
-                                                Image(systemName: "trash.fill")
-                                                    .foregroundColor(.red)
+                                                .buttonStyle(.plain)
                                             }
-                                            .buttonStyle(.plain)
+                                            SkillGroupForm(
+                                                skillGroup: skillGroup, language: effectiveLanguage)
+                                        }
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .background(Color.gray.opacity(0.05))
+                                        .cornerRadius(8)
+                                        if skillGroup.id != profile.skills.last?.id {
+                                            Divider().background(Color.secondary.opacity(0.3))
                                         }
                                     }
                                     StyledButton(
-                                        title: localizedTitle(for: "add_skill"),
+                                        title: localizedTitle(for: "add_skill_group"),
                                         systemImage: "plus",
                                         action: {
-                                            DispatchQueue.main.async { profile.skills.append("") }
+                                            DispatchQueue.main.async {
+                                                profile.skills.append(
+                                                    SkillGroup(title: "", skills: []))
+                                            }
                                         })
                                 }
                             }
@@ -556,6 +716,8 @@ struct ProfileView: View {
             showEducations: profile.showEducations,
             showReferences: profile.showReferences,
             showSkills: profile.showSkills,
+            showCertifications: profile.showCertifications,
+            showLanguages: profile.showLanguages,
             experiences: profile.experiences.map { exp in
                 Experience(
                     company: exp.company, position: exp.position, startDate: exp.startDate,
@@ -572,7 +734,17 @@ struct ProfileView: View {
                     name: ref.name, position: ref.position, company: ref.company, email: ref.email,
                     phone: ref.phone, isVisible: ref.isVisible)
             },
-            skills: profile.skills
+            skills: profile.skills.map { skillGroup in
+                SkillGroup(title: skillGroup.title, skills: skillGroup.skills)
+            },
+            certifications: profile.certifications.map { cert in
+                Certification(
+                    name: cert.name, date: cert.date, certificationNumber: cert.certificationNumber,
+                    webLink: cert.webLink, isVisible: cert.isVisible)
+            },
+            languages: profile.languages.map { lang in
+                Language(name: lang.name, level: lang.level, isVisible: lang.isVisible)
+            }
         )
         modelContext.insert(duplicatedProfile)
         selectedProfile = duplicatedProfile
@@ -596,7 +768,6 @@ struct ProfileView: View {
 }
 
 // MARK: - Reusable Styled Components
-
 
 private struct StyledSection<Content: View>: View {
     let title: String
@@ -657,9 +828,9 @@ private struct StyledButton: View {
 
 private struct StyledTextField: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
-                    configuration
-                        .padding(10)
-                        .background(.thinMaterial)            .cornerRadius(8)
+        configuration
+            .padding(10)
+            .background(.thinMaterial).cornerRadius(8)
             .foregroundColor(.primary)
     }
 }
@@ -687,6 +858,149 @@ private struct StyledPickerModifier: ViewModifier {
 }
 
 // MARK: - Form Views (to be restyled)
+
+struct CertificationForm: View {
+    @Bindable var certification: Certification
+    var language: String
+
+    private func localizedTitle(for key: String) -> String {
+        let enDict: [String: String] = [
+            "name": "Name",
+            "date": "Date",
+            "certification_number": "Certification Number",
+            "web_link": "Web Link",
+        ]
+        let frDict: [String: String] = [
+            "name": "Nom",
+            "date": "Date",
+            "certification_number": "Numéro de certification",
+            "web_link": "Lien Web",
+        ]
+        let dict = language == "en" ? enDict : frDict
+        return dict[key] ?? key
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            TextField(localizedTitle(for: "name"), text: $certification.name)
+                .foregroundColor(.primary)
+            DatePicker(
+                localizedTitle(for: "date"),
+                selection: Binding(
+                    get: { certification.date ?? Date() },
+                    set: { certification.date = $0 }
+                ),
+                displayedComponents: .date
+            )
+            .datePickerStyle(.compact)
+            TextField(
+                localizedTitle(for: "certification_number"),
+                text: Binding(
+                    get: { certification.certificationNumber ?? "" },
+                    set: { certification.certificationNumber = $0.isEmpty ? nil : $0 }
+                )
+            )
+            .foregroundColor(.primary)
+            TextField(
+                localizedTitle(for: "web_link"),
+                text: Binding(
+                    get: { certification.webLink ?? "" },
+                    set: { certification.webLink = $0.isEmpty ? nil : $0 }
+                )
+            )
+            .foregroundColor(.primary)
+        }
+        .textFieldStyle(StyledTextField())
+    }
+}
+
+struct LanguageForm: View {
+    @Bindable var languageItem: Language
+    var language: String
+
+    private func localizedTitle(for key: String) -> String {
+        let enDict: [String: String] = [
+            "name": "Name",
+            "level": "Level",
+        ]
+        let frDict: [String: String] = [
+            "name": "Nom",
+            "level": "Niveau",
+        ]
+        let dict = language == "en" ? enDict : frDict
+        return dict[key] ?? key
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            TextField(localizedTitle(for: "name"), text: $languageItem.name)
+                .foregroundColor(.primary)
+            TextField(
+                localizedTitle(for: "level"),
+                text: Binding(
+                    get: { languageItem.level ?? "" },
+                    set: { languageItem.level = $0.isEmpty ? nil : $0 }
+                )
+            )
+            .foregroundColor(.primary)
+        }
+        .textFieldStyle(StyledTextField())
+    }
+}
+
+struct SkillGroupForm: View {
+    @Bindable var skillGroup: SkillGroup
+    var language: String
+
+    private func localizedTitle(for key: String) -> String {
+        let enDict: [String: String] = [
+            "title": "Title",
+            "skills": "Skills",
+            "add_skill": "Add a skill",
+        ]
+        let frDict: [String: String] = [
+            "title": "Titre",
+            "skills": "Compétences",
+            "add_skill": "Ajouter une compétence",
+        ]
+        let dict = language == "en" ? enDict : frDict
+        return dict[key] ?? key
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            TextField(localizedTitle(for: "title"), text: $skillGroup.title)
+                .foregroundColor(.primary)
+
+            ForEach(skillGroup.skills.indices, id: \.self) { index in
+                HStack {
+                    TextField(
+                        "",
+                        text: $skillGroup.skills[index]
+                    )
+                    .textFieldStyle(StyledTextField())
+                    Button(action: {
+                        skillGroup.skills.remove(at: index)
+                    }) {
+                        Image(systemName: "trash.fill")
+                            .foregroundColor(.red)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            StyledButton(
+                title: localizedTitle(for: "add_skill"),
+                systemImage: "plus",
+                action: {
+                    skillGroup.skills.append("")
+                }
+            )
+        }
+        .textFieldStyle(StyledTextField())
+    }
+}
+
 struct ExperienceForm: View {
     @Bindable var experience: Experience
     var language: String

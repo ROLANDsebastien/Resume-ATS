@@ -29,10 +29,14 @@ final class Profile {
     var showEducations: Bool = true
     var showReferences: Bool = true
     var showSkills: Bool = true
+    var showCertifications: Bool = true
+    var showLanguages: Bool = true
     @Relationship(deleteRule: .cascade) var experiences: [Experience]
     @Relationship(deleteRule: .cascade) var educations: [Education]
     @Relationship(deleteRule: .cascade) var references: [Reference]
-    var skills: [String]
+    @Relationship(deleteRule: .cascade) var skills: [SkillGroup]
+    @Relationship(deleteRule: .cascade) var certifications: [Certification]
+    @Relationship(deleteRule: .cascade) var languages: [Language]
 
     init(
         name: String, language: String = "fr", firstName: String? = nil, lastName: String? = nil,
@@ -41,9 +45,10 @@ final class Profile {
         linkedin: String? = nil, website: String? = nil, photo: Data? = nil,
         showPhotoInPDF: Bool = false, summary: Data = Data(),
         showExperiences: Bool = true, showEducations: Bool = true, showReferences: Bool = true,
-        showSkills: Bool = true,
+        showSkills: Bool = true, showCertifications: Bool = true, showLanguages: Bool = true,
         experiences: [Experience] = [],
-        educations: [Education] = [], references: [Reference] = [], skills: [String] = []
+        educations: [Education] = [], references: [Reference] = [], skills: [SkillGroup] = [],
+        certifications: [Certification] = [], languages: [Language] = []
     ) {
         self.name = name
         self.language = language
@@ -63,10 +68,14 @@ final class Profile {
         self.showEducations = showEducations
         self.showReferences = showReferences
         self.showSkills = showSkills
+        self.showCertifications = showCertifications
+        self.showLanguages = showLanguages
         self.experiences = experiences
         self.educations = educations
         self.references = references
         self.skills = skills
+        self.certifications = certifications
+        self.languages = languages
     }
 
     var summaryAttributedString: NSAttributedString {
@@ -237,6 +246,53 @@ final class Reference {
         self.company = company
         self.email = email
         self.phone = phone
+        self.isVisible = isVisible
+    }
+}
+
+@Model
+final class SkillGroup {
+    var title: String
+    var skills: [String]
+    var profile: Profile?
+
+    init(title: String, skills: [String]) {
+        self.title = title
+        self.skills = skills
+    }
+}
+
+@Model
+final class Certification {
+    var name: String
+    var date: Date?
+    var certificationNumber: String?
+    var webLink: String?
+    var isVisible: Bool = true
+    var profile: Profile?
+
+    init(
+        name: String, date: Date? = nil, certificationNumber: String? = nil, webLink: String? = nil,
+        isVisible: Bool = true
+    ) {
+        self.name = name
+        self.date = date
+        self.certificationNumber = certificationNumber
+        self.webLink = webLink
+        self.isVisible = isVisible
+    }
+}
+
+@Model
+final class Language {
+    var name: String
+    var level: String?
+    var isVisible: Bool = true
+    var profile: Profile?
+
+    init(name: String, level: String? = nil, isVisible: Bool = true) {
+        self.name = name
+        self.level = level
         self.isVisible = isVisible
     }
 }
