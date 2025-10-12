@@ -60,7 +60,7 @@ struct ATSResumeView: View {
     private func localizedTitle(for key: String) -> String {
         let enDict: [String: String] = [
             "professional_summary": "Professional Summary",
-            "professional_experience": "Professional Experience",
+            "professional_experience": "Experiences",
             "education": "Education",
             "references": "References",
             "skills": "Skills",
@@ -76,8 +76,8 @@ struct ATSResumeView: View {
             "present": "Present",
         ]
         let frDict: [String: String] = [
-            "professional_summary": "Résumé Professionnel",
-            "professional_experience": "Expérience Professionnelle",
+            "professional_summary": "Résumé",
+            "professional_experience": "Expériences",
             "education": "Formation",
             "references": "Références",
             "skills": "Compétences",
@@ -252,16 +252,9 @@ struct ATSResumeView: View {
                         ForEach(profile.experiences.filter({ $0.isVisible })) { experience in
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(experience.company)
-                                            .font(.custom("Arial", size: 12))
-                                            .foregroundColor(.black)
-                                        if let position = experience.position, !position.isEmpty {
-                                            Text(position)
-                                                .font(.custom("Arial", size: 11))
-                                                .foregroundColor(.black)
-                                        }
-                                    }
+                                    Text(experience.company)
+                                        .font(.custom("Arial", size: 12))
+                                        .foregroundColor(.black)
                                     Spacer()
                                     Text(
                                         dateRange(
@@ -270,6 +263,11 @@ struct ATSResumeView: View {
                                     )
                                     .font(.custom("Arial", size: 10))
                                     .foregroundColor(.black)
+                                }
+                                if let position = experience.position, !position.isEmpty {
+                                    Text(position)
+                                        .font(.custom("Arial", size: 11))
+                                        .foregroundColor(.black)
                                 }
                                  AttributedTextView(attributedString: experience.normalizedDetailsAttributedString, fontSize: 11)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -286,9 +284,14 @@ struct ATSResumeView: View {
                         ForEach(profile.educations.filter({ $0.isVisible })) { education in
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack {
-                                    Text("\(education.institution) - \(education.degree)")
-                                        .font(.custom("Arial", size: 12))
-                                        .foregroundColor(.black)
+                                    VStack(alignment: .leading, spacing: 5) {
+                                        Text(education.institution)
+                                            .font(.custom("Arial", size: 12))
+                                            .foregroundColor(.black)
+                                        Text(education.degree)
+                                            .font(.custom("Arial", size: 11))
+                                            .foregroundColor(.black)
+                                    }
                                     Spacer()
                                     Text(
                                         dateRange(

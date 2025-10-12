@@ -23,8 +23,8 @@ class PDFService {
             "present": "Present",
         ]
         let frDict: [String: String] = [
-            "professional_summary": "Résumé Professionnel",
-            "professional_experience": "Expérience Professionnelle",
+            "professional_summary": "Résumé",
+            "professional_experience": "Expériences",
             "education": "Formation",
             "references": "Références",
             "skills": "Compétences",
@@ -543,11 +543,8 @@ class PDFService {
                             font: NSFont.boldSystemFont(ofSize: 18),
                             color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
                         for experience in profile.experiences.filter({ $0.isVisible }) {
-                            // Ligne entreprise + poste à gauche, date à droite sur la même ligne
-                            let leftText =
-                                experience.company
-                                + (experience.position != nil && !experience.position!.isEmpty
-                                    ? " - \(experience.position!)" : "")
+                            // Ligne entreprise, date à droite
+                            let companyText = experience.company
                             let dateText: String = {
                                 let formatter = DateFormatter()
                                 formatter.dateFormat = "MM/yyyy"
@@ -556,30 +553,26 @@ class PDFService {
                                     let endStr = formatter.string(from: endDate)
                                     return "\(startStr) - \(endStr)"
                                 } else {
-                                    return
-                                        "\(startStr) - \(localizedTitle(for: "present", language: profile.language))"
+                                    return "\(startStr) - \(localizedTitle(for: "present", language: profile.language))"
                                 }
                             }()
 
-                            // Mesurer la hauteur de la ligne
-                            let attributesLeft: [NSAttributedString.Key: Any] = [
+                            let companyAttributes: [NSAttributedString.Key: Any] = [
                                 .font: NSFont.boldSystemFont(ofSize: 12),
                                 .foregroundColor: NSColor.black,
                             ]
-                            let attributesRight: [NSAttributedString.Key: Any] = [
+                            let dateAttributes: [NSAttributedString.Key: Any] = [
                                 .font: NSFont.systemFont(ofSize: 11),
                                 .foregroundColor: NSColor.black,
                             ]
-                            let leftAttr = NSAttributedString(
-                                string: leftText, attributes: attributesLeft)
-                            let rightAttr = NSAttributedString(
-                                string: dateText, attributes: attributesRight)
-                            let leftSize = leftAttr.size()
-                            let rightSize = rightAttr.size()
-                            let lineHeight = max(leftSize.height, rightSize.height)
 
-                            // Pagination si besoin
-                            if currentY + lineHeight > pageHeight - margin {
+                            let companyAttr = NSAttributedString(string: companyText, attributes: companyAttributes)
+                            let dateAttr = NSAttributedString(string: dateText, attributes: dateAttributes)
+                            let companySize = companyAttr.size()
+                            let dateSize = dateAttr.size()
+                            let firstLineHeight = max(companySize.height, dateSize.height)
+
+                            if currentY + firstLineHeight > pageHeight - margin {
                                 addPageToDocument(context, pageData)
                                 pageIndex += 1
                                 let result = createPage()
@@ -588,32 +581,35 @@ class PDFService {
                                 currentY = marginTop
                             }
 
-                            // Dessiner le texte à gauche et la date à droite sur la même ligne en utilisant CTFrameDraw
-                            let yPos = pageHeight - currentY - lineHeight
-                            let leftRect = CGRect(
-                                x: margin, y: yPos, width: pageWidth / 2, height: lineHeight)
-                            let leftPath = CGMutablePath()
-                            leftPath.addRect(leftRect)
-                            let leftFramesetter = CTFramesetterCreateWithAttributedString(leftAttr)
-                            let leftFrame = CTFramesetterCreateFrame(
-                                leftFramesetter, CFRange(location: 0, length: 0), leftPath, nil)
-                            CTFrameDraw(leftFrame, context)
+                            let yPos = pageHeight - currentY - firstLineHeight
+                            let companyRect = CGRect(x: margin, y: yPos, width: pageWidth / 2, height: firstLineHeight)
+                            let companyPath = CGMutablePath()
+                            companyPath.addRect(companyRect)
+                            let companyFramesetter = CTFramesetterCreateWithAttributedString(companyAttr)
+                            let companyFrame = CTFramesetterCreateFrame(companyFramesetter, CFRange(location: 0, length: 0), companyPath, nil)
+                            CTFrameDraw(companyFrame, context)
 
-                            let rightRect = CGRect(
-                                x: pageWidth - margin - rightSize.width, y: yPos,
-                                width: rightSize.width,
-                                height: lineHeight)
-                            let rightPath = CGMutablePath()
-                            rightPath.addRect(rightRect)
-                            let rightFramesetter = CTFramesetterCreateWithAttributedString(
-                                rightAttr)
-                            let rightFrame = CTFramesetterCreateFrame(
-                                rightFramesetter, CFRange(location: 0, length: 0), rightPath, nil)
-                            CTFrameDraw(rightFrame, context)
+                            let dateRect = CGRect(x: pageWidth - margin - dateSize.width, y: yPos, width: dateSize.width, height: firstLineHeight)
+                            let datePath = CGMutablePath()
+                            datePath.addRect(dateRect)
+                            let dateFramesetter = CTFramesetterCreateWithAttributedString(dateAttr)
+                            let dateFrame = CTFramesetterCreateFrame(dateFramesetter, CFRange(location: 0, length: 0), datePath, nil)
+                            CTFrameDraw(dateFrame, context)
 
-                            currentY += lineHeight + 2
+                            currentY += firstLineHeight + 2
 
-                            // Détails de l'expérience (pagination gérée par drawAttributedText)
+                            // Position en dessous
+                            if let position = experience.position, !position.isEmpty {
+                                drawText(
+                                    position,
+                                    font: NSFont.systemFont(ofSize: 11),
+                                    color: .black,
+                                    x: margin,
+                                    maxWidth: pageWidth - 2 * margin
+                                )
+                            }
+
+                            // Détails de l'expérience
                             drawAttributedText(
                                 experience.normalizedDetailsAttributedString,
                                 x: margin, maxWidth: pageWidth - 2 * margin)

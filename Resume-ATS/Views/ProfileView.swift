@@ -160,16 +160,16 @@ struct ProfileView: View {
 
 
 
-                         VStack(spacing: 0) {
-                             ForEach(profile.sectionsOrder.indices, id: \.self) { index in
-                                 if index > 0 {
-                                     DropZoneView(targetIndex: index, onDrop: handleDrop)
-                                 }
-                                 StyledSection(title: "", section: profile.sectionsOrder[index], language: effectiveLanguage) {
-                                     sectionView(for: profile.sectionsOrder[index], profile: profile)
-                                 }
-                             }
-                         }
+                          VStack(spacing: 10) {
+                              ForEach(profile.sectionsOrder.indices, id: \.self) { index in
+                                  if index > 0 {
+                                      DropZoneView(targetIndex: index, onDrop: handleDrop)
+                                  }
+                                  StyledSection(title: "", section: profile.sectionsOrder[index], language: effectiveLanguage) {
+                                      sectionView(for: profile.sectionsOrder[index], profile: profile)
+                                  }
+                              }
+                          }
                      }
                      .onAppear {
                          if profile.sectionsOrder.isEmpty {
