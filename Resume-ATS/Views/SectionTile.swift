@@ -13,6 +13,7 @@ struct DashboardTile: View {
     let systemImage: String
     let action: () -> Void
     var isEnabled: Bool = true
+    var isSelected: Bool = false
 
     @State private var isHovered = false
 
@@ -21,15 +22,16 @@ struct DashboardTile: View {
             VStack {
                 Image(systemName: systemImage)
                     .font(.largeTitle)
-                    .foregroundColor(isEnabled ? .blue : .gray)
+                    .foregroundColor(isEnabled ? (isSelected ? .white : .blue) : .gray)
                 Text(title)
                     .font(.headline)
+                    .foregroundColor(isSelected ? .white : .primary)
                 Text(subtitle)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
             }
             .frame(maxWidth: .infinity, minHeight: 120)
-            .background(.regularMaterial)
+            .background(isSelected ? Color.blue : Color.gray.opacity(0.1))
             .cornerRadius(12)
             .shadow(radius: isHovered && isEnabled ? 8 : 4)
             .scaleEffect(isHovered && isEnabled ? 1.02 : 1.0)

@@ -680,15 +680,22 @@ struct ProfileView: View {
                 }
             }
 
-            Picker(effectiveLanguage == "fr" ? "Profil" : "Profile", selection: $selectedProfile) {
-                Text(effectiveLanguage == "fr" ? "Nouveau Profil" : "New Profile").tag(
-                    nil as Profile?)
-                ForEach(profiles) { profile in
-                    Text(profile.name).tag(profile as Profile?)
+            if selectedProfile == nil {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20), GridItem(.flexible())], spacing: 20) {
+                    ForEach(profiles) { profile in
+                        DashboardTile(
+                            title: profile.name,
+                            subtitle: "",
+                            systemImage: "person.circle",
+                            action: {
+                                selectedProfile = profile
+                            },
+                            isEnabled: true,
+                            isSelected: false
+                        )
+                    }
                 }
             }
-            .pickerStyle(MenuPickerStyle())
-            .modifier(StyledPickerModifier())
         }
     }
 

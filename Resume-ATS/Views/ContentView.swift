@@ -24,21 +24,21 @@ struct TemplatesView: View {
                     .fontWeight(.bold)
                     .padding(.top)
 
-                // Profile selector
-                VStack(alignment: .leading) {
-                    Text(language == "fr" ? "Sélectionner un profil:" : "Select a profile:")
-                        .font(.headline)
-                    Picker(language == "fr" ? "Profil" : "Profile", selection: $selectedProfile) {
-                        Text(language == "fr" ? "Choisir un profil" : "Choose a profile").tag(
-                            nil as Profile?)
-                        ForEach(profiles) { profile in
-                            Text(profile.name).tag(profile as Profile?)
-                        }
-                    }
-                    .pickerStyle(MenuPickerStyle())
-                    .frame(maxWidth: 300)
-                }
-                .padding(.horizontal)
+                 // Profile selector
+                 VStack(alignment: .leading) {
+                     Text(language == "fr" ? "Sélectionner un profil:" : "Select a profile:")
+                         .font(.headline)
+                     Picker(language == "fr" ? "Profil" : "Profile", selection: $selectedProfile) {
+                         Text(language == "fr" ? "Choisir un profil" : "Choose a profile").tag(
+                             nil as Profile?)
+                         ForEach(profiles) { profile in
+                             Text(profile.name).tag(profile as Profile?)
+                         }
+                     }
+                     .pickerStyle(MenuPickerStyle())
+                     .frame(maxWidth: 300)
+                 }
+                 .padding(.horizontal)
 
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 40), GridItem(.flexible(), spacing: 40), GridItem(.flexible())], spacing: 60) {
                     DashboardTile(
