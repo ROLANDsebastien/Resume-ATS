@@ -135,24 +135,13 @@ struct RichTextToolbar: View {
             length: min(
                 selectedRange.length,
                 attributedString.length - min(selectedRange.location, attributedString.length)))
-        if validRange.length > 0 {
-            mutableString.enumerateAttribute(.font, in: validRange, options: []) {
-                value, range, _ in
-                if let font = value as? NSFont {
-                    let newFont = fontManager.convert(font, toHaveTrait: .boldFontMask)
-                    mutableString.addAttribute(.font, value: newFont, range: range)
-                }
-            }
-        } else {
-            // Apply to current position or whole text if no selection
-            let range =
-                validRange.length > 0
-                ? validRange : NSRange(location: 0, length: mutableString.length)
-            mutableString.enumerateAttribute(.font, in: range, options: []) { value, range, _ in
-                if let font = value as? NSFont {
-                    let newFont = fontManager.convert(font, toHaveTrait: .boldFontMask)
-                    mutableString.addAttribute(.font, value: newFont, range: range)
-                }
+        let range = validRange.length > 0 ? validRange : NSRange(location: 0, length: mutableString.length)
+        mutableString.enumerateAttribute(.font, in: range, options: []) { value, range, _ in
+            if let font = value as? NSFont {
+                let trait = NSFontTraitMask.boldFontMask
+                let hasTrait = fontManager.traits(of: font).contains(trait)
+                let newFont = hasTrait ? fontManager.convert(font, toNotHaveTrait: trait) : fontManager.convert(font, toHaveTrait: trait)
+                mutableString.addAttribute(.font, value: newFont, range: range)
             }
         }
         DispatchQueue.main.async {
@@ -168,21 +157,13 @@ struct RichTextToolbar: View {
             length: min(
                 selectedRange.length,
                 attributedString.length - min(selectedRange.location, attributedString.length)))
-        if validRange.length > 0 {
-            mutableString.enumerateAttribute(.font, in: validRange, options: []) {
-                value, range, _ in
-                if let font = value as? NSFont {
-                    let newFont = fontManager.convert(font, toHaveTrait: .italicFontMask)
-                    mutableString.addAttribute(.font, value: newFont, range: range)
-                }
-            }
-        } else {
-            let range = NSRange(location: 0, length: mutableString.length)
-            mutableString.enumerateAttribute(.font, in: range, options: []) { value, range, _ in
-                if let font = value as? NSFont {
-                    let newFont = fontManager.convert(font, toHaveTrait: .italicFontMask)
-                    mutableString.addAttribute(.font, value: newFont, range: range)
-                }
+        let range = validRange.length > 0 ? validRange : NSRange(location: 0, length: mutableString.length)
+        mutableString.enumerateAttribute(.font, in: range, options: []) { value, range, _ in
+            if let font = value as? NSFont {
+                let trait = NSFontTraitMask.italicFontMask
+                let hasTrait = fontManager.traits(of: font).contains(trait)
+                let newFont = hasTrait ? fontManager.convert(font, toNotHaveTrait: trait) : fontManager.convert(font, toHaveTrait: trait)
+                mutableString.addAttribute(.font, value: newFont, range: range)
             }
         }
         DispatchQueue.main.async {
