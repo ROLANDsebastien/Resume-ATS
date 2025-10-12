@@ -249,7 +249,7 @@ struct ATSResumeView: View {
             if profile.showExperiences && !profile.experiences.filter({ $0.isVisible }).isEmpty {
                 SectionView(title: localizedTitle(for: "professional_experience")) {
                     VStack(alignment: .leading, spacing: 15) {
-                        ForEach(profile.experiences.filter({ $0.isVisible })) { experience in
+                        ForEach(profile.experiences.filter({ $0.isVisible }).sorted(by: { $0.startDate > $1.startDate })) { experience in
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack {
                                     Text(experience.company)

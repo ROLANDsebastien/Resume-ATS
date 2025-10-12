@@ -542,7 +542,7 @@ class PDFService {
                                 for: "professional_experience", language: profile.language),
                             font: NSFont.boldSystemFont(ofSize: 18),
                             color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
-                        for experience in profile.experiences.filter({ $0.isVisible }) {
+                        for experience in profile.experiences.filter({ $0.isVisible }).sorted(by: { $0.startDate > $1.startDate }) {
                             // Ligne entreprise, date à droite
                             let companyText = experience.company
                             let dateText: String = {
