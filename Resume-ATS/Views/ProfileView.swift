@@ -163,13 +163,7 @@ struct ProfileView: View {
                          VStack(spacing: 0) {
                              ForEach(profile.sectionsOrder.indices, id: \.self) { index in
                                  if index > 0 {
-                                     Rectangle()
-                                         .fill(Color.clear)
-                                         .frame(height: 10)
-                                         .onDrop(of: [.text], isTargeted: nil) { providers in
-                                             handleDrop(providers: providers, targetIndex: index)
-                                             return true
-                                         }
+                                     DropZoneView(targetIndex: index, onDrop: handleDrop)
                                  }
                                  StyledSection(title: "", section: profile.sectionsOrder[index], language: effectiveLanguage) {
                                      sectionView(for: profile.sectionsOrder[index], profile: profile)
@@ -1404,6 +1398,25 @@ struct PersonalInfoForm: View {
                 print("Error loading image: \(error)")
             }
         }
+    }
+}
+
+private struct DropZoneView: View {
+    let targetIndex: Int
+    let onDrop: ([NSItemProvider], Int) -> Void
+
+    @State private var isTargeted = false
+
+    var body: some View {
+        Rectangle()
+            .fill(isTargeted ? Color.blue.opacity(0.3) : Color.gray.opacity(0.1))
+            .frame(height: 20)
+            .cornerRadius(4)
+            .animation(.easeInOut(duration: 0.2), value: isTargeted)
+            .onDrop(of: [.text], isTargeted: $isTargeted) { providers in
+                onDrop(providers, targetIndex)
+                return true
+            }
     }
 }
 
