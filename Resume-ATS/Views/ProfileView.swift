@@ -724,12 +724,12 @@ struct ProfileView: View {
             photo: profile.photo,
             showPhotoInPDF: profile.showPhotoInPDF,
             summary: profile.summary,
-            showExperiences: profile.showExperiences,
-            showEducations: profile.showEducations,
-            showReferences: profile.showReferences,
-            showSkills: profile.showSkills,
-            showCertifications: profile.showCertifications,
-            showLanguages: profile.showLanguages,
+            showExperiences: !profile.experiences.isEmpty,
+            showEducations: !profile.educations.isEmpty,
+            showReferences: !profile.references.isEmpty,
+            showSkills: !profile.skills.isEmpty,
+            showCertifications: !profile.certifications.isEmpty,
+            showLanguages: !profile.languages.isEmpty,
             sectionsOrder: profile.sectionsOrder,
             experiences: profile.experiences.map { exp in
                 Experience(
@@ -760,6 +760,7 @@ struct ProfileView: View {
             }
         )
         modelContext.insert(duplicatedProfile)
+        try? modelContext.save()
         selectedProfile = duplicatedProfile
     }
 

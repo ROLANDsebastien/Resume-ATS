@@ -246,105 +246,105 @@ struct ATSResumeView: View {
             }
 
             // Professional Experience
-            // if profile.showExperiences && !profile.experiences.filter({ $0.isVisible }).isEmpty {
-            //     SectionView(title: localizedTitle(for: "professional_experience")) {
-            //         VStack(alignment: .leading, spacing: 15) {
-            //             ForEach(profile.experiences.filter({ $0.isVisible })) { experience in
-            //                 VStack(alignment: .leading, spacing: 5) {
-            //                     HStack {
-            //                         VStack(alignment: .leading, spacing: 2) {
-            //                             Text(experience.company)
-            //                                 .font(.custom("Arial", size: 12))
-            //                                 .foregroundColor(.black)
-            //                             if let position = experience.position, !position.isEmpty {
-            //                                 Text(position)
-            //                                     .font(.custom("Arial", size: 11))
-            //                                     .foregroundColor(.black)
-            //                             }
-            //                         }
-            //                         Spacer()
-            //                         Text(
-            //                             dateRange(
-            //                                 start: experience.startDate, end: experience.endDate
-            //                             )
-            //                         )
-            //                         .font(.custom("Arial", size: 10))
-            //                         .foregroundColor(.black)
-            //                     }
-            //                      AttributedTextView(attributedString: experience.normalizedDetailsAttributedString, fontSize: 11)
-            //                         .frame(maxWidth: .infinity, alignment: .leading)
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
+            if profile.showExperiences && !profile.experiences.filter({ $0.isVisible }).isEmpty {
+                SectionView(title: localizedTitle(for: "professional_experience")) {
+                    VStack(alignment: .leading, spacing: 15) {
+                        ForEach(profile.experiences.filter({ $0.isVisible })) { experience in
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(experience.company)
+                                            .font(.custom("Arial", size: 12))
+                                            .foregroundColor(.black)
+                                        if let position = experience.position, !position.isEmpty {
+                                            Text(position)
+                                                .font(.custom("Arial", size: 11))
+                                                .foregroundColor(.black)
+                                        }
+                                    }
+                                    Spacer()
+                                    Text(
+                                        dateRange(
+                                            start: experience.startDate, end: experience.endDate
+                                        )
+                                    )
+                                    .font(.custom("Arial", size: 10))
+                                    .foregroundColor(.black)
+                                }
+                                 AttributedTextView(attributedString: experience.normalizedDetailsAttributedString, fontSize: 11)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                    }
+                }
+            }
 
             // Education
-            // if profile.showEducations && !profile.educations.filter({ $0.isVisible }).isEmpty {
-            //     SectionView(title: localizedTitle(for: "education")) {
-            //         VStack(alignment: .leading, spacing: 15) {
-            //             ForEach(profile.educations.filter({ $0.isVisible })) { education in
-            //                 VStack(alignment: .leading, spacing: 5) {
-            //                     HStack {
-            //                         Text("\(education.institution) - \(education.degree)")
-            //                             .font(.custom("Arial", size: 12))
-            //                             .foregroundColor(.black)
-            //                         Spacer()
-            //                         Text(
-            //                             dateRange(
-            //                                 start: education.startDate, end: education.endDate)
-            //                         )
-            //                         .font(.custom("Arial", size: 10))
-            //                         .foregroundColor(.black)
-            //                     }
-            //                      if !education.detailsString.isEmpty {
-            //                          AttributedTextView(attributedString: education.normalizedDetailsAttributedString, fontSize: 11)
-            //                              .frame(maxWidth: .infinity, alignment: .leading)
-            //                      }
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
+            if profile.showEducations && !profile.educations.filter({ $0.isVisible }).isEmpty {
+                SectionView(title: localizedTitle(for: "education")) {
+                    VStack(alignment: .leading, spacing: 15) {
+                        ForEach(profile.educations.filter({ $0.isVisible })) { education in
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack {
+                                    Text("\(education.institution) - \(education.degree)")
+                                        .font(.custom("Arial", size: 12))
+                                        .foregroundColor(.black)
+                                    Spacer()
+                                    Text(
+                                        dateRange(
+                                            start: education.startDate, end: education.endDate)
+                                    )
+                                    .font(.custom("Arial", size: 10))
+                                    .foregroundColor(.black)
+                                }
+                                 if !education.detailsString.isEmpty {
+                                     AttributedTextView(attributedString: education.normalizedDetailsAttributedString, fontSize: 11)
+                                         .frame(maxWidth: .infinity, alignment: .leading)
+                                 }
+                            }
+                        }
+                    }
+                }
+            }
 
             // References
-            // if profile.showReferences && !profile.references.filter({ $0.isVisible }).isEmpty {
-            //     SectionView(title: localizedTitle(for: "references")) {
-            //         VStack(alignment: .leading, spacing: 15) {
-            //             ForEach(profile.references.filter({ $0.isVisible })) { reference in
-            //                 VStack(alignment: .leading, spacing: 5) {
-            //                     Text(
-            //                         "\(reference.name) - \(reference.position) at \(reference.company)"
-            //                     )
-            //                     .font(.custom("Arial", size: 12))
-            //                     .foregroundColor(.black)
-            //                     Text("Email: \(reference.email) | Phone: \(reference.phone)")
-            //                         .font(.custom("Arial", size: 11))
-            //                         .foregroundColor(.black)
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
+            if profile.showReferences && !profile.references.filter({ $0.isVisible }).isEmpty {
+                SectionView(title: localizedTitle(for: "references")) {
+                    VStack(alignment: .leading, spacing: 15) {
+                        ForEach(profile.references.filter({ $0.isVisible })) { reference in
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(
+                                    "\(reference.name) - \(reference.position) at \(reference.company)"
+                                )
+                                .font(.custom("Arial", size: 12))
+                                .foregroundColor(.black)
+                                Text("Email: \(reference.email) | Phone: \(reference.phone)")
+                                    .font(.custom("Arial", size: 11))
+                                    .foregroundColor(.black)
+                            }
+                        }
+                    }
+                }
+            }
 
             // Skills
-            // if profile.showSkills && !profile.skills.isEmpty {
-            //     SectionView(title: localizedTitle(for: "skills")) {
-            //         VStack(alignment: .leading, spacing: 5) {
-            //             ForEach(profile.skills) { skillGroup in
-            //                 VStack(alignment: .leading, spacing: 2) {
-            //                     Text(skillGroup.title)
-            //                         .font(.custom("Arial", size: 12))
-            //                         .fontWeight(.bold)
-            //                         .foregroundColor(.black)
-            //                     Text(skillGroup.skills.joined(separator: ", "))
-            //                         .font(.custom("Arial", size: 11))
-            //                         .foregroundColor(.black)
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
+            if profile.showSkills && !profile.skills.isEmpty {
+                SectionView(title: localizedTitle(for: "skills")) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        ForEach(profile.skills) { skillGroup in
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(skillGroup.title)
+                                    .font(.custom("Arial", size: 12))
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.black)
+                                Text(skillGroup.skills.joined(separator: ", "))
+                                    .font(.custom("Arial", size: 11))
+                                    .foregroundColor(.black)
+                            }
+                        }
+                    }
+                }
+            }
 
             // Certifications
             if profile.showCertifications
@@ -390,52 +390,27 @@ struct ATSResumeView: View {
             }
 
             // Languages
-
-            // if profile.showLanguages && !profile.languages.isEmpty {
-
-            //     SectionView(title: localizedTitle(for: "languages")) {
-
-            //         VStack(alignment: .leading, spacing: 5) {
-
-            //             ForEach(profile.languages) { language in
-
-            //                 if language.isVisible {
-
-            //                     HStack {
-
-            //                         Text(language.name)
-
-            //                             .font(.custom("Arial", size: 11))
-
-            //                             .foregroundColor(.black)
-
-            //                         if let level = language.level, !level.isEmpty {
-
-            //                             Text(" - ")
-
-            //                                 .font(.custom("Arial", size: 11))
-
-            //                                 .foregroundColor(.black)
-
-            //                             Text(level)
-
-            //                                 .font(.custom("Arial", size: 11))
-
-            //                                 .foregroundColor(.black)
-
-            //                         }
-
-            //                     }
-
-            //                 }
-
-            //             }
-
-            //         }
-
-            //     }
-
-            // }
+            if profile.showLanguages && !profile.languages.filter({ $0.isVisible }).isEmpty {
+                SectionView(title: localizedTitle(for: "languages")) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        ForEach(profile.languages.filter({ $0.isVisible })) { language in
+                            HStack {
+                                Text(language.name)
+                                    .font(.custom("Arial", size: 11))
+                                    .foregroundColor(.black)
+                                if let level = language.level, !level.isEmpty {
+                                    Text(" - ")
+                                        .font(.custom("Arial", size: 11))
+                                        .foregroundColor(.black)
+                                    Text(level)
+                                        .font(.custom("Arial", size: 11))
+                                        .foregroundColor(.black)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         .padding()
         .frame(maxWidth: 595, minHeight: 842, alignment: .top)  // A4 size, align to top
