@@ -835,24 +835,25 @@ private struct StyledSection<Content: View>: View {
                     Image(systemName: "line.horizontal.3")
                         .foregroundColor(.secondary)
                 }
-                Button(action: { withAnimation { isExpanded.toggle() } }) {
-                    HStack {
-                        Text(section != nil ? localizedTitle(for: section!.rawValue) : title)
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.primary)
-                        Spacer()
-                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                            .foregroundColor(.primary)
-                    }
+                Text(section != nil ? localizedTitle(for: section!.rawValue) : title)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                Spacer()
+                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                    .foregroundColor(.primary)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.spring()) {
+                    isExpanded.toggle()
                 }
-                .buttonStyle(.plain)
             }
             .onDrag {
                 if let section = section {
-                    NSItemProvider(object: section.rawValue as NSString)
+                    return NSItemProvider(object: section.rawValue as NSString)
                 } else {
-                    NSItemProvider()
+                    return NSItemProvider()
                 }
             }
 
@@ -1409,10 +1410,11 @@ private struct DropZoneView: View {
 
     var body: some View {
         Rectangle()
-            .fill(isTargeted ? Color.blue.opacity(0.3) : Color.gray.opacity(0.1))
-            .frame(height: 20)
-            .cornerRadius(4)
-            .animation(.easeInOut(duration: 0.2), value: isTargeted)
+            .fill(isTargeted ? Color.accentColor : Color.clear)
+            .frame(height: isTargeted ? 5 : 2)
+            .cornerRadius(2.5)
+            .padding(.vertical, isTargeted ? 8 : 0)
+            .animation(.spring(), value: isTargeted)
             .onDrop(of: [.text], isTargeted: $isTargeted) { providers in
                 onDrop(providers, targetIndex)
                 return true
