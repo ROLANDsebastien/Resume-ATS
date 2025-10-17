@@ -6,8 +6,8 @@ import SwiftUI
 class PDFService {
     private static func localizedTitle(for key: String, language: String) -> String {
         let enDict: [String: String] = [
-            "professional_summary": "Professional Summary",
-            "professional_experience": "Professional Experience",
+            "professional_summary": "Summary",
+            "professional_experience": "Experience",
             "education": "Education",
             "references": "References",
             "skills": "Skills",
@@ -1015,7 +1015,8 @@ class PDFService {
                                 let skillFramesetter = CTFramesetterCreateWithAttributedString(
                                     skillAttr)
                                 let skillFrame = CTFramesetterCreateFrame(
-                                    skillFramesetter, CFRange(location: 0, length: 0), skillPath,
+                                    skillFramesetter, CFRange(location: 0, length: 0),
+                                    skillPath,
                                     nil)
                                 CTFrameDraw(skillFrame, context)
 
@@ -1051,7 +1052,7 @@ class PDFService {
                                     .foregroundColor: NSColor.black,
                                 ]
                                 let attributesRight: [NSAttributedString.Key: Any] = [
-                                    .font: NSFont.systemFont(ofSize: 9),
+                                    .font: NSFont.systemFont(ofSize: 11),
                                     .foregroundColor: NSColor.black,
                                 ]
                                 let leftAttr = NSAttributedString(

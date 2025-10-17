@@ -59,8 +59,8 @@ struct ATSResumeView: View {
 
     private func localizedTitle(for key: String) -> String {
         let enDict: [String: String] = [
-            "professional_summary": "Professional Summary",
-            "professional_experience": "Experiences",
+            "professional_summary": "Summary",
+            "professional_experience": "Experience",
             "education": "Education",
             "references": "References",
             "skills": "Skills",
