@@ -634,6 +634,22 @@ class PDFService {
                     if profile.showEducations
                         && !profile.educations.filter({ $0.isVisible }).isEmpty
                     {
+                        // Check if we need to move to next page to keep title with content
+                        let titleHeight: CGFloat = 20  // Approximate height for section title
+                        let minContentHeight: CGFloat = 15  // Minimum space needed for at least one education line
+                        if currentY + titleHeight + minContentHeight > pageHeight - margin {
+                            addPageToDocument(context, pageData)
+                            pageIndex += 1
+                            let result = createPage()
+                            if let newContext = result.0 {
+                                context = newContext
+                            } else {
+                                return
+                            }
+                            pageData = result.1
+                            currentY = marginTop
+                        }
+
                         drawText(
                             localizedTitle(for: "education", language: profile.language),
                             font: NSFont.boldSystemFont(ofSize: 18), color: .black, x: margin,
@@ -915,116 +931,70 @@ class PDFService {
                             x: margin,
                             maxWidth: pageWidth - 2 * margin)
 
-                        // Display skills in 4 columns
-                        let columnCount = min(4, profile.skills.count)
-                        let columnSpacing: CGFloat = 10  // Spacing between columns
-                        let totalSpacing = columnSpacing * CGFloat(columnCount - 1)
-                        let columnWidth =
-                            (pageWidth - 2 * margin - totalSpacing) / CGFloat(columnCount)
+                        // Display skills with title and skills on one line: "Title: skill1, skill2, skill3"
+                        for skillGroup in profile.skills {
+                            // Create attributed string with title (bold) + colon + skills (normal)
+                            let titleAndSkills = NSMutableAttributedString()
 
-                        // Calculate column heights for pagination
-                        var columnHeights: [CGFloat] = Array(repeating: 0, count: columnCount)
-                        for col in 0..<columnCount {
-                            var height: CGFloat = 0
-                            let skillGroup = profile.skills[col]
-
-                            // Title height
+                            // Add title in bold
                             let titleAttributes: [NSAttributedString.Key: Any] = [
-                                .font: NSFont.boldSystemFont(ofSize: 10),
+                                .font: NSFont.boldSystemFont(ofSize: 11),
                                 .foregroundColor: NSColor.black,
                             ]
+                            let titleWithColon = skillGroup.title + ": "
                             let titleAttr = NSAttributedString(
-                                string: skillGroup.title, attributes: titleAttributes)
-                            height += titleAttr.size().height + 2
+                                string: titleWithColon, attributes: titleAttributes)
+                            titleAndSkills.append(titleAttr)
 
-                            // Skills heights
+                            // Add skills separated by commas (normal weight)
+                            let skillsText = skillGroup.skills.joined(separator: ", ")
                             let skillAttributes: [NSAttributedString.Key: Any] = [
-                                .font: NSFont.systemFont(ofSize: 9),
+                                .font: NSFont.systemFont(ofSize: 11),
                                 .foregroundColor: NSColor.black,
                             ]
-                            for skill in skillGroup.skills {
-                                let skillAttr = NSAttributedString(
-                                    string: skill, attributes: skillAttributes)
-                                height += skillAttr.size().height + 1
+                            let skillsAttr = NSAttributedString(
+                                string: skillsText, attributes: skillAttributes)
+                            titleAndSkills.append(skillsAttr)
+
+                            // Calculate height needed for this skill group
+                            let maxWidth = pageWidth - 2 * margin
+                            let boundingRect = titleAndSkills.boundingRect(
+                                with: CGSize(
+                                    width: maxWidth, height: CGFloat.greatestFiniteMagnitude),
+                                options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                context: nil)
+                            let requiredHeight = boundingRect.height + 5  // Add some spacing
+
+                            // Check if we need a new page
+                            if currentY + requiredHeight > pageHeight - margin {
+                                addPageToDocument(context, pageData)
+                                pageIndex += 1
+                                let result = createPage()
+                                if let newContext = result.0 {
+                                    context = newContext
+                                } else {
+                                    return
+                                }
+                                pageData = result.1
+                                currentY = marginTop
                             }
 
-                            columnHeights[col] = height
+                            // Draw the skill group
+                            let rect = CGRect(
+                                x: margin,
+                                y: pageHeight - currentY - requiredHeight + 5,
+                                width: pageWidth - 2 * margin,
+                                height: requiredHeight)
+                            let path = CGMutablePath()
+                            path.addRect(rect)
+                            let finalFramesetter = CTFramesetterCreateWithAttributedString(
+                                titleAndSkills)
+                            let finalFrame = CTFramesetterCreateFrame(
+                                finalFramesetter, CFRange(location: 0, length: 0), path, nil)
+                            CTFrameDraw(finalFrame, context)
+
+                            currentY += requiredHeight + 1
                         }
-
-                        let maxHeight = columnHeights.max() ?? 0
-
-                        // Pagination if needed
-                        if currentY + maxHeight > pageHeight - margin {
-                            addPageToDocument(context, pageData)
-                            pageIndex += 1
-                            let result = createPage()
-                            if let newContext = result.0 {
-                                context = newContext
-                            } else {
-                                return
-                            }
-                            pageData = result.1
-                            currentY = marginTop
-                        }
-
-                        // Draw all columns in parallel
-                        for col in 0..<columnCount {
-                            let skillGroup = profile.skills[col]
-                            let columnX = margin + CGFloat(col) * (columnWidth + columnSpacing)
-                            var yOffset: CGFloat = 0
-
-                            // Draw title
-                            let titleAttributes: [NSAttributedString.Key: Any] = [
-                                .font: NSFont.boldSystemFont(ofSize: 10),
-                                .foregroundColor: NSColor.black,
-                            ]
-                            let titleAttr = NSAttributedString(
-                                string: skillGroup.title, attributes: titleAttributes)
-                            let titleSize = titleAttr.size()
-
-                            let titleRect = CGRect(
-                                x: columnX, y: pageHeight - currentY - titleSize.height,
-                                width: columnWidth, height: titleSize.height)
-                            let titlePath = CGMutablePath()
-                            titlePath.addRect(titleRect)
-                            let titleFramesetter = CTFramesetterCreateWithAttributedString(
-                                titleAttr)
-                            let titleFrame = CTFramesetterCreateFrame(
-                                titleFramesetter, CFRange(location: 0, length: 0), titlePath,
-                                nil)
-                            CTFrameDraw(titleFrame, context)
-
-                            yOffset += titleSize.height + 2
-
-                            // Draw skills
-                            let skillAttributes: [NSAttributedString.Key: Any] = [
-                                .font: NSFont.systemFont(ofSize: 9),
-                                .foregroundColor: NSColor.black,
-                            ]
-                            for skill in skillGroup.skills {
-                                let skillAttr = NSAttributedString(
-                                    string: skill, attributes: skillAttributes)
-                                let skillSize = skillAttr.size()
-
-                                let skillRect = CGRect(
-                                    x: columnX,
-                                    y: pageHeight - currentY - yOffset - skillSize.height,
-                                    width: columnWidth, height: skillSize.height)
-                                let skillPath = CGMutablePath()
-                                skillPath.addRect(skillRect)
-                                let skillFramesetter = CTFramesetterCreateWithAttributedString(
-                                    skillAttr)
-                                let skillFrame = CTFramesetterCreateFrame(
-                                    skillFramesetter, CFRange(location: 0, length: 0),
-                                    skillPath,
-                                    nil)
-                                CTFrameDraw(skillFrame, context)
-
-                                yOffset += skillSize.height + 1
-                            }
-                        }
-
-                        currentY += maxHeight + 5
                     }
                 case .certifications:
                     if profile.showCertifications
