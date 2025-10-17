@@ -288,7 +288,11 @@ struct ATSResumeView: View {
             if profile.showEducations && !profile.educations.filter({ $0.isVisible }).isEmpty {
                 SectionView(title: localizedTitle(for: "education")) {
                     VStack(alignment: .leading, spacing: 15) {
-                        ForEach(profile.educations.filter({ $0.isVisible })) { education in
+                        ForEach(
+                            profile.educations.filter({ $0.isVisible }).sorted(by: {
+                                ($0.endDate ?? Date.distantFuture) > ($1.endDate ?? Date.distantFuture)
+                            })
+                        ) { education in
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 5) {

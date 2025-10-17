@@ -313,7 +313,9 @@ struct ProfileView: View {
                 }
 
                 if profile.showExperiences {
-                    ForEach(profile.experiences) { experience in
+                    ForEach(profile.experiences.sorted(by: {
+                        ($0.endDate ?? Date.distantFuture) > ($1.endDate ?? Date.distantFuture)
+                    })) { experience in
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
                                 Toggle(
@@ -386,7 +388,9 @@ struct ProfileView: View {
                 }
 
                 if profile.showEducations {
-                    ForEach(profile.educations) { education in
+                    ForEach(profile.educations.sorted(by: {
+                        ($0.endDate ?? Date.distantFuture) > ($1.endDate ?? Date.distantFuture)
+                    })) { education in
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
                                 Toggle(
