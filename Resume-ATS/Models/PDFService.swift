@@ -152,10 +152,10 @@ class PDFService {
         // Variables pour la pagination
         var currentY: CGFloat = 0
         var pageIndex = 0
-        let photoSize: CGFloat = 120
+        let photoSize: CGFloat = 140
         let photoPadding: CGFloat = 20
         let photoCornerRadius: CGFloat = 10
-        let headerHeight: CGFloat = max(photoSize + photoPadding, 140)
+        let headerHeight: CGFloat = photoSize + 60
         let marginTop: CGFloat = margin
 
         // Créer la première page
@@ -378,7 +378,7 @@ class PDFService {
                         string: "Email: ",
                         attributes: [
                             .font: NSFont.boldSystemFont(ofSize: 11),
-                            .foregroundColor: NSColor.darkGray,
+                            .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
@@ -396,7 +396,7 @@ class PDFService {
                         string: "Téléphone: ",
                         attributes: [
                             .font: NSFont.boldSystemFont(ofSize: 11),
-                            .foregroundColor: NSColor.darkGray,
+                            .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
@@ -414,7 +414,7 @@ class PDFService {
                         string: "Localisation: ",
                         attributes: [
                             .font: NSFont.boldSystemFont(ofSize: 11),
-                            .foregroundColor: NSColor.darkGray,
+                            .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
@@ -432,7 +432,7 @@ class PDFService {
                         string: "LinkedIn: ",
                         attributes: [
                             .font: NSFont.boldSystemFont(ofSize: 11),
-                            .foregroundColor: NSColor.darkGray,
+                            .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
@@ -450,7 +450,7 @@ class PDFService {
                         string: "GitHub: ",
                         attributes: [
                             .font: NSFont.boldSystemFont(ofSize: 11),
-                            .foregroundColor: NSColor.darkGray,
+                            .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
@@ -468,7 +468,7 @@ class PDFService {
                         string: "GitLab: ",
                         attributes: [
                             .font: NSFont.boldSystemFont(ofSize: 11),
-                            .foregroundColor: NSColor.darkGray,
+                            .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
@@ -486,7 +486,7 @@ class PDFService {
                         string: "Site Web: ",
                         attributes: [
                             .font: NSFont.boldSystemFont(ofSize: 11),
-                            .foregroundColor: NSColor.darkGray,
+                            .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
@@ -519,7 +519,7 @@ class PDFService {
                     headerBlockHeight += textHeight
                 }
                 // Positionner le début du contenu sous le header (nom + infos + sans marge)
-                currentY = headerHeight + headerBlockHeight
+                currentY = max(headerHeight, headerBlockHeight) + 5
             } else {
                 currentY = marginTop
             }
@@ -531,7 +531,7 @@ class PDFService {
                         drawText(
                             localizedTitle(for: "professional_summary", language: profile.language),
                             font: NSFont.boldSystemFont(ofSize: 18), color: .black,
-                            x: margin, maxWidth: pageWidth - 2 * margin)
+                            x: margin, maxWidth: pageWidth - 2 * margin, spacing: 8)
                         drawAttributedText(
                             profile.normalizedSummaryAttributedString,
                             x: margin, maxWidth: pageWidth - 2 * margin)
