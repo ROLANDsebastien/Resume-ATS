@@ -145,29 +145,34 @@ struct ProfileView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text(effectiveLanguage == "fr" ? "Profil" : "Profile")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                    .padding(.top)
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text(effectiveLanguage == "fr" ? "Profil" : "Profile")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                        .padding(.top)
 
-                profileSelector
+                    profileSelector
 
-                if let profile = selectedProfile {
-                    profileContentView(for: profile)
-                } else {
-                    VStack {
-                        Spacer()
-                        Text(localizedTitle(for: "select_section"))
-                            .foregroundColor(.secondary)
-                        Spacer()
+                    if let profile = selectedProfile {
+                        profileContentView(for: profile)
+                    } else {
+                        VStack {
+                            Spacer()
+                            Text(localizedTitle(for: "select_section"))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
                     }
                 }
+                .padding(.horizontal)
             }
-            .padding(.horizontal)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets())
         }
+        .listStyle(.plain)
         .background(.regularMaterial)
         .navigationTitle("Resume-ATS")
         .environment(\.locale, Locale(identifier: selectedProfile?.language ?? "fr"))
