@@ -168,6 +168,7 @@ struct ProfileView: View {
             }
             .padding(.horizontal)
         }
+        .background(.regularMaterial)
         .navigationTitle("Resume-ATS")
         .environment(\.locale, Locale(identifier: selectedProfile?.language ?? "fr"))
         .toolbar {
