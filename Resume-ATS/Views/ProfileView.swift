@@ -15,6 +15,9 @@ struct ProfileView: View {
     @State private var renameProfileName: String = ""
     @State private var showRenameAlert: Bool = false
     @State private var showDeleteAlert: Bool = false
+    @State private var draggedSectionIndex: Int? = nil
+    @State private var targetInsertionIndex: Int? = nil
+    @State private var dragLocationY: CGFloat = 0
 
     private var effectiveLanguage: String {
         selectedProfile?.language ?? appLanguage
@@ -152,31 +155,9 @@ struct ProfileView: View {
 
                 profileSelector
 
-                 if let profile = selectedProfile {
-                     VStack(spacing: 20) {
-                         StyledSection(title: localizedTitle(for: "personal_info"), section: nil, language: effectiveLanguage) {
-                             PersonalInfoForm(profile: profile, language: effectiveLanguage)
-                         }
-
-
-
-                          VStack(spacing: 10) {
-                              ForEach(profile.sectionsOrder.indices, id: \.self) { index in
-                                  if index > 0 {
-                                      DropZoneView(targetIndex: index, onDrop: handleDrop)
-                                  }
-                                  StyledSection(title: "", section: profile.sectionsOrder[index], language: effectiveLanguage) {
-                                      sectionView(for: profile.sectionsOrder[index], profile: profile)
-                                  }
-                              }
-                          }
-                     }
-                     .onAppear {
-                         if profile.sectionsOrder.isEmpty {
-                             profile.sectionsOrder = SectionType.allCases
-                         }
-                     }
-                 } else {
+                if let profile = selectedProfile {
+                    profileContentView(for: profile)
+                } else {
                     VStack {
                         Spacer()
                         Text(localizedTitle(for: "select_section"))
@@ -213,6 +194,88 @@ struct ProfileView: View {
         } message: {
             Text(localizedTitle(for: "delete_confirm"))
         }
+    }
+
+    @ViewBuilder
+    private func profileContentView(for profile: Profile) -> some View {
+        VStack(spacing: 20) {
+            StyledSection(
+                title: localizedTitle(for: "personal_info"), section: nil,
+                language: effectiveLanguage
+            ) {
+                PersonalInfoForm(profile: profile, language: effectiveLanguage)
+            }
+
+            VStack(spacing: 10) {
+                ForEach(Array(profile.sectionsOrder.indices), id: \.self) { index in
+                    sectionItemView(index: index, profile: profile)
+                }
+            }
+        }
+        .onAppear {
+            if profile.sectionsOrder.isEmpty {
+                profile.sectionsOrder = SectionType.allCases
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func sectionItemView(index: Int, profile: Profile) -> some View {
+        let isDragged = draggedSectionIndex == index
+        let isDropTarget =
+            targetInsertionIndex == index && draggedSectionIndex != nil
+            && draggedSectionIndex != index
+
+        StyledSection(
+            title: "",
+            section: profile.sectionsOrder[index],
+            language: effectiveLanguage,
+            content: {
+                sectionView(for: profile.sectionsOrder[index], profile: profile)
+            }
+        )
+        .scaleEffect(isDragged ? 0.97 : 1.0)
+        .opacity(isDragged ? 0.65 : 1.0)
+        .background(
+            Group {
+                if isDragged {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.accentColor.opacity(0.1))
+                        .shadow(color: Color.accentColor.opacity(0.25), radius: 6, x: 0, y: 3)
+                } else if isDropTarget {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.accentColor.opacity(0.2))
+                        .shadow(color: Color.accentColor.opacity(0.35), radius: 8, x: 0, y: 4)
+                }
+            }
+        )
+        .onDrag {
+            draggedSectionIndex = index
+            // macOS va afficher son propre preview - on accepte ce comportement
+            // Notre feedback visuel personnalisé (scale + opacity + background) prend le relais
+            return NSItemProvider(object: NSString(string: "\(index)"))
+        }
+        .onDrop(
+            of: [.text],
+            isTargeted: nil,
+            perform: { providers in
+                guard let provider = providers.first else { return false }
+                provider.loadObject(ofClass: NSString.self) { object, error in
+                    if let string = object as? NSString, let fromIndex = Int(string as String) {
+                        DispatchQueue.main.async {
+                            if fromIndex != index {
+                                withAnimation(.easeInOut(duration: 0.25)) {
+                                    profile.sectionsOrder.move(
+                                        fromOffsets: IndexSet([fromIndex]), toOffset: index)
+                                    draggedSectionIndex = nil
+                                    targetInsertionIndex = nil
+                                }
+                            }
+                        }
+                    }
+                }
+                return true
+            })
     }
 
     @ViewBuilder
@@ -681,7 +744,12 @@ struct ProfileView: View {
             }
 
             if selectedProfile == nil {
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20), GridItem(.flexible())], spacing: 20) {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20),
+                        GridItem(.flexible()),
+                    ], spacing: 20
+                ) {
                     ForEach(profiles) { profile in
                         DashboardTile(
                             title: profile.name,
@@ -787,31 +855,16 @@ struct ProfileView: View {
         showRenameAlert = false
     }
 
-    private func handleDrop(providers: [NSItemProvider], targetIndex: Int) {
-        guard let provider = providers.first else { return }
-        _ = provider.loadObject(ofClass: NSString.self) { string, error in
-            if let sectionRaw = string as? String,
-                let draggedSection = SectionType(rawValue: sectionRaw),
-                let fromIndex = selectedProfile?.sectionsOrder.firstIndex(of: draggedSection)
-            {
-                DispatchQueue.main.async {
-                    selectedProfile?.sectionsOrder.move(fromOffsets: IndexSet([fromIndex]), toOffset: targetIndex)
-                }
-            }
-        }
-    }
 }
 
 // MARK: - Reusable Styled Components
-
-
 
 private struct StyledSection<Content: View>: View {
     let title: String
     let section: SectionType?
     let language: String
-    @ViewBuilder let content: Content
     @State private var isExpanded: Bool = false
+    @ViewBuilder let content: Content
 
     private func localizedTitle(for key: String) -> String {
         let enDict: [String: String] = [
@@ -855,13 +908,6 @@ private struct StyledSection<Content: View>: View {
             .onTapGesture {
                 withAnimation(.spring()) {
                     isExpanded.toggle()
-                }
-            }
-            .onDrag {
-                if let section = section {
-                    return NSItemProvider(object: section.rawValue as NSString)
-                } else {
-                    return NSItemProvider()
                 }
             }
 
