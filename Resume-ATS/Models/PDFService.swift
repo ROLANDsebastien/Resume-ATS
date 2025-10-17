@@ -55,7 +55,8 @@ class PDFService {
         print("Skills: \(profile.skills.count)")
 
         // Save to temporary file
-        let sanitizedName = profile.name.replacingOccurrences(of: "[^a-zA-Z0-9_\\- ]", with: "_", options: .regularExpression)
+        let sanitizedName = profile.name.replacingOccurrences(
+            of: "[^a-zA-Z0-9_\\- ]", with: "_", options: .regularExpression)
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
             "ATS_Resume_\(sanitizedName).pdf")
 
@@ -86,7 +87,8 @@ class PDFService {
         print("Generating PDF for cover letter: \(coverLetter.title)")
 
         // Save to temporary file
-        let sanitizedTitle = coverLetter.title.replacingOccurrences(of: "[^a-zA-Z0-9_\\- ]", with: "_", options: .regularExpression)
+        let sanitizedTitle = coverLetter.title.replacingOccurrences(
+            of: "[^a-zA-Z0-9_\\- ]", with: "_", options: .regularExpression)
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
             "Cover_Letter_\(sanitizedTitle).pdf")
 
@@ -197,7 +199,8 @@ class PDFService {
 
         // Fonction pour dessiner du texte avec pagination
         func drawText(
-            _ text: String, font: NSFont, color: NSColor, x: CGFloat, maxWidth: CGFloat
+            _ text: String, font: NSFont, color: NSColor, x: CGFloat, maxWidth: CGFloat,
+            spacing: CGFloat = 10
         ) {
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: font,
@@ -228,7 +231,7 @@ class PDFService {
             path.addRect(textRect)
             let frame = CTFramesetterCreateFrame(framesetter, currentRange, path, nil)
             CTFrameDraw(frame, context)
-            currentY += textHeight + 10
+            currentY += textHeight + spacing
         }
 
         // Fonction pour nettoyer l'affichage des URLs
@@ -542,7 +545,9 @@ class PDFService {
                                 for: "professional_experience", language: profile.language),
                             font: NSFont.boldSystemFont(ofSize: 18),
                             color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
-                        for experience in profile.experiences.filter({ $0.isVisible }).sorted(by: { $0.startDate > $1.startDate }) {
+                        for experience in profile.experiences.filter({ $0.isVisible }).sorted(by: {
+                            $0.startDate > $1.startDate
+                        }) {
                             // Ligne entreprise, date à droite
                             let companyText = experience.company
                             let dateText: String = {
@@ -553,7 +558,8 @@ class PDFService {
                                     let endStr = formatter.string(from: endDate)
                                     return "\(startStr) - \(endStr)"
                                 } else {
-                                    return "\(startStr) - \(localizedTitle(for: "present", language: profile.language))"
+                                    return
+                                        "\(startStr) - \(localizedTitle(for: "present", language: profile.language))"
                                 }
                             }()
 
@@ -566,8 +572,10 @@ class PDFService {
                                 .foregroundColor: NSColor.black,
                             ]
 
-                            let companyAttr = NSAttributedString(string: companyText, attributes: companyAttributes)
-                            let dateAttr = NSAttributedString(string: dateText, attributes: dateAttributes)
+                            let companyAttr = NSAttributedString(
+                                string: companyText, attributes: companyAttributes)
+                            let dateAttr = NSAttributedString(
+                                string: dateText, attributes: dateAttributes)
                             let companySize = companyAttr.size()
                             let dateSize = dateAttr.size()
                             let firstLineHeight = max(companySize.height, dateSize.height)
@@ -582,18 +590,25 @@ class PDFService {
                             }
 
                             let yPos = pageHeight - currentY - firstLineHeight
-                            let companyRect = CGRect(x: margin, y: yPos, width: pageWidth / 2, height: firstLineHeight)
+                            let companyRect = CGRect(
+                                x: margin, y: yPos, width: pageWidth / 2, height: firstLineHeight)
                             let companyPath = CGMutablePath()
                             companyPath.addRect(companyRect)
-                            let companyFramesetter = CTFramesetterCreateWithAttributedString(companyAttr)
-                            let companyFrame = CTFramesetterCreateFrame(companyFramesetter, CFRange(location: 0, length: 0), companyPath, nil)
+                            let companyFramesetter = CTFramesetterCreateWithAttributedString(
+                                companyAttr)
+                            let companyFrame = CTFramesetterCreateFrame(
+                                companyFramesetter, CFRange(location: 0, length: 0), companyPath,
+                                nil)
                             CTFrameDraw(companyFrame, context)
 
-                            let dateRect = CGRect(x: pageWidth - margin - dateSize.width, y: yPos, width: dateSize.width, height: firstLineHeight)
+                            let dateRect = CGRect(
+                                x: pageWidth - margin - dateSize.width, y: yPos,
+                                width: dateSize.width, height: firstLineHeight)
                             let datePath = CGMutablePath()
                             datePath.addRect(dateRect)
                             let dateFramesetter = CTFramesetterCreateWithAttributedString(dateAttr)
-                            let dateFrame = CTFramesetterCreateFrame(dateFramesetter, CFRange(location: 0, length: 0), datePath, nil)
+                            let dateFrame = CTFramesetterCreateFrame(
+                                dateFramesetter, CFRange(location: 0, length: 0), datePath, nil)
                             CTFrameDraw(dateFrame, context)
 
                             currentY += firstLineHeight + 2
@@ -615,85 +630,97 @@ class PDFService {
                                 x: margin, maxWidth: pageWidth - 2 * margin)
                         }
                     }
-                 case .educations:
-                     if profile.showEducations
-                         && !profile.educations.filter({ $0.isVisible }).isEmpty
-                     {
-                         drawText(
-                             localizedTitle(for: "education", language: profile.language),
-                             font: NSFont.boldSystemFont(ofSize: 18), color: .black, x: margin,
-                             maxWidth: pageWidth - 2 * margin)
-                         for education in profile.educations.filter({ $0.isVisible }) {
-                             // Institution on left, dates on right
-                             let leftText = education.institution
-                             let dateText: String = {
-                                 let formatter = DateFormatter()
-                                 formatter.dateFormat = "MM/yyyy"
-                                 let startStr = formatter.string(from: education.startDate)
-                                 if let endDate = education.endDate {
-                                     let endStr = formatter.string(from: endDate)
-                                     return "\(startStr) - \(endStr)"
-                                 } else {
-                                     return "\(startStr) - \(localizedTitle(for: "present", language: profile.language))"
-                                 }
-                             }()
+                case .educations:
+                    if profile.showEducations
+                        && !profile.educations.filter({ $0.isVisible }).isEmpty
+                    {
+                        drawText(
+                            localizedTitle(for: "education", language: profile.language),
+                            font: NSFont.boldSystemFont(ofSize: 18), color: .black, x: margin,
+                            maxWidth: pageWidth - 2 * margin)
+                        for education in profile.educations.filter({ $0.isVisible }) {
+                            // Institution on left, dates on right
+                            let leftText = education.institution
+                            let dateText: String = {
+                                let formatter = DateFormatter()
+                                formatter.dateFormat = "MM/yyyy"
+                                let startStr = formatter.string(from: education.startDate)
+                                if let endDate = education.endDate {
+                                    let endStr = formatter.string(from: endDate)
+                                    return "\(startStr) - \(endStr)"
+                                } else {
+                                    return
+                                        "\(startStr) - \(localizedTitle(for: "present", language: profile.language))"
+                                }
+                            }()
 
-                             // Measure heights
-                             let attributesLeft: [NSAttributedString.Key: Any] = [
-                                 .font: NSFont.boldSystemFont(ofSize: 12),
-                                 .foregroundColor: NSColor.black,
-                             ]
-                             let attributesRight: [NSAttributedString.Key: Any] = [
-                                 .font: NSFont.systemFont(ofSize: 11),
-                                 .foregroundColor: NSColor.black,
-                             ]
-                             let leftAttr = NSAttributedString(string: leftText, attributes: attributesLeft)
-                             let rightAttr = NSAttributedString(string: dateText, attributes: attributesRight)
-                             let leftSize = leftAttr.size()
-                             let rightSize = rightAttr.size()
-                             let lineHeight = max(leftSize.height, rightSize.height)
+                            // Measure heights
+                            let attributesLeft: [NSAttributedString.Key: Any] = [
+                                .font: NSFont.boldSystemFont(ofSize: 12),
+                                .foregroundColor: NSColor.black,
+                            ]
+                            let attributesRight: [NSAttributedString.Key: Any] = [
+                                .font: NSFont.systemFont(ofSize: 11),
+                                .foregroundColor: NSColor.black,
+                            ]
+                            let leftAttr = NSAttributedString(
+                                string: leftText, attributes: attributesLeft)
+                            let rightAttr = NSAttributedString(
+                                string: dateText, attributes: attributesRight)
+                            let leftSize = leftAttr.size()
+                            let rightSize = rightAttr.size()
+                            let lineHeight = max(leftSize.height, rightSize.height)
 
-                             // Pagination if needed
-                             if currentY + lineHeight > pageHeight - margin {
-                                 addPageToDocument(context, pageData)
-                                 pageIndex += 1
-                                 let result = createPage()
-                                 if let newContext = result.0 {
-                                     context = newContext
-                                 } else {
-                                     return
-                                 }
-                                 pageData = result.1
-                                 currentY = marginTop
-                             }
+                            // Pagination if needed
+                            if currentY + lineHeight > pageHeight - margin {
+                                addPageToDocument(context, pageData)
+                                pageIndex += 1
+                                let result = createPage()
+                                if let newContext = result.0 {
+                                    context = newContext
+                                } else {
+                                    return
+                                }
+                                pageData = result.1
+                                currentY = marginTop
+                            }
 
-                             // Draw institution left, dates right
-                             let yPos = pageHeight - currentY - lineHeight
-                             let leftRect = CGRect(x: margin, y: yPos, width: pageWidth / 2, height: lineHeight)
-                             let leftPath = CGMutablePath()
-                             leftPath.addRect(leftRect)
-                             let leftFramesetter = CTFramesetterCreateWithAttributedString(leftAttr)
-                             let leftFrame = CTFramesetterCreateFrame(leftFramesetter, CFRange(location: 0, length: 0), leftPath, nil)
-                             CTFrameDraw(leftFrame, context)
+                            // Draw institution left, dates right
+                            let yPos = pageHeight - currentY - lineHeight
+                            let leftRect = CGRect(
+                                x: margin, y: yPos, width: pageWidth / 2, height: lineHeight)
+                            let leftPath = CGMutablePath()
+                            leftPath.addRect(leftRect)
+                            let leftFramesetter = CTFramesetterCreateWithAttributedString(leftAttr)
+                            let leftFrame = CTFramesetterCreateFrame(
+                                leftFramesetter, CFRange(location: 0, length: 0), leftPath, nil)
+                            CTFrameDraw(leftFrame, context)
 
-                             let rightRect = CGRect(x: pageWidth - margin - rightSize.width, y: yPos, width: rightSize.width, height: lineHeight)
-                             let rightPath = CGMutablePath()
-                             rightPath.addRect(rightRect)
-                             let rightFramesetter = CTFramesetterCreateWithAttributedString(rightAttr)
-                             let rightFrame = CTFramesetterCreateFrame(rightFramesetter, CFRange(location: 0, length: 0), rightPath, nil)
-                             CTFrameDraw(rightFrame, context)
+                            let rightRect = CGRect(
+                                x: pageWidth - margin - rightSize.width, y: yPos,
+                                width: rightSize.width, height: lineHeight)
+                            let rightPath = CGMutablePath()
+                            rightPath.addRect(rightRect)
+                            let rightFramesetter = CTFramesetterCreateWithAttributedString(
+                                rightAttr)
+                            let rightFrame = CTFramesetterCreateFrame(
+                                rightFramesetter, CFRange(location: 0, length: 0), rightPath, nil)
+                            CTFrameDraw(rightFrame, context)
 
-                             currentY += lineHeight + 2
+                            currentY += lineHeight + 2
 
-                             // Degree below
-                             drawText(education.degree, font: NSFont.systemFont(ofSize: 11), color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
+                            // Degree below
+                            drawText(
+                                education.degree, font: NSFont.systemFont(ofSize: 11),
+                                color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
 
-                             // Details
-                             drawAttributedText(education.normalizedDetailsAttributedString, x: margin, maxWidth: pageWidth - 2 * margin)
-                         }
-                     }
+                            // Details
+                            drawAttributedText(
+                                education.normalizedDetailsAttributedString, x: margin,
+                                maxWidth: pageWidth - 2 * margin)
+                        }
+                    }
                 case .references:
-                    // References rendering - assuming similar structure, but since not in original, add placeholder
                     if profile.showReferences
                         && !profile.references.filter({ $0.isVisible }).isEmpty
                     {
@@ -701,15 +728,183 @@ class PDFService {
                             localizedTitle(for: "references", language: profile.language),
                             font: NSFont.boldSystemFont(ofSize: 18), color: .black, x: margin,
                             maxWidth: pageWidth - 2 * margin)
-                        for reference in profile.references.filter({ $0.isVisible }) {
-                            drawText(
-                                "\(reference.name) - \(reference.position) at \(reference.company)",
-                                font: NSFont.boldSystemFont(ofSize: 12), color: .black, x: margin,
-                                maxWidth: pageWidth - 2 * margin)
-                            drawText(
-                                "Email: \(reference.email), Phone: \(reference.phone)",
-                                font: NSFont.systemFont(ofSize: 11), color: .black, x: margin,
-                                maxWidth: pageWidth - 2 * margin)
+
+                        let visibleReferences = profile.references.filter { $0.isVisible }
+                        var index = 0
+                        while index < visibleReferences.count {
+                            let leftReference = visibleReferences[index]
+
+                            // Build left reference text
+                            var leftText = "\(leftReference.name) - \(leftReference.position)"
+                            if !leftReference.company.isEmpty {
+                                leftText += " (\(leftReference.company))"
+                            }
+
+                            var leftContactText = ""
+                            if !leftReference.email.isEmpty {
+                                leftContactText = leftReference.email
+                            }
+                            if !leftReference.phone.isEmpty {
+                                if !leftContactText.isEmpty {
+                                    leftContactText += " | \(leftReference.phone)"
+                                } else {
+                                    leftContactText = leftReference.phone
+                                }
+                            }
+
+                            let rightReference =
+                                (index + 1 < visibleReferences.count)
+                                ? visibleReferences[index + 1] : nil
+                            var rightText = ""
+                            var rightContactText = ""
+
+                            if let rightRef = rightReference {
+                                rightText = "\(rightRef.name) - \(rightRef.position)"
+                                if !rightRef.company.isEmpty {
+                                    rightText += " (\(rightRef.company))"
+                                }
+
+                                if !rightRef.email.isEmpty {
+                                    rightContactText = rightRef.email
+                                }
+                                if !rightRef.phone.isEmpty {
+                                    if !rightContactText.isEmpty {
+                                        rightContactText += " | \(rightRef.phone)"
+                                    } else {
+                                        rightContactText = rightRef.phone
+                                    }
+                                }
+                            }
+
+                            // Draw left reference (name and position)
+                            let attributes: [NSAttributedString.Key: Any] = [
+                                .font: NSFont.boldSystemFont(ofSize: 10),
+                                .foregroundColor: NSColor.black,
+                            ]
+                            let leftAttr = NSAttributedString(
+                                string: leftText, attributes: attributes)
+                            let leftSize = leftAttr.size()
+                            let rightAttr = NSAttributedString(
+                                string: rightText, attributes: attributes)
+                            let rightSize = rightAttr.size()
+                            let lineHeight = max(leftSize.height, rightSize.height)
+
+                            // Pagination if needed
+                            if currentY + lineHeight + 18 > pageHeight - margin {
+                                addPageToDocument(context, pageData)
+                                pageIndex += 1
+                                let result = createPage()
+                                if let newContext = result.0 {
+                                    context = newContext
+                                } else {
+                                    return
+                                }
+                                pageData = result.1
+                                currentY = marginTop
+                            }
+
+                            // Draw left name/position
+                            let yPos = pageHeight - currentY - lineHeight
+                            let leftRect = CGRect(
+                                x: margin, y: yPos, width: (pageWidth - 2 * margin) / 2,
+                                height: lineHeight)
+                            let leftPath = CGMutablePath()
+                            leftPath.addRect(leftRect)
+                            let leftFramesetter = CTFramesetterCreateWithAttributedString(leftAttr)
+                            let leftFrame = CTFramesetterCreateFrame(
+                                leftFramesetter, CFRange(location: 0, length: 0), leftPath, nil)
+                            CTFrameDraw(leftFrame, context)
+
+                            // Draw right name/position if exists
+                            if !rightText.isEmpty {
+                                let rightRect = CGRect(
+                                    x: margin + (pageWidth - 2 * margin) / 2, y: yPos,
+                                    width: (pageWidth - 2 * margin) / 2, height: lineHeight)
+                                let rightPath = CGMutablePath()
+                                rightPath.addRect(rightRect)
+                                let rightFramesetter = CTFramesetterCreateWithAttributedString(
+                                    rightAttr)
+                                let rightFrame = CTFramesetterCreateFrame(
+                                    rightFramesetter, CFRange(location: 0, length: 0), rightPath,
+                                    nil)
+                                CTFrameDraw(rightFrame, context)
+                            }
+
+                            currentY += lineHeight
+
+                            // Draw contact info directly without extra spacing
+                            let contactAttributes: [NSAttributedString.Key: Any] = [
+                                .font: NSFont.systemFont(ofSize: 9),
+                                .foregroundColor: NSColor.black,
+                            ]
+
+                            var contactLineHeight: CGFloat = 0
+
+                            if !leftContactText.isEmpty || !rightContactText.isEmpty {
+                                let leftContactAttr = NSAttributedString(
+                                    string: leftContactText, attributes: contactAttributes)
+                                let leftContactSize = leftContactAttr.size()
+                                let rightContactAttr = NSAttributedString(
+                                    string: rightContactText, attributes: contactAttributes)
+                                let rightContactSize = rightContactAttr.size()
+                                contactLineHeight = max(
+                                    leftContactSize.height, rightContactSize.height)
+
+                                // Pagination if needed
+                                if currentY + contactLineHeight > pageHeight - margin {
+                                    addPageToDocument(context, pageData)
+                                    pageIndex += 1
+                                    let result = createPage()
+                                    if let newContext = result.0 {
+                                        context = newContext
+                                    } else {
+                                        return
+                                    }
+                                    pageData = result.1
+                                    currentY = marginTop
+                                }
+
+                                // Draw left contact
+                                if !leftContactText.isEmpty {
+                                    let contactYPos = pageHeight - currentY - leftContactSize.height
+                                    let leftContactRect = CGRect(
+                                        x: margin, y: contactYPos,
+                                        width: (pageWidth - 2 * margin) / 2,
+                                        height: leftContactSize.height)
+                                    let leftContactPath = CGMutablePath()
+                                    leftContactPath.addRect(leftContactRect)
+                                    let leftContactFramesetter =
+                                        CTFramesetterCreateWithAttributedString(
+                                            leftContactAttr)
+                                    let leftContactFrame = CTFramesetterCreateFrame(
+                                        leftContactFramesetter, CFRange(location: 0, length: 0),
+                                        leftContactPath, nil)
+                                    CTFrameDraw(leftContactFrame, context)
+                                }
+
+                                // Draw right contact
+                                if !rightContactText.isEmpty {
+                                    let contactYPos =
+                                        pageHeight - currentY - rightContactSize.height
+                                    let rightContactRect = CGRect(
+                                        x: margin + (pageWidth - 2 * margin) / 2, y: contactYPos,
+                                        width: (pageWidth - 2 * margin) / 2,
+                                        height: rightContactSize.height)
+                                    let rightContactPath = CGMutablePath()
+                                    rightContactPath.addRect(rightContactRect)
+                                    let rightContactFramesetter =
+                                        CTFramesetterCreateWithAttributedString(
+                                            rightContactAttr)
+                                    let rightContactFrame = CTFramesetterCreateFrame(
+                                        rightContactFramesetter, CFRange(location: 0, length: 0),
+                                        rightContactPath, nil)
+                                    CTFrameDraw(rightContactFrame, context)
+                                }
+
+                                currentY += contactLineHeight + 5
+                            }
+
+                            index += 2
                         }
                     }
                 case .skills:
@@ -719,16 +914,116 @@ class PDFService {
                             font: NSFont.boldSystemFont(ofSize: 18), color: .black,
                             x: margin,
                             maxWidth: pageWidth - 2 * margin)
-                        for skillGroup in profile.skills {
-                            drawText(
-                                skillGroup.title, font: NSFont.boldSystemFont(ofSize: 12),
-                                color: .black,
-                                x: margin, maxWidth: pageWidth - 2 * margin)
-                            drawText(
-                                skillGroup.skills.joined(separator: ", "),
-                                font: NSFont.systemFont(ofSize: 12),
-                                color: .black, x: margin, maxWidth: pageWidth - 2 * margin)
+
+                        // Display skills in 4 columns
+                        let columnCount = min(4, profile.skills.count)
+                        let columnSpacing: CGFloat = 10  // Spacing between columns
+                        let totalSpacing = columnSpacing * CGFloat(columnCount - 1)
+                        let columnWidth =
+                            (pageWidth - 2 * margin - totalSpacing) / CGFloat(columnCount)
+
+                        // Calculate column heights for pagination
+                        var columnHeights: [CGFloat] = Array(repeating: 0, count: columnCount)
+                        for col in 0..<columnCount {
+                            var height: CGFloat = 0
+                            let skillGroup = profile.skills[col]
+
+                            // Title height
+                            let titleAttributes: [NSAttributedString.Key: Any] = [
+                                .font: NSFont.boldSystemFont(ofSize: 10),
+                                .foregroundColor: NSColor.black,
+                            ]
+                            let titleAttr = NSAttributedString(
+                                string: skillGroup.title, attributes: titleAttributes)
+                            height += titleAttr.size().height + 2
+
+                            // Skills heights
+                            let skillAttributes: [NSAttributedString.Key: Any] = [
+                                .font: NSFont.systemFont(ofSize: 9),
+                                .foregroundColor: NSColor.black,
+                            ]
+                            for skill in skillGroup.skills {
+                                let skillAttr = NSAttributedString(
+                                    string: skill, attributes: skillAttributes)
+                                height += skillAttr.size().height + 1
+                            }
+
+                            columnHeights[col] = height
                         }
+
+                        let maxHeight = columnHeights.max() ?? 0
+
+                        // Pagination if needed
+                        if currentY + maxHeight > pageHeight - margin {
+                            addPageToDocument(context, pageData)
+                            pageIndex += 1
+                            let result = createPage()
+                            if let newContext = result.0 {
+                                context = newContext
+                            } else {
+                                return
+                            }
+                            pageData = result.1
+                            currentY = marginTop
+                        }
+
+                        // Draw all columns in parallel
+                        for col in 0..<columnCount {
+                            let skillGroup = profile.skills[col]
+                            let columnX = margin + CGFloat(col) * (columnWidth + columnSpacing)
+                            var yOffset: CGFloat = 0
+
+                            // Draw title
+                            let titleAttributes: [NSAttributedString.Key: Any] = [
+                                .font: NSFont.boldSystemFont(ofSize: 10),
+                                .foregroundColor: NSColor.black,
+                            ]
+                            let titleAttr = NSAttributedString(
+                                string: skillGroup.title, attributes: titleAttributes)
+                            let titleSize = titleAttr.size()
+
+                            let titleRect = CGRect(
+                                x: columnX, y: pageHeight - currentY - titleSize.height,
+                                width: columnWidth, height: titleSize.height)
+                            let titlePath = CGMutablePath()
+                            titlePath.addRect(titleRect)
+                            let titleFramesetter = CTFramesetterCreateWithAttributedString(
+                                titleAttr)
+                            let titleFrame = CTFramesetterCreateFrame(
+                                titleFramesetter, CFRange(location: 0, length: 0), titlePath,
+                                nil)
+                            CTFrameDraw(titleFrame, context)
+
+                            yOffset += titleSize.height + 2
+
+                            // Draw skills
+                            let skillAttributes: [NSAttributedString.Key: Any] = [
+                                .font: NSFont.systemFont(ofSize: 9),
+                                .foregroundColor: NSColor.black,
+                            ]
+                            for skill in skillGroup.skills {
+                                let skillAttr = NSAttributedString(
+                                    string: skill, attributes: skillAttributes)
+                                let skillSize = skillAttr.size()
+
+                                let skillRect = CGRect(
+                                    x: columnX,
+                                    y: pageHeight - currentY - yOffset - skillSize.height,
+                                    width: columnWidth, height: skillSize.height)
+                                let skillPath = CGMutablePath()
+                                skillPath.addRect(skillRect)
+                                let skillFramesetter = CTFramesetterCreateWithAttributedString(
+                                    skillAttr)
+                                let skillFrame = CTFramesetterCreateFrame(
+                                    skillFramesetter, CFRange(location: 0, length: 0), skillPath,
+                                    nil)
+                                CTFrameDraw(skillFrame, context)
+
+                                yOffset += skillSize.height + 1
+                            }
+                        }
+
+                        currentY += maxHeight + 5
                     }
                 case .certifications:
                     if profile.showCertifications
@@ -752,11 +1047,11 @@ class PDFService {
                             }()
                             if let dateText = dateText {
                                 let attributesLeft: [NSAttributedString.Key: Any] = [
-                                    .font: NSFont.boldSystemFont(ofSize: 12),
+                                    .font: NSFont.boldSystemFont(ofSize: 10),
                                     .foregroundColor: NSColor.black,
                                 ]
                                 let attributesRight: [NSAttributedString.Key: Any] = [
-                                    .font: NSFont.systemFont(ofSize: 11),
+                                    .font: NSFont.systemFont(ofSize: 9),
                                     .foregroundColor: NSColor.black,
                                 ]
                                 let leftAttr = NSAttributedString(
@@ -800,7 +1095,7 @@ class PDFService {
                             } else {
                                 // Just draw name if no date
                                 drawText(
-                                    leftText, font: NSFont.boldSystemFont(ofSize: 12),
+                                    leftText, font: NSFont.boldSystemFont(ofSize: 10),
                                     color: .black,
                                     x: margin, maxWidth: pageWidth - 2 * margin)
                             }
@@ -808,107 +1103,120 @@ class PDFService {
                             if let number = certification.certificationNumber, !number.isEmpty {
                                 let numberText = "ID: \(number)"
                                 drawText(
-                                    numberText, font: NSFont.systemFont(ofSize: 11), color: .black,
-                                    x: margin, maxWidth: pageWidth - 2 * margin)
+                                    numberText, font: NSFont.systemFont(ofSize: 9), color: .black,
+                                    x: margin, maxWidth: pageWidth - 2 * margin, spacing: 2)
                             }
                             // Web link below
                             if let webLink = certification.webLink, !webLink.isEmpty {
                                 drawText(
-                                    webLink, font: NSFont.systemFont(ofSize: 11), color: .black,
+                                    webLink, font: NSFont.systemFont(ofSize: 9), color: .black,
                                     x: margin,
                                     maxWidth: pageWidth - 2 * margin)
                             }
                         }
                     }
-                 case .languages:
-                     if profile.showLanguages && !profile.languages.filter({ $0.isVisible }).isEmpty
-                     {
-                         drawText(
-                             localizedTitle(for: "languages", language: profile.language),
-                             font: NSFont.boldSystemFont(ofSize: 18), color: .black,
-                             x: margin,
-                             maxWidth: pageWidth - 2 * margin)
-                         let visibleLanguages = profile.languages.filter({ $0.isVisible })
-                         var index = 0
-                         while index < visibleLanguages.count {
-                             let leftLanguage = visibleLanguages[index]
-                             var leftText = leftLanguage.name
-                             if let level = leftLanguage.level, !level.isEmpty {
-                                 leftText += " - \(level)"
-                             }
+                case .languages:
+                    if profile.showLanguages && !profile.languages.filter({ $0.isVisible }).isEmpty
+                    {
+                        drawText(
+                            localizedTitle(for: "languages", language: profile.language),
+                            font: NSFont.boldSystemFont(ofSize: 18), color: .black,
+                            x: margin,
+                            maxWidth: pageWidth - 2 * margin)
+                        let visibleLanguages = profile.languages.filter({ $0.isVisible })
+                        var index = 0
+                        while index < visibleLanguages.count {
+                            let leftLanguage = visibleLanguages[index]
+                            var leftText = leftLanguage.name
+                            if let level = leftLanguage.level, !level.isEmpty {
+                                leftText += " - \(level)"
+                            }
 
-                             let rightLanguage = (index + 1 < visibleLanguages.count) ? visibleLanguages[index + 1] : nil
-                             var rightText = ""
-                             if let rightLang = rightLanguage {
-                                 rightText = rightLang.name
-                                 if let level = rightLang.level, !level.isEmpty {
-                                     rightText += " - \(level)"
-                                 }
-                             }
+                            let rightLanguage =
+                                (index + 1 < visibleLanguages.count)
+                                ? visibleLanguages[index + 1] : nil
+                            var rightText = ""
+                            if let rightLang = rightLanguage {
+                                rightText = rightLang.name
+                                if let level = rightLang.level, !level.isEmpty {
+                                    rightText += " - \(level)"
+                                }
+                            }
 
-                             // Draw left
-                             let attributes: [NSAttributedString.Key: Any] = [
-                                 .font: NSFont.systemFont(ofSize: 12),
-                                 .foregroundColor: NSColor.black,
-                             ]
-                             let leftAttr = NSAttributedString(string: leftText, attributes: attributes)
-                             let leftSize = leftAttr.size()
-                             let rightAttr = NSAttributedString(string: rightText, attributes: attributes)
-                             let rightSize = rightAttr.size()
-                             let lineHeight = max(leftSize.height, rightSize.height)
+                            // Draw left
+                            let attributes: [NSAttributedString.Key: Any] = [
+                                .font: NSFont.systemFont(ofSize: 10),
+                                .foregroundColor: NSColor.black,
+                            ]
+                            let leftAttr = NSAttributedString(
+                                string: leftText, attributes: attributes)
+                            let leftSize = leftAttr.size()
+                            let rightAttr = NSAttributedString(
+                                string: rightText, attributes: attributes)
+                            let rightSize = rightAttr.size()
+                            let lineHeight = max(leftSize.height, rightSize.height)
 
-                             // Pagination if needed
-                             if currentY + lineHeight > pageHeight - margin {
-                                 addPageToDocument(context, pageData)
-                                 pageIndex += 1
-                                 let result = createPage()
-                                 if let newContext = result.0 {
-                                     context = newContext
-                                 } else {
-                                     return
-                                 }
-                                 pageData = result.1
-                                 currentY = marginTop
-                             }
+                            // Pagination if needed
+                            if currentY + lineHeight > pageHeight - margin {
+                                addPageToDocument(context, pageData)
+                                pageIndex += 1
+                                let result = createPage()
+                                if let newContext = result.0 {
+                                    context = newContext
+                                } else {
+                                    return
+                                }
+                                pageData = result.1
+                                currentY = marginTop
+                            }
 
-                             // Draw left
-                             let yPos = pageHeight - currentY - lineHeight
-                             let leftRect = CGRect(x: margin, y: yPos, width: (pageWidth - 2 * margin) / 2, height: lineHeight)
-                             let leftPath = CGMutablePath()
-                             leftPath.addRect(leftRect)
-                             let leftFramesetter = CTFramesetterCreateWithAttributedString(leftAttr)
-                             let leftFrame = CTFramesetterCreateFrame(leftFramesetter, CFRange(location: 0, length: 0), leftPath, nil)
-                             CTFrameDraw(leftFrame, context)
+                            // Draw left
+                            let yPos = pageHeight - currentY - lineHeight
+                            let leftRect = CGRect(
+                                x: margin, y: yPos, width: (pageWidth - 2 * margin) / 2,
+                                height: lineHeight)
+                            let leftPath = CGMutablePath()
+                            leftPath.addRect(leftRect)
+                            let leftFramesetter = CTFramesetterCreateWithAttributedString(leftAttr)
+                            let leftFrame = CTFramesetterCreateFrame(
+                                leftFramesetter, CFRange(location: 0, length: 0), leftPath, nil)
+                            CTFrameDraw(leftFrame, context)
 
-                             // Draw right if exists
-                             if !rightText.isEmpty {
-                                 let rightRect = CGRect(x: margin + (pageWidth - 2 * margin) / 2, y: yPos, width: (pageWidth - 2 * margin) / 2, height: lineHeight)
-                                 let rightPath = CGMutablePath()
-                                 rightPath.addRect(rightRect)
-                                 let rightFramesetter = CTFramesetterCreateWithAttributedString(rightAttr)
-                                 let rightFrame = CTFramesetterCreateFrame(rightFramesetter, CFRange(location: 0, length: 0), rightPath, nil)
-                                 CTFrameDraw(rightFrame, context)
-                             }
+                            // Draw right if exists
+                            if !rightText.isEmpty {
+                                let rightRect = CGRect(
+                                    x: margin + (pageWidth - 2 * margin) / 2, y: yPos,
+                                    width: (pageWidth - 2 * margin) / 2, height: lineHeight)
+                                let rightPath = CGMutablePath()
+                                rightPath.addRect(rightRect)
+                                let rightFramesetter = CTFramesetterCreateWithAttributedString(
+                                    rightAttr)
+                                let rightFrame = CTFramesetterCreateFrame(
+                                    rightFramesetter, CFRange(location: 0, length: 0), rightPath,
+                                    nil)
+                                CTFrameDraw(rightFrame, context)
+                            }
 
-                             currentY += lineHeight + 5
-                             index += 2
-                         }
-                     }
+                            currentY += lineHeight + 5
+                            index += 2
+                        }
+                    }
                 }
             }
 
             // Ajouter la dernière page
             let ctx = context
-                addPageToDocument(ctx, pageData)
-            }
-
-            // Sauvegarder le PDF
-            let sanitizedName = profile.name.replacingOccurrences(of: "[^a-zA-Z0-9_\\- ]", with: "_", options: .regularExpression)
-            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
-                "ATS_Resume_Paginated_\(sanitizedName).pdf")
-            pdfDocument.write(to: tempURL)
-
-            print("PDF paginé généré avec succès")
-            completion(tempURL)
+            addPageToDocument(ctx, pageData)
         }
+
+        // Sauvegarder le PDF
+        let sanitizedName = profile.name.replacingOccurrences(
+            of: "[^a-zA-Z0-9_\\- ]", with: "_", options: .regularExpression)
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "ATS_Resume_Paginated_\(sanitizedName).pdf")
+        pdfDocument.write(to: tempURL)
+
+        print("PDF paginé généré avec succès")
+        completion(tempURL)
     }
+}

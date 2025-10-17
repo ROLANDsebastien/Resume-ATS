@@ -239,7 +239,7 @@ struct ATSResumeView: View {
             if !profile.summaryString.isEmpty {
                 SectionView(title: localizedTitle(for: "professional_summary")) {
                     AttributedTextView(
-                        attributedString: profile.normalizedSummaryAttributedString, fontSize: 11
+                        attributedString: profile.normalizedSummaryAttributedString, fontSize: 10
                     )
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -249,11 +249,15 @@ struct ATSResumeView: View {
             if profile.showExperiences && !profile.experiences.filter({ $0.isVisible }).isEmpty {
                 SectionView(title: localizedTitle(for: "professional_experience")) {
                     VStack(alignment: .leading, spacing: 15) {
-                        ForEach(profile.experiences.filter({ $0.isVisible }).sorted(by: { $0.startDate > $1.startDate })) { experience in
+                        ForEach(
+                            profile.experiences.filter({ $0.isVisible }).sorted(by: {
+                                $0.startDate > $1.startDate
+                            })
+                        ) { experience in
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack {
                                     Text(experience.company)
-                                        .font(.custom("Arial", size: 12))
+                                        .font(.custom("Arial", size: 10))
                                         .foregroundColor(.black)
                                     Spacer()
                                     Text(
@@ -266,11 +270,14 @@ struct ATSResumeView: View {
                                 }
                                 if let position = experience.position, !position.isEmpty {
                                     Text(position)
-                                        .font(.custom("Arial", size: 11))
+                                        .font(.custom("Arial", size: 10))
                                         .foregroundColor(.black)
                                 }
-                                 AttributedTextView(attributedString: experience.normalizedDetailsAttributedString, fontSize: 11)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                AttributedTextView(
+                                    attributedString: experience.normalizedDetailsAttributedString,
+                                    fontSize: 10
+                                )
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
                     }
@@ -286,10 +293,10 @@ struct ATSResumeView: View {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 5) {
                                         Text(education.institution)
-                                            .font(.custom("Arial", size: 12))
+                                            .font(.custom("Arial", size: 10))
                                             .foregroundColor(.black)
                                         Text(education.degree)
-                                            .font(.custom("Arial", size: 11))
+                                            .font(.custom("Arial", size: 10))
                                             .foregroundColor(.black)
                                     }
                                     Spacer()
@@ -300,10 +307,13 @@ struct ATSResumeView: View {
                                     .font(.custom("Arial", size: 10))
                                     .foregroundColor(.black)
                                 }
-                                 if !education.detailsString.isEmpty {
-                                     AttributedTextView(attributedString: education.normalizedDetailsAttributedString, fontSize: 11)
-                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                 }
+                                if !education.detailsString.isEmpty {
+                                    AttributedTextView(
+                                        attributedString: education
+                                            .normalizedDetailsAttributedString, fontSize: 10
+                                    )
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                }
                             }
                         }
                     }
@@ -319,10 +329,10 @@ struct ATSResumeView: View {
                                 Text(
                                     "\(reference.name) - \(reference.position) at \(reference.company)"
                                 )
-                                .font(.custom("Arial", size: 12))
+                                .font(.custom("Arial", size: 10))
                                 .foregroundColor(.black)
                                 Text("Email: \(reference.email) | Phone: \(reference.phone)")
-                                    .font(.custom("Arial", size: 11))
+                                    .font(.custom("Arial", size: 10))
                                     .foregroundColor(.black)
                             }
                         }
@@ -333,16 +343,21 @@ struct ATSResumeView: View {
             // Skills
             if profile.showSkills && !profile.skills.isEmpty {
                 SectionView(title: localizedTitle(for: "skills")) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        ForEach(profile.skills) { skillGroup in
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(skillGroup.title)
-                                    .font(.custom("Arial", size: 12))
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.black)
-                                Text(skillGroup.skills.joined(separator: ", "))
-                                    .font(.custom("Arial", size: 11))
-                                    .foregroundColor(.black)
+                    HStack(alignment: .top, spacing: 15) {
+                        ForEach(0..<min(4, profile.skills.count), id: \.self) { col in
+                            if col < profile.skills.count {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    let skillGroup = profile.skills[col]
+                                    Text(skillGroup.title)
+                                        .font(.custom("Arial", size: 9))
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.black)
+                                    ForEach(skillGroup.skills, id: \.self) { skill in
+                                        Text(skill)
+                                            .font(.custom("Arial", size: 9))
+                                            .foregroundColor(.black)
+                                    }
+                                }
                             }
                         }
                     }
@@ -362,7 +377,7 @@ struct ATSResumeView: View {
                                 // Nom et date sur la même ligne
                                 HStack {
                                     Text(certification.name)
-                                        .font(.custom("Arial", size: 11))
+                                        .font(.custom("Arial", size: 10))
                                         .fontWeight(.bold)
                                         .foregroundColor(.black)
                                     Spacer()
@@ -395,18 +410,18 @@ struct ATSResumeView: View {
             // Languages
             if profile.showLanguages && !profile.languages.filter({ $0.isVisible }).isEmpty {
                 SectionView(title: localizedTitle(for: "languages")) {
-                    VStack(alignment: .leading, spacing: 5) {
+                    VStack(alignment: .leading, spacing: 2) {
                         ForEach(profile.languages.filter({ $0.isVisible })) { language in
                             HStack {
                                 Text(language.name)
-                                    .font(.custom("Arial", size: 11))
+                                    .font(.custom("Arial", size: 10))
                                     .foregroundColor(.black)
                                 if let level = language.level, !level.isEmpty {
                                     Text(" - ")
-                                        .font(.custom("Arial", size: 11))
+                                        .font(.custom("Arial", size: 10))
                                         .foregroundColor(.black)
                                     Text(level)
-                                        .font(.custom("Arial", size: 11))
+                                        .font(.custom("Arial", size: 10))
                                         .foregroundColor(.black)
                                 }
                             }
@@ -431,7 +446,7 @@ struct SectionView<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
-                .font(.custom("Arial", size: 14))
+                .font(.custom("Arial", size: 12))
                 .fontWeight(.bold)
                 .foregroundColor(.black)
             content
