@@ -751,10 +751,8 @@ class PDFService {
                             let leftReference = visibleReferences[index]
 
                             // Build left reference text
+                            let leftCompany = leftReference.company
                             var leftText = "\(leftReference.name) - \(leftReference.position)"
-                            if !leftReference.company.isEmpty {
-                                leftText += " (\(leftReference.company))"
-                            }
 
                             var leftContactText = ""
                             if !leftReference.email.isEmpty {
@@ -772,13 +770,12 @@ class PDFService {
                                 (index + 1 < visibleReferences.count)
                                 ? visibleReferences[index + 1] : nil
                             var rightText = ""
+                            var rightCompany = ""
                             var rightContactText = ""
 
                             if let rightRef = rightReference {
                                 rightText = "\(rightRef.name) - \(rightRef.position)"
-                                if !rightRef.company.isEmpty {
-                                    rightText += " (\(rightRef.company))"
-                                }
+                                rightCompany = rightRef.company
 
                                 if !rightRef.email.isEmpty {
                                     rightContactText = rightRef.email
@@ -846,11 +843,50 @@ class PDFService {
                                 CTFrameDraw(rightFrame, context)
                             }
 
-                            currentY += lineHeight
+                            currentY += lineHeight + 2
+
+                            // --- Draw Company ---
+                            let companyAttributes: [NSAttributedString.Key: Any] = [
+                                .font: NSFont.systemFont(ofSize: 10),
+                                .foregroundColor: NSColor.black,
+                            ]
+                            let leftCompanyAttr = NSAttributedString(string: leftCompany, attributes: companyAttributes)
+                            let rightCompanyAttr = NSAttributedString(string: rightCompany, attributes: companyAttributes)
+                            let companyLineHeight = max(leftCompanyAttr.size().height, rightCompanyAttr.size().height)
+
+                            if companyLineHeight > 0 {
+                                // Pagination if needed
+                                if currentY + companyLineHeight > pageHeight - margin {
+                                    addPageToDocument(context, pageData)
+                                    pageIndex += 1
+                                    let result = createPage()
+                                    if let newContext = result.0 { context = newContext } else { return }
+                                    pageData = result.1
+                                    currentY = marginTop
+                                }
+
+                                let companyYPos = pageHeight - currentY - companyLineHeight
+                                if !leftCompany.isEmpty {
+                                    let leftCompanyRect = CGRect(x: margin, y: companyYPos, width: (pageWidth - 2 * margin) / 2, height: companyLineHeight)
+                                    let leftCompanyPath = CGMutablePath(); leftCompanyPath.addRect(leftCompanyRect)
+                                    let leftCompanyFramesetter = CTFramesetterCreateWithAttributedString(leftCompanyAttr)
+                                    let leftCompanyFrame = CTFramesetterCreateFrame(leftCompanyFramesetter, CFRange(location: 0, length: 0), leftCompanyPath, nil)
+                                    CTFrameDraw(leftCompanyFrame, context)
+                                }
+
+                                if !rightCompany.isEmpty {
+                                    let rightCompanyRect = CGRect(x: margin + (pageWidth - 2 * margin) / 2, y: companyYPos, width: (pageWidth - 2 * margin) / 2, height: companyLineHeight)
+                                    let rightCompanyPath = CGMutablePath(); rightCompanyPath.addRect(rightCompanyRect)
+                                    let rightCompanyFramesetter = CTFramesetterCreateWithAttributedString(rightCompanyAttr)
+                                    let rightCompanyFrame = CTFramesetterCreateFrame(rightCompanyFramesetter, CFRange(location: 0, length: 0), rightCompanyPath, nil)
+                                    CTFrameDraw(rightCompanyFrame, context)
+                                }
+                                currentY += companyLineHeight + 2
+                            }
 
                             // Draw contact info directly without extra spacing
                             let contactAttributes: [NSAttributedString.Key: Any] = [
-                                .font: NSFont.systemFont(ofSize: 9),
+                                .font: NSFont.systemFont(ofSize: 10),
                                 .foregroundColor: NSColor.black,
                             ]
 
@@ -949,7 +985,7 @@ class PDFService {
                             // Add skills separated by commas (normal weight)
                             let skillsText = skillGroup.skills.joined(separator: ", ")
                             let skillAttributes: [NSAttributedString.Key: Any] = [
-                                .font: NSFont.systemFont(ofSize: 11),
+                                .font: NSFont.systemFont(ofSize: 10),
                                 .foregroundColor: NSColor.black,
                             ]
                             let skillsAttr = NSAttributedString(
@@ -1072,15 +1108,15 @@ class PDFService {
                             }
                             // Certification number below
                             if let number = certification.certificationNumber, !number.isEmpty {
-                                let numberText = "ID: \(number)"
+                                let numberText = number
                                 drawText(
-                                    numberText, font: NSFont.systemFont(ofSize: 9), color: .black,
+                                    numberText, font: NSFont.systemFont(ofSize: 10), color: .black,
                                     x: margin, maxWidth: pageWidth - 2 * margin, spacing: 2)
                             }
                             // Web link below
                             if let webLink = certification.webLink, !webLink.isEmpty {
                                 drawText(
-                                    webLink, font: NSFont.systemFont(ofSize: 9), color: .black,
+                                    webLink, font: NSFont.systemFont(ofSize: 10), color: .black,
                                     x: margin,
                                     maxWidth: pageWidth - 2 * margin)
                             }
