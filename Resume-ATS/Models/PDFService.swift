@@ -377,14 +377,14 @@ class PDFService {
                     NSAttributedString(
                         string: "Email: ",
                         attributes: [
-                            .font: NSFont.boldSystemFont(ofSize: 11),
+                            .font: NSFont.boldSystemFont(ofSize: 10),
                             .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
                         string: email,
                         attributes: [
-                            .font: NSFont.systemFont(ofSize: 11),
+                            .font: NSFont.systemFont(ofSize: 10),
                             .foregroundColor: NSColor.darkGray,
                         ]))
                 contactInfo.append(attributedString)
@@ -395,14 +395,14 @@ class PDFService {
                     NSAttributedString(
                         string: "Téléphone: ",
                         attributes: [
-                            .font: NSFont.boldSystemFont(ofSize: 11),
+                            .font: NSFont.boldSystemFont(ofSize: 10),
                             .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
                         string: cleanPhoneForATS(phone),
                         attributes: [
-                            .font: NSFont.systemFont(ofSize: 11),
+                            .font: NSFont.systemFont(ofSize: 10),
                             .foregroundColor: NSColor.darkGray,
                         ]))
                 contactInfo.append(attributedString)
@@ -413,14 +413,14 @@ class PDFService {
                     NSAttributedString(
                         string: "Localisation: ",
                         attributes: [
-                            .font: NSFont.boldSystemFont(ofSize: 11),
+                            .font: NSFont.boldSystemFont(ofSize: 10),
                             .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
                         string: location,
                         attributes: [
-                            .font: NSFont.systemFont(ofSize: 11),
+                            .font: NSFont.systemFont(ofSize: 10),
                             .foregroundColor: NSColor.darkGray,
                         ]))
                 contactInfo.append(attributedString)
@@ -431,14 +431,14 @@ class PDFService {
                     NSAttributedString(
                         string: "LinkedIn: ",
                         attributes: [
-                            .font: NSFont.boldSystemFont(ofSize: 11),
+                            .font: NSFont.boldSystemFont(ofSize: 10),
                             .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
                         string: cleanURLDisplay(linkedin),
                         attributes: [
-                            .font: NSFont.systemFont(ofSize: 11),
+                            .font: NSFont.systemFont(ofSize: 10),
                             .foregroundColor: NSColor.darkGray,
                         ]))
                 contactInfo.append(attributedString)
@@ -449,14 +449,14 @@ class PDFService {
                     NSAttributedString(
                         string: "GitHub: ",
                         attributes: [
-                            .font: NSFont.boldSystemFont(ofSize: 11),
+                            .font: NSFont.boldSystemFont(ofSize: 10),
                             .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
                         string: cleanURLDisplay(github),
                         attributes: [
-                            .font: NSFont.systemFont(ofSize: 11),
+                            .font: NSFont.systemFont(ofSize: 10),
                             .foregroundColor: NSColor.darkGray,
                         ]))
                 contactInfo.append(attributedString)
@@ -467,14 +467,14 @@ class PDFService {
                     NSAttributedString(
                         string: "GitLab: ",
                         attributes: [
-                            .font: NSFont.boldSystemFont(ofSize: 11),
+                            .font: NSFont.boldSystemFont(ofSize: 10),
                             .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
                         string: cleanURLDisplay(gitlab),
                         attributes: [
-                            .font: NSFont.systemFont(ofSize: 11),
+                            .font: NSFont.systemFont(ofSize: 10),
                             .foregroundColor: NSColor.darkGray,
                         ]))
                 contactInfo.append(attributedString)
@@ -485,14 +485,14 @@ class PDFService {
                     NSAttributedString(
                         string: "Site Web: ",
                         attributes: [
-                            .font: NSFont.boldSystemFont(ofSize: 11),
+                            .font: NSFont.boldSystemFont(ofSize: 10),
                             .foregroundColor: NSColor.black,
                         ]))
                 attributedString.append(
                     NSAttributedString(
                         string: cleanURLDisplay(website),
                         attributes: [
-                            .font: NSFont.systemFont(ofSize: 11),
+                            .font: NSFont.systemFont(ofSize: 10),
                             .foregroundColor: NSColor.darkGray,
                         ]))
                 contactInfo.append(attributedString)
