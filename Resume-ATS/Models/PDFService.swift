@@ -752,7 +752,7 @@ class PDFService {
 
                             // Build left reference text
                             let leftCompany = leftReference.company
-                            var leftText = "\(leftReference.name) - \(leftReference.position)"
+                            let leftText = "\(leftReference.name) - \(leftReference.position)"
 
                             var leftContactText = ""
                             if !leftReference.email.isEmpty {
