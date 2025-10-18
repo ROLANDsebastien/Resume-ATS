@@ -104,20 +104,10 @@ struct TemplatesView: View {
 struct ContentView: View {
     @State private var selectedSection: String? = "Dashboard"
     @AppStorage("appLanguage") private var appLanguage: String = "fr"
-    @State private var sidebarWidth: CGFloat = 200
 
     var body: some View {
         NavigationSplitView {
             List(selection: $selectedSection) {
-                Section {
-                    Button(action: {
-                        sidebarWidth = sidebarWidth == 0 ? 200 : 0
-                    }) {
-                        Image(systemName: "sidebar.left")
-                            .foregroundColor(.primary)
-                    }
-                    .buttonStyle(.plain)
-                }
                 NavigationLink(value: "Dashboard") {
                     Label(appLanguage == "fr" ? "Dashboard" : "Dashboard", systemImage: "house")
                 }
@@ -147,7 +137,6 @@ struct ContentView: View {
                 }
             }
             .navigationTitle(appLanguage == "fr" ? "Sections" : "Sections")
-            .navigationSplitViewColumnWidth(min: 0, ideal: sidebarWidth, max: .infinity)
         } detail: {
             switch selectedSection {
             case "Dashboard":
