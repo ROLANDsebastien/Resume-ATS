@@ -564,21 +564,21 @@ struct DocumentsView: View {
                     try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
                     var exportTasks = 0
 
-                    if let profile = application.profile {
-                        exportTasks += 1
-                        PDFService.generateATSResumePDF(for: profile) { pdfURL in
-                            if let pdfURL = pdfURL {
-                                let destURL = url.appendingPathComponent("CV.pdf")
-                                do {
-                                    try fileManager.copyItem(at: pdfURL, to: destURL)
-                                } catch {
-                                    print("Error copying CV PDF: \(error)")
-                                }
-                            }
-                            exportTasks -= 1
-                            checkCompletion()
-                        }
-                    }
+                     if let profile = application.profile {
+                         exportTasks += 1
+                         PDFService.generateATSResumePDFWithPagination(for: profile) { pdfURL in
+                             if let pdfURL = pdfURL {
+                                 let destURL = url.appendingPathComponent("CV.pdf")
+                                 do {
+                                     try fileManager.copyItem(at: pdfURL, to: destURL)
+                                 } catch {
+                                     print("Error copying CV PDF: \(error)")
+                                 }
+                             }
+                             exportTasks -= 1
+                             checkCompletion()
+                         }
+                     }
 
                     if let coverLetter = application.coverLetter {
                         exportTasks += 1
