@@ -27,19 +27,19 @@ struct CoverLettersView: View {
                     .fontWeight(.bold)
                     .padding(.top)
 
-                     LazyVGrid(columns: [GridItem(.flexible())], spacing: 60) {
+                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 40) {
                          NavigationLink(destination: AIGenerationPageView(language: language, profiles: profiles)) {
                              VStack(spacing: 10) {
-                                 Image(systemName: "plus")
+                                 Image(systemName: "wand.and.stars")
                                      .font(.largeTitle)
                                      .foregroundColor(.blue)
-                                 Text(language == "fr" ? "Nouvelle Lettre" : "New Letter")
+                                 Text(language == "fr" ? "Générer avec AI" : "Generate with AI")
                                      .font(.headline)
                                      .foregroundColor(.primary)
                                  Text(
                                      language == "fr"
-                                         ? "Générer une lettre de motivation avec AI"
-                                         : "Generate a cover letter with AI"
+                                         ? "Créer une lettre avec l'IA"
+                                         : "Create letter with AI"
                                  )
                                  .font(.subheadline)
                                  .foregroundColor(.secondary)
@@ -47,7 +47,31 @@ struct CoverLettersView: View {
                              }
                              .frame(maxWidth: .infinity, minHeight: 120)
                              .padding()
- .background(.regularMaterial)
+                             .background(.regularMaterial)
+                             .cornerRadius(8)
+                         }
+                         .buttonStyle(.plain)
+
+                         NavigationLink(destination: AddCoverLetterView(language: language)) {
+                             VStack(spacing: 10) {
+                                 Image(systemName: "square.and.pencil")
+                                     .font(.largeTitle)
+                                     .foregroundColor(.green)
+                                 Text(language == "fr" ? "Créer Manuellement" : "Create Manually")
+                                     .font(.headline)
+                                     .foregroundColor(.primary)
+                                 Text(
+                                     language == "fr"
+                                         ? "Écrire une lettre manuellement"
+                                         : "Write letter manually"
+                                 )
+                                 .font(.subheadline)
+                                 .foregroundColor(.secondary)
+                                 .multilineTextAlignment(.center)
+                             }
+                             .frame(maxWidth: .infinity, minHeight: 120)
+                             .padding()
+                             .background(.regularMaterial)
                              .cornerRadius(8)
                          }
                          .buttonStyle(.plain)
