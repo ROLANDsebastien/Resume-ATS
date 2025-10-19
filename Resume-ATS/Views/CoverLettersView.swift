@@ -362,14 +362,17 @@ struct AIGenerationPageView: View {
                         )
                         .padding(.vertical, 5)
                 }
-                Section(header: Text(language == "fr" ? "Profil (optionnel)" : "Profile (optional)")) {
-                    Picker(language == "fr" ? "Sélectionner un profil" : "Select a profile", selection: $selectedProfile) {
-                        Text(language == "fr" ? "Aucun" : "None").tag(nil as Profile?)
-                        ForEach(profiles) { profile in
-                            Text(profile.name).tag(profile as Profile?)
-                        }
-                    }
-                }
+                  Section(header: Text(language == "fr" ? "Profil (optionnel)" : "Profile (optional)")) {
+                      Picker(selection: $selectedProfile) {
+                          Text(language == "fr" ? "Aucun" : "None").tag(nil as Profile?)
+                          ForEach(profiles) { profile in
+                              Text(profile.name).tag(profile as Profile?)
+                          }
+                      } label: {
+                          EmptyView()
+                      }
+                      .pickerStyle(.menu)
+                  }
                 Section(header: Text(language == "fr" ? "Instructions Supplémentaires (optionnel)" : "Additional Instructions (optional)")) {
                     TextEditor(text: $additionalInstructions)
                         .frame(minHeight: 60)
