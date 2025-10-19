@@ -172,37 +172,7 @@ struct StatistiquesView: View {
                 }
                 .padding(.vertical)
 
-                // Pie Chart for Status Distribution
-                VStack(alignment: .leading) {
-                    Text(language == "fr" ? "Répartition par Statut" : "Status Distribution")
-                        .font(.headline)
 
-                    Chart {
-                        ForEach(Application.Status.allCases, id: \.self) { status in
-                            SectorMark(
-                                angle: .value(
-                                    language == "fr" ? "Nombre" : "Count",
-                                    statusDistribution[status] ?? 0),
-                                innerRadius: .ratio(0.5),
-                                angularInset: 1.5
-                            )
-                            .foregroundStyle(
-                                by: .value(
-                                    language == "fr" ? "Statut" : "Status",
-                                    status.localizedString(language: language)))
-                        }
-                    }
-                    .chartForegroundStyleScale([
-                        (language == "fr" ? "Acceptée" : "Accepted"): .green,
-                        (language == "fr" ? "Refusée" : "Rejected"): .red,
-                        (language == "fr" ? "Candidature envoyée" : "Applied"): .blue,
-                        (language == "fr" ? "En attente" : "Pending"): .orange,
-                        (language == "fr" ? "Retirée" : "Withdrawn"): .gray,
-                        (language == "fr" ? "Entretien" : "Interviewing"): .cyan,
-                    ])
-                    .frame(height: 300)
-                }
-                .padding(.vertical)
 
                 // Bar Chart
                 VStack(alignment: .leading) {
@@ -240,20 +210,7 @@ struct StatistiquesView: View {
 
                 }
                 .padding(.vertical)
-                // Success Rate by Source Chart
-                VStack(alignment: .leading) {
-                    Text(language == "fr" ? "Taux de Succès par Source" : "Success Rate by Source")
-                        .font(.headline)
 
-                    Chart(successRateBySource) { item in
-                        BarMark(
-                            x: .value(language == "fr" ? "Source" : "Source", item.source),
-                            y: .value(language == "fr" ? "Taux (%)" : "Rate (%)", item.rate)
-                        )
-                    }
-                    .frame(height: 300)
-                }
-                .padding(.vertical)
 
                 // PDF Export Button
                 Button(action: {
