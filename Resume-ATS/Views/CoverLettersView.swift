@@ -156,6 +156,7 @@ struct AddCoverLetterView: View {
 
     @State private var title = ""
     @State private var contentAttributedString = NSAttributedString()
+    @State private var showingAIGeneration = false
 
     var body: some View {
         ScrollView {
@@ -173,6 +174,10 @@ struct AddCoverLetterView: View {
                 .frame(minWidth: 600, minHeight: 500)
 
                 HStack {
+                    Button(language == "fr" ? "Générer avec AI" : "Generate with AI") {
+                        showingAIGeneration = true
+                    }
+                    .buttonStyle(.bordered)
                     Spacer()
                     Button(language == "fr" ? "Ajouter" : "Add") {
                         let newCoverLetter = CoverLetter(
@@ -193,6 +198,13 @@ struct AddCoverLetterView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .navigationTitle(language == "fr" ? "Nouvelle Lettre" : "New Letter")
+        .sheet(isPresented: $showingAIGeneration) {
+            AIGenerationView(language: language, profiles: profiles) { generatedText in
+                if let text = generatedText {
+                    self.contentAttributedString = NSAttributedString(string: text)
+                }
+            }
+        }
     }
 }
 
@@ -205,6 +217,7 @@ struct EditCoverLetterView: View {
 
     @State private var title: String
     @State private var contentAttributedString: NSAttributedString
+    @State private var showingAIGeneration = false
 
     init(coverLetter: CoverLetter, language: String) {
         self.coverLetter = coverLetter
@@ -229,6 +242,10 @@ struct EditCoverLetterView: View {
                 .frame(minWidth: 600, minHeight: 500)
 
                 HStack {
+                    Button(language == "fr" ? "Générer avec AI" : "Generate with AI") {
+                        showingAIGeneration = true
+                    }
+                    .buttonStyle(.bordered)
                     Spacer()
                     Button(language == "fr" ? "Sauvegarder" : "Save") {
                         coverLetter.title = title
@@ -244,6 +261,122 @@ struct EditCoverLetterView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .navigationTitle(language == "fr" ? "Modifier Lettre" : "Edit Letter")
+        .sheet(isPresented: $showingAIGeneration) {
+            AIGenerationView(language: language, profiles: profiles) { generatedText in
+                if let text = generatedText {
+                    self.contentAttributedString = NSAttributedString(string: text)
+                }
+            }
+        }
+    }
+}
+
+struct AIGenerationView: View {
+    @Environment(\.dismiss) private var dismiss
+    var language: String
+    var profiles: [Profile]
+    var onGenerate: (String?) -> Void
+
+    @State private var jobDescription = ""
+    @State private var selectedProfile: Profile?
+    @State private var isGenerating = false
+    @State private var generatingText: String?
+    @State private var errorMessage: String?
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text(language == "fr" ? "Générer Lettre avec AI" : "Generate Letter with AI")
+                .font(.title)
+                .fontWeight(.bold)
+
+            Form {
+                TextField(language == "fr" ? "Description du poste" : "Job Description", text: $jobDescription)
+                    .textFieldStyle(.roundedBorder)
+                Picker(language == "fr" ? "Profil" : "Profile", selection: $selectedProfile) {
+                    Text(language == "fr" ? "Aucun" : "None").tag(nil as Profile?)
+                    ForEach(profiles) { profile in
+                        Text(profile.name).tag(profile as Profile?)
+                    }
+                }
+            }
+            .frame(minWidth: 400)
+
+            HStack {
+                Button(language == "fr" ? "Annuler" : "Cancel") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+                Spacer()
+                Button(language == "fr" ? "Générer" : "Generate") {
+                    isGenerating = true
+                    generatingText = language == "fr" ? "Génération en cours..." : "Generating..."
+                    AIService.generateCoverLetter(jobDescription: jobDescription, profile: selectedProfile) { result in
+                        DispatchQueue.main.async {
+                            if let result = result {
+                                onGenerate(result)
+                                dismiss()
+                            } else {
+                                errorMessage = language == "fr" ? "Erreur lors de la génération" : "Generation failed"
+                            }
+                            isGenerating = false
+                            generatingText = nil
+                        }
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(jobDescription.isEmpty || isGenerating)
+            }
+
+            if let text = generatingText {
+                Text(text)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 10)
+            }
+
+            if let text = generatingText {
+                Text(text)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 10)
+            }
+
+            HStack {
+                Button(language == "fr" ? "Annuler" : "Cancel") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+                Spacer()
+                Button(language == "fr" ? "Générer" : "Generate") {
+                    isGenerating = true
+                    generatingText = language == "fr" ? "Génération en cours..." : "Generating..."
+                    AIService.generateCoverLetter(jobDescription: jobDescription, profile: selectedProfile) { result in
+                        DispatchQueue.main.async {
+                            if let result = result {
+                                onGenerate(result)
+                                dismiss()
+                            } else {
+                                errorMessage = language == "fr" ? "Erreur lors de la génération" : "Generation failed"
+                            }
+                            isGenerating = false
+                            generatingText = nil
+                        }
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(jobDescription.isEmpty || isGenerating)
+            }
+            .padding(.horizontal)
+        }
+        .padding()
+        .frame(minWidth: 450, minHeight: 300)
+        .alert(isPresented: .constant(errorMessage != nil), content: {
+            Alert(
+                title: Text(language == "fr" ? "Erreur" : "Error"),
+                message: Text(errorMessage ?? ""),
+                dismissButton: .default(Text(language == "fr" ? "OK" : "OK")) {
+                    errorMessage = nil
+                }
+            )
+        })
     }
 }
 
