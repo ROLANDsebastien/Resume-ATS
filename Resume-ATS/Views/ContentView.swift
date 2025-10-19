@@ -127,6 +127,9 @@ struct ContentView: View {
                 NavigationLink(value: "Templates") {
                     Label(appLanguage == "fr" ? "Templates" : "Templates", systemImage: "doc")
                 }
+                NavigationLink(value: "CVs") {
+                    Label(appLanguage == "fr" ? "CVs" : "CVs", systemImage: "doc.fill")
+                }
                 NavigationLink(value: "Statistiques") {
                     Label(
                         appLanguage == "fr" ? "Statistiques" : "Statistics",
@@ -149,6 +152,8 @@ struct ContentView: View {
                 CoverLettersView(selectedSection: $selectedSection, language: appLanguage)
             case "Templates":
                 TemplatesView(selectedSection: $selectedSection, language: appLanguage)
+            case "CVs":
+                CVsView(selectedSection: $selectedSection, language: appLanguage)
             case "Statistiques":
                 StatistiquesView(selectedSection: $selectedSection, language: appLanguage)
             case "Settings":
@@ -164,5 +169,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: Profile.self, inMemory: true)
+        .modelContainer(for: [Profile.self, Application.self, CoverLetter.self, CVDocument.self], inMemory: true)
 }

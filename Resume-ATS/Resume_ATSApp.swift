@@ -20,6 +20,7 @@ struct Resume_ATSApp: App {
             Profile.self,
             Application.self,
             CoverLetter.self,
+            CVDocument.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

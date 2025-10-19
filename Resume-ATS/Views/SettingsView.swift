@@ -13,6 +13,7 @@ struct SettingsView: View {
     @Query private var profiles: [Profile]
     @Query private var applications: [Application]
     @Query private var coverLetters: [CoverLetter]
+    @Query private var cvDocuments: [CVDocument]
 
     @State private var showingExportSuccess = false
     @State private var showingImportSuccess = false
@@ -171,8 +172,8 @@ struct SettingsView: View {
                                     .foregroundColor(.primary)
                                 Text(
                                     appLanguage == "fr"
-                                        ? "Sauvegarder profils, candidatures et documents joints"
-                                        : "Backup profiles, applications and attached documents"
+                                        ? "Sauvegarder profils, candidatures, CVs et documents joints"
+                                        : "Backup profiles, applications, CVs and attached documents"
                                 )
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -190,8 +191,8 @@ struct SettingsView: View {
                                     .foregroundColor(.primary)
                                 Text(
                                     appLanguage == "fr"
-                                        ? "Restaurer profils, candidatures et documents joints"
-                                        : "Restore profiles, applications and attached documents"
+                                        ? "Restaurer profils, candidatures, CVs et documents joints"
+                                        : "Restore profiles, applications, CVs and attached documents"
                                 )
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -212,8 +213,8 @@ struct SettingsView: View {
                                 .foregroundColor(.red)
                                 Text(
                                     appLanguage == "fr"
-                                        ? "Supprimer définitivement tous les profils et candidatures"
-                                        : "Permanently delete all profiles and applications"
+                                        ? "Supprimer définitivement tous les profils, candidatures et CVs"
+                                        : "Permanently delete all profiles, applications and CVs"
                                 )
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -277,8 +278,8 @@ struct SettingsView: View {
         } message: {
             Text(
                 appLanguage == "fr"
-                    ? "Cette action supprimera définitivement tous les profils, candidatures et documents joints. Cette action est irréversible."
-                    : "This action will permanently delete all profiles, applications and attached documents. This action is irreversible."
+                    ? "Cette action supprimera définitivement tous les profils, candidatures, CVs et documents joints. Cette action est irréversible."
+                    : "This action will permanently delete all profiles, applications, CVs and attached documents. This action is irreversible."
             )
         }
         .navigationTitle("Resume-ATS")
@@ -296,7 +297,7 @@ struct SettingsView: View {
     private func exportProfiles() {
         guard
             let zipURL = DataService.exportProfiles(
-                profiles, coverLetters: coverLetters, applications: applications)
+                profiles, coverLetters: coverLetters, applications: applications, cvDocuments: cvDocuments)
         else {
             errorMessage = "Erreur lors de l'exportation des données."
             showingError = true

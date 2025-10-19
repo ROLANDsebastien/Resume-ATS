@@ -91,6 +91,12 @@ class DataService {
         let creationDate: Date
     }
 
+    struct SerializableCVDocument: Codable {
+        let name: String
+        let dateCreated: Date
+        let pdfPath: String?  // Chemin relatif du PDF dans l'archive
+    }
+
     struct SerializableApplication: Codable {
         let company: String
         let position: String
@@ -107,12 +113,13 @@ class DataService {
         let profiles: [SerializableProfile]
         let coverLetters: [SerializableCoverLetter]?
         let applications: [SerializableApplication]
+        let cvDocuments: [SerializableCVDocument]?
         let exportDate: Date
         let version: String
     }
 
     static func exportProfiles(
-        _ profiles: [Profile], coverLetters: [CoverLetter], applications: [Application]
+        _ profiles: [Profile], coverLetters: [CoverLetter], applications: [Application], cvDocuments: [CVDocument]
     ) -> URL? {
         let fileManager = FileManager.default
 
@@ -245,12 +252,48 @@ class DataService {
             serializableApplications.append(serializableApp)
         }
 
+        // Traiter les CVs et copier les PDFs
+        var serializableCVs: [SerializableCVDocument] = []
+
+        for cvDocument in cvDocuments {
+            var pdfPath: String? = nil
+
+            if let bookmark = cvDocument.pdfBookmark {
+                do {
+                    var isStale = false
+                    let url = try URL(
+                        resolvingBookmarkData: bookmark, options: .withSecurityScope,
+                        relativeTo: nil, bookmarkDataIsStale: &isStale)
+
+                    if !isStale && url.startAccessingSecurityScopedResource() {
+                        defer { url.stopAccessingSecurityScopedResource() }
+                        let pdfName = url.lastPathComponent
+                        let destinationURL = documentsDir.appendingPathComponent(pdfName)
+
+                        // Copier le fichier
+                        try fileManager.copyItem(at: url, to: destinationURL)
+                        pdfPath = pdfName
+                    }
+                } catch {
+                    print("Erreur lors de la copie du CV: \(error)")
+                }
+            }
+
+            let serializableCV = SerializableCVDocument(
+                name: cvDocument.name,
+                dateCreated: cvDocument.dateCreated,
+                pdfPath: pdfPath
+            )
+            serializableCVs.append(serializableCV)
+        }
+
         let exportData = ExportData(
             profiles: serializableProfiles,
             coverLetters: serializableCoverLetters,
             applications: serializableApplications,
+            cvDocuments: serializableCVs,
             exportDate: Date(),
-            version: "1.1"
+            version: "1.2"
         )
 
         // Écrire le fichier JSON
@@ -327,6 +370,10 @@ class DataService {
             existingApplications.map {
                 "\($0.company)|\($0.position)|\($0.dateApplied.timeIntervalSince1970)"
             })
+
+        // Récupérer les CVs existants pour éviter les doublons
+        let existingCVs = try context.fetch(FetchDescriptor<CVDocument>())
+        let existingCVNames = Set(existingCVs.map { $0.name })
 
         // Importer les profils non existants
         for serializableProfile in exportData.profiles
@@ -538,6 +585,53 @@ class DataService {
             context.insert(application)
         }
 
+        // Importer les CVs
+        if let serializableCVs = exportData.cvDocuments {
+            for serializableCV in serializableCVs where !existingCVNames.contains(serializableCV.name) {
+                var bookmark: Data? = nil
+
+                if let pdfPath = serializableCV.pdfPath {
+                    let tempPDFURL = documentsDir.appendingPathComponent(pdfPath)
+                    let permanentURL = appDocumentsDir.appendingPathComponent(pdfPath)
+
+                    // Ensure the source file exists
+                    guard fileManager.fileExists(atPath: tempPDFURL.path) else {
+                        print("CV source file not found after extraction: \(pdfPath)")
+                        continue
+                    }
+
+                    // Try to copy the item
+                    do {
+                        try fileManager.copyItem(at: tempPDFURL, to: permanentURL)
+                    } catch let error as NSError {
+                        // If the error is that the file already exists, we can ignore it.
+                        // Cocoa error code 516 is "file exists".
+                        if !(error.domain == NSCocoaErrorDomain && error.code == 516) {
+                            // If it's a different error, print it and skip this document.
+                            print("Failed to copy CV \(pdfPath): \(error)")
+                            continue
+                        }
+                    }
+
+                    // At this point, the file is guaranteed to be at permanentURL. Create the bookmark.
+                    do {
+                        bookmark = try permanentURL.bookmarkData(
+                            options: .withSecurityScope, includingResourceValuesForKeys: nil,
+                            relativeTo: nil)
+                    } catch {
+                        print("Failed to create bookmark for CV \(pdfPath): \(error)")
+                    }
+                }
+
+                let cvDocument = CVDocument(
+                    name: serializableCV.name,
+                    dateCreated: serializableCV.dateCreated,
+                    pdfBookmark: bookmark
+                )
+                context.insert(cvDocument)
+            }
+        }
+
         try context.save()
 
         // Nettoyer le dossier temporaire
@@ -555,6 +649,12 @@ class DataService {
         let applications = try context.fetch(FetchDescriptor<Application>())
         for application in applications {
             context.delete(application)
+        }
+
+        // Supprimer tous les CVs
+        let cvDocuments = try context.fetch(FetchDescriptor<CVDocument>())
+        for cvDocument in cvDocuments {
+            context.delete(cvDocument)
         }
 
         try context.save()

@@ -20,11 +20,12 @@ struct CandidaturesView: View {
     var language: String
 
     var filteredApplications: [Application] {
-        if let status = selectedStatus {
-            return applications.filter { $0.status == status }
+        let filtered = if let status = selectedStatus {
+            applications.filter { $0.status == status }
         } else {
-            return applications
+            applications
         }
+        return filtered.sorted(by: { $0.dateApplied > $1.dateApplied })
     }
 
     var body: some View {

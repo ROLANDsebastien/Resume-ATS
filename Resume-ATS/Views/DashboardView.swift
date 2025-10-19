@@ -52,21 +52,29 @@ struct DashboardView: View {
                          selectedSection = "Statistiques"
                      }
 
-                     DashboardTile(
-                         title: language == "fr" ? "Lettres" : "Letters",
-                         subtitle: language == "fr" ? "Gérer vos lettres de motivation" : "Manage your cover letters",
-                         systemImage: "doc.text"
-                     ) {
-                         selectedSection = "Lettres"
-                     }
+                      DashboardTile(
+                          title: language == "fr" ? "Lettres" : "Letters",
+                          subtitle: language == "fr" ? "Gérer vos lettres de motivation" : "Manage your cover letters",
+                          systemImage: "doc.text"
+                      ) {
+                          selectedSection = "Lettres"
+                      }
 
                       DashboardTile(
-                          title: language == "fr" ? "Réglages" : "Settings",
-                          subtitle: language == "fr" ? "Préférences de l'app" : "App preferences",
-                          systemImage: "gear"
+                          title: language == "fr" ? "CVs" : "CVs",
+                          subtitle: language == "fr" ? "Gérer vos CVs PDF" : "Manage your CV PDFs",
+                          systemImage: "doc.fill"
                       ) {
-                         selectedSection = "Settings"
+                          selectedSection = "CVs"
                       }
+
+                       DashboardTile(
+                           title: language == "fr" ? "Réglages" : "Settings",
+                           subtitle: language == "fr" ? "Préférences de l'app" : "App preferences",
+                           systemImage: "gear"
+                       ) {
+                          selectedSection = "Settings"
+                       }
                 }
                 .padding(.horizontal, 20)
             }
