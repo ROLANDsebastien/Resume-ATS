@@ -7,13 +7,16 @@
 
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct CoverLettersView: View {
-    @Binding var selectedSection: String?
-    @Environment(\.modelContext) private var modelContext
-    @Query private var coverLetters: [CoverLetter]
-    @Query private var profiles: [Profile]
-    var language: String
+     @Binding var selectedSection: String?
+     @Environment(\.modelContext) private var modelContext
+     @Query private var coverLetters: [CoverLetter]
+     @Query private var profiles: [Profile]
+     var language: String
+
+     @State private var showingFileImporter = false
 
     var body: some View {
         NavigationStack {
@@ -76,9 +79,20 @@ struct CoverLettersView: View {
                          }
                          .buttonStyle(.plain)
                      }
-                    .padding(.horizontal, 20)
+                     .padding(.horizontal, 20)
 
-                    if !coverLetters.isEmpty {
+                     HStack {
+                         Spacer()
+                         Button(language == "fr" ? "Importer Lettre" : "Import Letter") {
+                             showingFileImporter = true
+                         }
+                         .buttonStyle(.bordered)
+                         .padding(.top, 10)
+                         Spacer()
+                     }
+                     .padding(.horizontal, 20)
+
+                     if !coverLetters.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             Text(language == "fr" ? "Lettres de Motivation" : "Cover Letters")
                                 .font(.title2)
@@ -116,16 +130,54 @@ struct CoverLettersView: View {
                 }
                 .padding(.horizontal)
             }
-            .navigationTitle("Resume-ATS")
-            .toolbar {
-                ToolbarItem(placement: .navigation) {
-                    Button(action: {
-                        selectedSection = "Dashboard"
-                    }) {
-                        Image(systemName: "chevron.left")
-                    }
-                }
-            }
+         .navigationTitle("Resume-ATS")
+         .toolbar {
+             ToolbarItem(placement: .navigation) {
+                 Button(action: {
+                     selectedSection = "Dashboard"
+                 }) {
+                     Image(systemName: "chevron.left")
+                 }
+             }
+         }
+         .fileImporter(
+             isPresented: $showingFileImporter,
+             allowedContentTypes: [UTType.rtf, UTType.plainText],
+             allowsMultipleSelection: false
+         ) { result in
+             switch result {
+             case .success(let urls):
+                 if let url = urls.first {
+                     do {
+                         let data = try Data(contentsOf: url)
+                         var attributedString: NSAttributedString
+                         if url.pathExtension.lowercased() == "rtf" {
+                             attributedString = try NSAttributedString(
+                                 data: data,
+                                 options: [.documentType: NSAttributedString.DocumentType.rtf],
+                                 documentAttributes: nil
+                             )
+                         } else {
+                             // Plain text
+                             let text = String(data: data, encoding: .utf8) ?? ""
+                             attributedString = NSAttributedString(string: text)
+                         }
+                         let title = url.deletingPathExtension().lastPathComponent
+                         let newCoverLetter = CoverLetter(
+                             title: title,
+                             content: attributedString.rtf(
+                                 from: NSRange(location: 0, length: attributedString.length)) ?? data
+                         )
+                         modelContext.insert(newCoverLetter)
+                     } catch {
+                         // Handle error, perhaps show alert
+                         print("Error importing file: \(error)")
+                     }
+                 }
+             case .failure(let error):
+                 print("File import failed: \(error)")
+             }
+         }
         }
     }
 }
