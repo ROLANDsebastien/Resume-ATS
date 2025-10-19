@@ -16,8 +16,7 @@ class AIService {
 
         Candidate Profile:
         \(profile?.summaryString ?? "No summary available")
-        Skills: \(profile?.skills.flatMap { $0.skills }.joined(separator: ", ") ?? "No skills listed")
-        Experience: \(profile?.experiences.map { "\($0.position ?? "") at \($0.company)" }.joined(separator: "; ") ?? "No experience listed")
+                    Skills: \(profile?.skills.flatMap { $0.skillsArray }.joined(separator: ", ") ?? "No skills listed")        Experience: \(profile?.experiences.map { "\($0.position ?? "") at \($0.company)" }.joined(separator: "; ") ?? "No experience listed")
 
         Additional Instructions:
         \(additionalInstructions.isEmpty ? "None" : additionalInstructions)

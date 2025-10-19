@@ -274,12 +274,31 @@ final class Reference {
 @Model
 final class SkillGroup {
     var title: String
-    var skills: [String]
+    var skills: Data
     var profile: Profile?
 
     init(title: String, skills: [String]) {
         self.title = title
-        self.skills = skills
+        self.skills = (try? JSONEncoder().encode(skills)) ?? Data()
+    }
+
+    var skillsArray: [String] {
+        get {
+            guard !skills.isEmpty else { return [] }
+            do {
+                return try JSONDecoder().decode([String].self, from: skills)
+            } catch {
+                print("Error decoding skills: \(error)")
+                return []
+            }
+        }
+        set {
+            do {
+                skills = try JSONEncoder().encode(newValue)
+            } catch {
+                print("Error encoding skills: \(error)")
+            }
+        }
     }
 }
 

@@ -356,7 +356,7 @@ struct ATSResumeView: View {
                                         .font(.custom("Arial", size: 9))
                                         .fontWeight(.bold)
                                         .foregroundColor(.black)
-                                    ForEach(skillGroup.skills, id: \.self) { skill in
+                                    ForEach(skillGroup.skillsArray, id: \.self) { skill in
                                         Text(skill)
                                             .font(.custom("Arial", size: 9))
                                             .foregroundColor(.black)

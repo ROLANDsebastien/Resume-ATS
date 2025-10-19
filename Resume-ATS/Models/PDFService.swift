@@ -85,6 +85,8 @@ class PDFService {
         for coverLetter: CoverLetter, completion: @escaping (URL?) -> Void
     ) {
         print("Generating PDF for cover letter: \(coverLetter.title)")
+        print("Cover letter content length: \(coverLetter.content.count)")
+        print("Cover letter string: \(coverLetter.contentString)")
 
         // Save to temporary file
         let sanitizedTitle = coverLetter.title.replacingOccurrences(
@@ -93,13 +95,24 @@ class PDFService {
             "Cover_Letter_\(sanitizedTitle).pdf")
 
         // Create NSTextView for rendering the rich text
-        let textView = NSTextView(frame: CGRect(x: 0, y: 0, width: 595, height: 842))
-        textView.textStorage?.setAttributedString(coverLetter.normalizedContentAttributedString)
+        let pageWidth: CGFloat = 595
+        let pageHeight: CGFloat = 842
+        let margin: CGFloat = 72  // 1 inch margin
+
+        let textView = NSTextView(frame: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight))
+        let attributedString = coverLetter.normalizedContentAttributedString
+        print("Attributed string length: \(attributedString.length)")
+        textView.textStorage?.setAttributedString(attributedString)
         textView.isEditable = false
         textView.backgroundColor = .white
 
-        // Generate PDF data
-        let pdfData = textView.dataWithPDF(inside: textView.bounds)
+        // Set text container insets to create margins
+        textView.textContainerInset = NSSize(width: margin, height: margin)
+
+        // Generate PDF data with margins
+        let contentRect = CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight)
+        let pdfData = textView.dataWithPDF(inside: contentRect)
+        print("PDF data size: \(pdfData.count)")
 
         // Create PDF document
         let pdfDocument = PDFDocument(data: pdfData)
@@ -983,7 +996,7 @@ class PDFService {
                             titleAndSkills.append(titleAttr)
 
                             // Add skills separated by commas (normal weight)
-                            let skillsText = skillGroup.skills.joined(separator: ", ")
+                            let skillsText = skillGroup.skillsArray.joined(separator: ", ")
                             let skillAttributes: [NSAttributedString.Key: Any] = [
                                 .font: NSFont.systemFont(ofSize: 10),
                                 .foregroundColor: NSColor.black,

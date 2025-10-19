@@ -131,15 +131,6 @@ struct CoverLettersView: View {
                 .padding(.horizontal)
             }
          .navigationTitle("Resume-ATS")
-         .toolbar {
-             ToolbarItem(placement: .navigation) {
-                 Button(action: {
-                     selectedSection = "Dashboard"
-                 }) {
-                     Image(systemName: "chevron.left")
-                 }
-             }
-         }
          .fileImporter(
              isPresented: $showingFileImporter,
              allowedContentTypes: [UTType.rtf, UTType.plainText],
@@ -430,48 +421,51 @@ struct AIGenerationPageView: View {
                     .frame(minWidth: 300)
 
                     HStack {
-                        Button(language == "fr" ? "Utiliser dans Lettre" : "Use in Letter") {
-                            let coverLetter = CoverLetter(
-                                title: language == "fr" ? "Lettre Générée" : "Generated Letter",
-                                content: NSAttributedString(string: editableText).rtf(
-                                    from: NSRange(location: 0, length: editableText.count)) ?? Data()
-                            )
-                            modelContext.insert(coverLetter)
-                            dismiss()
-                        }
+                         Button(language == "fr" ? "Utiliser dans Lettre" : "Use in Letter") {
+                             let coverLetter = CoverLetter(
+                                 title: language == "fr" ? "Lettre Générée" : "Generated Letter",
+                                 content: NSAttributedString.fromMarkdown(editableText).rtf(
+                                     from: NSRange(location: 0, length: NSAttributedString.fromMarkdown(editableText).length)) ?? Data()
+                             )
+                             modelContext.insert(coverLetter)
+                             try? modelContext.save()
+                             dismiss()
+                         }
                         .buttonStyle(.borderedProminent)
                         Spacer()
-                        Button(language == "fr" ? "Exporter en PDF" : "Export to PDF") {
-                            let tempCoverLetter = CoverLetter(
-                                title: language == "fr" ? "Lettre Générée" : "Generated Letter",
-                                content: NSAttributedString(string: editableText).rtf(
-                                    from: NSRange(location: 0, length: editableText.count)) ?? Data()
-                            )
-                            PDFService.generateCoverLetterPDF(for: tempCoverLetter) { pdfURL in
-                                if let pdfURL = pdfURL {
-                                    DispatchQueue.main.async {
-                                        NSWorkspace.shared.open(pdfURL)
-                                    }
-                                }
-                            }
-                        }
+                         Button(language == "fr" ? "Exporter en PDF" : "Export to PDF") {
+                             let tempCoverLetter = CoverLetter(
+                                 title: language == "fr" ? "Lettre Générée" : "Generated Letter",
+                                 content: NSAttributedString.fromMarkdown(editableText).rtf(
+                                     from: NSRange(location: 0, length: NSAttributedString.fromMarkdown(editableText).length)) ?? Data()
+                             )
+                             // Don't insert temporary cover letter into context
+                             PDFService.generateCoverLetterPDF(for: tempCoverLetter) { pdfURL in
+                                 if let pdfURL = pdfURL {
+                                     DispatchQueue.main.async {
+                                         NSWorkspace.shared.open(pdfURL)
+                                     }
+                                 }
+                             }
+                         }
                         .buttonStyle(.bordered)
                         Spacer()
-                        Button(language == "fr" ? "Sauvegarder dans Candidature" : "Save to Application") {
-                            let coverLetter = CoverLetter(
-                                title: language == "fr" ? "Lettre pour \(company)" : "Letter for \(company)",
-                                content: NSAttributedString(string: editableText).rtf(
-                                    from: NSRange(location: 0, length: editableText.count)) ?? Data()
-                            )
-                            modelContext.insert(coverLetter)
-                            let application = Application(
-                                company: company,
-                                position: position,
-                                coverLetter: coverLetter
-                            )
-                            application.profile = selectedProfile
-                            modelContext.insert(application)
-                            dismiss()
+                         Button(language == "fr" ? "Sauvegarder dans Candidature" : "Save to Application") {
+                             let coverLetter = CoverLetter(
+                                 title: language == "fr" ? "Lettre pour \(company)" : "Letter for \(company)",
+                                 content: NSAttributedString.fromMarkdown(editableText).rtf(
+                                     from: NSRange(location: 0, length: NSAttributedString.fromMarkdown(editableText).length)) ?? Data()
+                             )
+                             modelContext.insert(coverLetter)
+                             let application = Application(
+                                 company: company,
+                                 position: position,
+                                 coverLetter: coverLetter
+                             )
+                             application.profile = selectedProfile
+                             modelContext.insert(application)
+                             try? modelContext.save()
+                             dismiss()
                         }
                         .buttonStyle(.bordered)
                         .disabled(company.isEmpty || position.isEmpty)

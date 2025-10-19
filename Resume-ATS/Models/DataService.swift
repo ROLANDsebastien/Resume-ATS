@@ -184,10 +184,9 @@ class DataService {
                         isVisible: ref.isVisible
                     )
                 },
-                skills: profile.skills.map { skillGroup in
-                    SerializableSkillGroup(title: skillGroup.title, skills: skillGroup.skills)
-                },
-                certifications: profile.certifications.map { cert in
+                            skills: profile.skills.map { skillGroup in
+                                SerializableSkillGroup(title: skillGroup.title, skills: skillGroup.skillsArray)
+                            },                certifications: profile.certifications.map { cert in
                     SerializableCertification(
                         name: cert.name, date: cert.date,
                         certificationNumber: cert.certificationNumber, webLink: cert.webLink,
@@ -214,10 +213,10 @@ class DataService {
         for application in applications {
             var documentPaths: [String]? = nil
 
-            if let bookmarks = application.documentBookmarks {
-                documentPaths = []
-                for bookmark in bookmarks {
-                    do {
+            let bookmarks = application.documentBookmarksArray
+            documentPaths = []
+            for bookmark in bookmarks {
+                do {
                         var isStale = false
                         let url = try URL(
                             resolvingBookmarkData: bookmark, options: .withSecurityScope,
@@ -235,7 +234,6 @@ class DataService {
                     } catch {
                         print("Erreur lors de la copie du document: \(error)")
                     }
-                }
             }
 
             let serializableApp = SerializableApplication(

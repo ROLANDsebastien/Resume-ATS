@@ -230,15 +230,6 @@ struct StatistiquesView: View {
                 applications: applications, language: language, selectedYear: selectedYear)
         }
         .navigationTitle("Resume-ATS")
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    selectedSection = "Dashboard"
-                }) {
-                    Image(systemName: "chevron.left")
-                }
-            }
-        }
     }
 }
 

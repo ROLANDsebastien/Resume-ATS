@@ -100,15 +100,6 @@ struct CVsView: View {
             return true
         }
         .navigationTitle("Resume-ATS")
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    selectedSection = "Dashboard"
-                }) {
-                    Image(systemName: "chevron.left")
-                }
-            }
-        }
     }
 
     private func importCV(from url: URL) {

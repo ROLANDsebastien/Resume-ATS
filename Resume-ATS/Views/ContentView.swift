@@ -68,17 +68,7 @@ struct TemplatesView: View {
         }
         .listStyle(.plain)
         .navigationTitle("Resume-ATS")
-        .environment(\.locale, Locale(identifier: selectedProfile?.language ?? "fr"))
-        .environment(\.locale, Locale(identifier: "fr"))
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    selectedSection = "Dashboard"
-                }) {
-                    Image(systemName: "chevron.left")
-                }
-            }
-        }
+        .environment(\.locale, Locale(identifier: selectedProfile?.language ?? language))
 
     }
 

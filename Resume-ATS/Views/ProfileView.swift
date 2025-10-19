@@ -176,15 +176,6 @@ struct ProfileView: View {
         .background(.regularMaterial)
         .navigationTitle("Resume-ATS")
         .environment(\.locale, Locale(identifier: selectedProfile?.language ?? "fr"))
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    selectedSection = "Dashboard"
-                }) {
-                    Image(systemName: "chevron.left")
-                }
-            }
-        }
         .alert(localizedTitle(for: "rename_profile"), isPresented: $showRenameAlert) {
             TextField(localizedTitle(for: "new_profile_name"), text: $renameProfileName)
             Button(localizedTitle(for: "cancel"), role: .cancel) {}
@@ -832,10 +823,9 @@ struct ProfileView: View {
                     name: ref.name, position: ref.position, company: ref.company, email: ref.email,
                     phone: ref.phone, isVisible: ref.isVisible)
             },
-            skills: profile.skills.map { skillGroup in
-                SkillGroup(title: skillGroup.title, skills: skillGroup.skills)
-            },
-            certifications: profile.certifications.map { cert in
+                                    skills: profile.skills.map { skillGroup in
+                                        SkillGroup(title: skillGroup.title, skills: skillGroup.skillsArray)
+                                    },            certifications: profile.certifications.map { cert in
                 Certification(
                     name: cert.name, date: cert.date, certificationNumber: cert.certificationNumber,
                     webLink: cert.webLink, isVisible: cert.isVisible)
@@ -1104,15 +1094,15 @@ struct SkillGroupForm: View {
             TextField(localizedTitle(for: "title"), text: $skillGroup.title)
                 .foregroundColor(.primary)
 
-            ForEach(skillGroup.skills.indices, id: \.self) { index in
+            ForEach(skillGroup.skillsArray.indices, id: \.self) { index in
                 HStack {
                     TextField(
                         "",
-                        text: $skillGroup.skills[index]
+                        text: $skillGroup.skillsArray[index]
                     )
                     .textFieldStyle(StyledTextField())
                     Button(action: {
-                        skillGroup.skills.remove(at: index)
+                        skillGroup.skillsArray.remove(at: index)
                     }) {
                         Image(systemName: "trash.fill")
                             .foregroundColor(.red)
@@ -1125,7 +1115,7 @@ struct SkillGroupForm: View {
                 title: localizedTitle(for: "add_skill"),
                 systemImage: "plus",
                 action: {
-                    skillGroup.skills.append("")
+                    skillGroup.skillsArray.append("")
                 }
             )
         }

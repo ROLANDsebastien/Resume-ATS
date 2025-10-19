@@ -10,14 +10,18 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct CandidaturesView: View {
-    @Binding var selectedSection: String?
-    @Environment(\.modelContext) private var modelContext
-    @Query private var applications: [Application]
-    @State private var showingAddApplication = false
-    @State private var selectedStatus: Application.Status? = nil
-    @State private var editingApplication: Application?
-    @State private var showingDocumentsFor: Application?
-    var language: String
+     @Binding var selectedSection: String?
+     @Environment(\.modelContext) private var modelContext
+     @Query(
+         FetchDescriptor<Application>(
+             sortBy: [SortDescriptor(\.dateApplied, order: .reverse)]
+         )
+     ) private var applications: [Application]
+     @State private var showingAddApplication = false
+     @State private var selectedStatus: Application.Status? = nil
+     @State private var editingApplication: Application?
+     @State private var showingDocumentsFor: Application?
+     var language: String
 
     var filteredApplications: [Application] {
         let filtered = if let status = selectedStatus {
@@ -136,15 +140,6 @@ struct CandidaturesView: View {
             DocumentsView(application: application, language: language)
         }
         .navigationTitle("Resume-ATS")
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    selectedSection = "Dashboard"
-                }) {
-                    Image(systemName: "chevron.left")
-                }
-            }
-        }
     }
 }
 
@@ -170,11 +165,13 @@ struct ApplicationRow: View {
                 )
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-                if let coverLetter = application.coverLetter {
-                    Text("\(language == "fr" ? "Lettre" : "Letter"): \(coverLetter.title)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
+                 if let coverLetter = application.coverLetter {
+                     // Safely access cover letter properties
+                     let title = coverLetter.title
+                     Text("\(language == "fr" ? "Lettre" : "Letter"): \(title)")
+                         .font(.subheadline)
+                         .foregroundColor(.secondary)
+                 }
             }
             Spacer()
         }
@@ -432,15 +429,15 @@ struct DocumentsView: View {
                         HStack {
                             Text(profile.name)
                             Spacer()
-                            Button(language == "fr" ? "Voir" : "View") {
-                                PDFService.generateATSResumePDF(for: profile) { pdfURL in
-                                    if let pdfURL = pdfURL {
-                                        DispatchQueue.main.async {
-                                            NSWorkspace.shared.open(pdfURL)
-                                        }
-                                    }
-                                }
-                            }
+                             Button(language == "fr" ? "Voir" : "View") {
+                                 PDFService.generateATSResumePDFWithPagination(for: profile) { pdfURL in
+                                     if let pdfURL = pdfURL {
+                                         DispatchQueue.main.async {
+                                             NSWorkspace.shared.open(pdfURL)
+                                         }
+                                     }
+                                 }
+                             }
                         }
                     }
                 }
@@ -453,7 +450,13 @@ struct DocumentsView: View {
                             Text(coverLetter.title)
                             Spacer()
                             Button(language == "fr" ? "Voir" : "View") {
-                                PDFService.generateCoverLetterPDF(for: coverLetter) { pdfURL in
+                                // Create a temporary copy to avoid SwiftData issues
+                                let tempCoverLetter = CoverLetter(
+                                    title: coverLetter.title,
+                                    content: coverLetter.content,
+                                    creationDate: coverLetter.creationDate
+                                )
+                                PDFService.generateCoverLetterPDF(for: tempCoverLetter) { pdfURL in
                                     if let pdfURL = pdfURL {
                                         DispatchQueue.main.async {
                                             NSWorkspace.shared.open(pdfURL)
@@ -466,7 +469,7 @@ struct DocumentsView: View {
                 }
 
                 Section(header: Text(language == "fr" ? "Documents" : "Documents")) {
-                    ForEach(application.documentBookmarks ?? [], id: \.self) { bookmark in
+                    ForEach(application.documentBookmarksArray, id: \.self) { bookmark in
                         HStack {
                             if let url = resolveBookmark(bookmark) {
                                 Text(url.lastPathComponent)
@@ -475,10 +478,10 @@ struct DocumentsView: View {
                                     openBookmark(bookmark)
                                 }
                                 Button(language == "fr" ? "Supprimer" : "Delete") {
-                                    if let index = application.documentBookmarks?.firstIndex(
+                                    if let index = application.documentBookmarksArray.firstIndex(
                                         of: bookmark)
                                     {
-                                        application.documentBookmarks?.remove(at: index)
+                                        application.documentBookmarksArray.remove(at: index)
                                     }
                                 }
                                 .foregroundColor(.red)
@@ -533,8 +536,7 @@ struct DocumentsView: View {
                                     options: .withSecurityScope,
                                     includingResourceValuesForKeys: nil, relativeTo: nil)
                                 print("Bookmark created")
-                                application.documentBookmarks =
-                                    (application.documentBookmarks ?? []) + [bookmark]
+                                application.documentBookmarksArray.append(bookmark)
                             } catch {
                                 print("Error creating bookmark: \(error)")
                             }
