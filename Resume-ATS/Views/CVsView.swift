@@ -115,52 +115,37 @@ struct CVsView: View {
         let accessGranted = url.startAccessingSecurityScopedResource()
         if accessGranted {
             do {
-                let bookmark = try url.bookmarkData(
-                    options: .withSecurityScope,
-                    includingResourceValuesForKeys: nil, relativeTo: nil)
+                let pdfData = try Data(contentsOf: url)
                 let name = url.deletingPathExtension().lastPathComponent
-                let newDocument = CVDocument(name: name, pdfBookmark: bookmark)
+                let newDocument = CVDocument(name: name, pdfData: pdfData)
                 modelContext.insert(newDocument)
             } catch {
-                print("Error creating bookmark: \(error)")
+                print("Error reading PDF data: \(error)")
             }
             url.stopAccessingSecurityScopedResource()
         }
     }
 
     private func previewCV(_ document: CVDocument) {
-        guard let bookmark = document.pdfBookmark else { return }
-        var isStale = false
+        guard let pdfData = document.pdfData else { return }
         do {
-            let url = try URL(
-                resolvingBookmarkData: bookmark, options: .withSecurityScope,
-                bookmarkDataIsStale: &isStale)
-            let accessGranted = url.startAccessingSecurityScopedResource()
-            if accessGranted {
-                NSWorkspace.shared.open(url)
-                url.stopAccessingSecurityScopedResource()
-            }
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(document.name).pdf")
+            try pdfData.write(to: tempURL)
+            NSWorkspace.shared.open(tempURL)
         } catch {
-            print("Error resolving bookmark: \(error)")
+            print("Error writing temp PDF: \(error)")
         }
     }
 
     private func exportCV(_ document: CVDocument) {
-        guard let bookmark = document.pdfBookmark else { return }
-        let savePanel = NSSavePanel()
-        savePanel.nameFieldStringValue = "\(document.name).pdf"
-        savePanel.begin { response in
-            if response == .OK, let url = savePanel.url {
+        guard let pdfData = document.pdfData else { return }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [UTType.pdf]
+        panel.nameFieldStringValue = "\(document.name).pdf"
+        panel.begin { response in
+            if response == .OK, let url = panel.url {
                 do {
-                    var isStale = false
-                    let pdfURL = try URL(
-                        resolvingBookmarkData: bookmark, options: .withSecurityScope,
-                        bookmarkDataIsStale: &isStale)
-                    let accessGranted = pdfURL.startAccessingSecurityScopedResource()
-                    if accessGranted {
-                        try FileManager.default.copyItem(at: pdfURL, to: url)
-                        pdfURL.stopAccessingSecurityScopedResource()
-                    }
+                    try pdfData.write(to: url)
                 } catch {
                     print("Error exporting CV: \(error)")
                 }
@@ -178,24 +163,16 @@ struct CVsView: View {
                 let fileManager = FileManager.default
                 do {
                     try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
-                    for document in cvDocuments {
-                        if let bookmark = document.pdfBookmark {
-                            do {
-                                var isStale = false
-                                let pdfURL = try URL(
-                                    resolvingBookmarkData: bookmark, options: .withSecurityScope,
-                                    bookmarkDataIsStale: &isStale)
-                                let accessGranted = pdfURL.startAccessingSecurityScopedResource()
-                                if accessGranted {
-                                    let destURL = url.appendingPathComponent("\(document.name).pdf")
-                                    try fileManager.copyItem(at: pdfURL, to: destURL)
-                                    pdfURL.stopAccessingSecurityScopedResource()
-                                }
-                            } catch {
-                                print("Error copying CV: \(error)")
-                            }
-                        }
-                    }
+                     for document in cvDocuments {
+                         if let pdfData = document.pdfData {
+                             do {
+                                 let destURL = url.appendingPathComponent("\(document.name).pdf")
+                                 try pdfData.write(to: destURL)
+                             } catch {
+                                 print("Error writing CV: \(error)")
+                             }
+                         }
+                     }
                     DispatchQueue.main.async {
                         NSWorkspace.shared.open(url)
                     }
