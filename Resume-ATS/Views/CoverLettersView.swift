@@ -7,13 +7,16 @@
 
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct CoverLettersView: View {
-    @Binding var selectedSection: String?
-    @Environment(\.modelContext) private var modelContext
-    @Query private var coverLetters: [CoverLetter]
-    @Query private var profiles: [Profile]
-    var language: String
+     @Binding var selectedSection: String?
+     @Environment(\.modelContext) private var modelContext
+      @Query(sort: \CoverLetter.creationDate, order: .reverse) private var coverLetters: [CoverLetter]
+     @Query private var profiles: [Profile]
+     var language: String
+
+     @State private var showingFileImporter = false
 
     var body: some View {
         NavigationStack {
@@ -27,34 +30,69 @@ struct CoverLettersView: View {
                     .fontWeight(.bold)
                     .padding(.top)
 
-                    LazyVGrid(columns: [GridItem(.flexible())], spacing: 60) {
-                        NavigationLink(destination: AddCoverLetterView(language: language)) {
-                            VStack(spacing: 10) {
-                                Image(systemName: "plus")
-                                    .font(.largeTitle)
-                                    .foregroundColor(.blue)
-                                Text(language == "fr" ? "Nouvelle Lettre" : "New Letter")
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                Text(
-                                    language == "fr"
-                                        ? "Créer une nouvelle lettre de motivation"
-                                        : "Create a new cover letter"
-                                )
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                            }
-                            .frame(maxWidth: .infinity, minHeight: 120)
-                            .padding()
-.background(.regularMaterial)
-                            .cornerRadius(8)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal, 20)
+                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 40) {
+                         NavigationLink(destination: AIGenerationPageView(language: language, profiles: profiles)) {
+                             VStack(spacing: 10) {
+                                 Image(systemName: "wand.and.stars")
+                                     .font(.largeTitle)
+                                     .foregroundColor(.blue)
+                                 Text(language == "fr" ? "Générer avec AI" : "Generate with AI")
+                                     .font(.headline)
+                                     .foregroundColor(.primary)
+                                 Text(
+                                     language == "fr"
+                                         ? "Créer une lettre avec l'IA"
+                                         : "Create letter with AI"
+                                 )
+                                 .font(.subheadline)
+                                 .foregroundColor(.secondary)
+                                 .multilineTextAlignment(.center)
+                             }
+                             .frame(maxWidth: .infinity, minHeight: 120)
+                             .padding()
+                             .background(.regularMaterial)
+                             .cornerRadius(8)
+                         }
+                         .buttonStyle(.plain)
 
-                    if !coverLetters.isEmpty {
+                         NavigationLink(destination: AddCoverLetterView(language: language)) {
+                             VStack(spacing: 10) {
+                                 Image(systemName: "square.and.pencil")
+                                     .font(.largeTitle)
+                                     .foregroundColor(.green)
+                                 Text(language == "fr" ? "Créer Manuellement" : "Create Manually")
+                                     .font(.headline)
+                                     .foregroundColor(.primary)
+                                 Text(
+                                     language == "fr"
+                                         ? "Écrire une lettre manuellement"
+                                         : "Write letter manually"
+                                 )
+                                 .font(.subheadline)
+                                 .foregroundColor(.secondary)
+                                 .multilineTextAlignment(.center)
+                             }
+                             .frame(maxWidth: .infinity, minHeight: 120)
+                             .padding()
+                             .background(.regularMaterial)
+                             .cornerRadius(8)
+                         }
+                         .buttonStyle(.plain)
+                     }
+                     .padding(.horizontal, 20)
+
+                     HStack {
+                         Spacer()
+                         Button(language == "fr" ? "Importer Lettre" : "Import Letter") {
+                             showingFileImporter = true
+                         }
+                         .buttonStyle(.bordered)
+                         .padding(.top, 10)
+                         Spacer()
+                     }
+                     .padding(.horizontal, 20)
+
+                     if !coverLetters.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             Text(language == "fr" ? "Lettres de Motivation" : "Cover Letters")
                                 .font(.title2)
@@ -92,16 +130,45 @@ struct CoverLettersView: View {
                 }
                 .padding(.horizontal)
             }
-            .navigationTitle("Resume-ATS")
-            .toolbar {
-                ToolbarItem(placement: .navigation) {
-                    Button(action: {
-                        selectedSection = "Dashboard"
-                    }) {
-                        Image(systemName: "chevron.left")
-                    }
-                }
-            }
+         .navigationTitle("Resume-ATS")
+         .fileImporter(
+             isPresented: $showingFileImporter,
+             allowedContentTypes: [UTType.rtf, UTType.plainText],
+             allowsMultipleSelection: false
+         ) { result in
+             switch result {
+             case .success(let urls):
+                 if let url = urls.first {
+                     do {
+                         let data = try Data(contentsOf: url)
+                         var attributedString: NSAttributedString
+                         if url.pathExtension.lowercased() == "rtf" {
+                             attributedString = try NSAttributedString(
+                                 data: data,
+                                 options: [.documentType: NSAttributedString.DocumentType.rtf],
+                                 documentAttributes: nil
+                             )
+                         } else {
+                             // Plain text
+                             let text = String(data: data, encoding: .utf8) ?? ""
+                             attributedString = NSAttributedString(string: text)
+                         }
+                         let title = url.deletingPathExtension().lastPathComponent
+                         let newCoverLetter = CoverLetter(
+                             title: title,
+                             content: attributedString.rtf(
+                                 from: NSRange(location: 0, length: attributedString.length)) ?? data
+                         )
+                         modelContext.insert(newCoverLetter)
+                     } catch {
+                         // Handle error, perhaps show alert
+                         print("Error importing file: \(error)")
+                     }
+                 }
+             case .failure(let error):
+                 print("File import failed: \(error)")
+             }
+         }
         }
     }
 }
@@ -117,7 +184,7 @@ struct CoverLetterRow: View {
                 Text(coverLetter.title)
                     .font(.headline)
                 Text(
-                    "\(language == "fr" ? "Créée le" : "Created on"): \(coverLetter.creationDate.formatted(date: .abbreviated, time: .omitted))"
+                    "\(language == "fr" ? "Créée le" : "Created on"): \(coverLetter.creationDate.formatted(date: .abbreviated, time: .shortened))"
                 )
                 .font(.subheadline)
                 .foregroundColor(.secondary)
@@ -154,8 +221,8 @@ struct AddCoverLetterView: View {
     @Query private var profiles: [Profile]
     var language: String
 
-    @State private var title = ""
-    @State private var contentAttributedString = NSAttributedString()
+     @State private var title = ""
+     @State private var contentAttributedString = NSAttributedString()
 
     var body: some View {
         ScrollView {
@@ -172,27 +239,27 @@ struct AddCoverLetterView: View {
                 }
                 .frame(minWidth: 600, minHeight: 500)
 
-                HStack {
-                    Spacer()
-                    Button(language == "fr" ? "Ajouter" : "Add") {
-                        let newCoverLetter = CoverLetter(
-                            title: title,
-                            content: contentAttributedString.rtf(
-                                from: NSRange(location: 0, length: contentAttributedString.length))
-                                ?? Data()
-                        )
-                        modelContext.insert(newCoverLetter)
-                        dismiss()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(title.isEmpty)
-                }
-                .padding(.horizontal)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .navigationTitle(language == "fr" ? "Nouvelle Lettre" : "New Letter")
+                 HStack {
+                     Spacer()
+                     Button(language == "fr" ? "Ajouter" : "Add") {
+                         let newCoverLetter = CoverLetter(
+                             title: title,
+                             content: contentAttributedString.rtf(
+                                 from: NSRange(location: 0, length: contentAttributedString.length))
+                                 ?? Data()
+                         )
+                         modelContext.insert(newCoverLetter)
+                         dismiss()
+                     }
+                     .buttonStyle(.borderedProminent)
+                     .disabled(title.isEmpty)
+                 }
+                 .padding(.horizontal)
+             }
+             .padding()
+             .frame(maxWidth: .infinity, maxHeight: .infinity)
+         }
+         .navigationTitle(language == "fr" ? "Nouvelle Lettre" : "New Letter")
     }
 }
 
@@ -203,8 +270,8 @@ struct EditCoverLetterView: View {
     var coverLetter: CoverLetter
     var language: String
 
-    @State private var title: String
-    @State private var contentAttributedString: NSAttributedString
+     @State private var title: String
+     @State private var contentAttributedString: NSAttributedString
 
     init(coverLetter: CoverLetter, language: String) {
         self.coverLetter = coverLetter
@@ -228,22 +295,210 @@ struct EditCoverLetterView: View {
                 }
                 .frame(minWidth: 600, minHeight: 500)
 
+                 HStack {
+                     Spacer()
+                     Button(language == "fr" ? "Sauvegarder" : "Save") {
+                         coverLetter.title = title
+                         coverLetter.contentAttributedString = contentAttributedString
+                         dismiss()
+                     }
+                     .buttonStyle(.borderedProminent)
+                     .disabled(title.isEmpty)
+                 }
+                 .padding(.horizontal)
+             }
+             .padding()
+             .frame(maxWidth: .infinity, maxHeight: .infinity)
+         }
+         .navigationTitle(language == "fr" ? "Modifier Lettre" : "Edit Letter")
+    }
+}
+
+struct AIGenerationPageView: View {
+     @Environment(\.dismiss) private var dismiss
+     @Environment(\.modelContext) private var modelContext
+     var language: String
+     var profiles: [Profile]
+
+     @State private var jobDescription = ""
+     @State private var selectedProfile: Profile?
+     @State private var additionalInstructions: String
+     @State private var isGenerating = false
+     @State private var generatingText: String?
+     @State private var errorMessage: String?
+     @State private var generatedText: String?
+     @State private var editableText = ""
+     @State private var company = ""
+     @State private var position = ""
+
+     init(language: String, profiles: [Profile], additionalInstructions: String = "") {
+         self.language = language
+         self.profiles = profiles
+         _additionalInstructions = State(initialValue: additionalInstructions)
+     }
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text(language == "fr" ? "Générer Lettre avec AI" : "Generate Letter with AI")
+                .font(.title)
+                .fontWeight(.bold)
+
+            Form {
+                Section(header: Text(language == "fr" ? "Annonce de Poste" : "Job Posting")) {
+                    TextEditor(text: $jobDescription)
+                        .frame(minHeight: 100)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                        )
+                        .padding(.vertical, 5)
+                }
+                  Section(header: Text(language == "fr" ? "Profil (optionnel)" : "Profile (optional)")) {
+                      Picker(selection: $selectedProfile) {
+                          Text(language == "fr" ? "Aucun" : "None").tag(nil as Profile?)
+                          ForEach(profiles) { profile in
+                              Text(profile.name).tag(profile as Profile?)
+                          }
+                      } label: {
+                          EmptyView()
+                      }
+                      .pickerStyle(.menu)
+                  }
+                Section(header: Text(language == "fr" ? "Instructions Supplémentaires (optionnel)" : "Additional Instructions (optional)")) {
+                    TextEditor(text: $additionalInstructions)
+                        .frame(minHeight: 60)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                        )
+                        .padding(.vertical, 5)
+                }
+            }
+            .frame(minWidth: 400)
+
+            if generatedText == nil {
                 HStack {
-                    Spacer()
-                    Button(language == "fr" ? "Sauvegarder" : "Save") {
-                        coverLetter.title = title
-                        coverLetter.contentAttributedString = contentAttributedString
+                    Button(language == "fr" ? "Annuler" : "Cancel") {
                         dismiss()
                     }
+                    .buttonStyle(.bordered)
+                    Spacer()
+                    Button(language == "fr" ? "Générer" : "Generate") {
+                        isGenerating = true
+                        generatingText = language == "fr" ? "Génération en cours..." : "Generating..."
+                        AIService.generateCoverLetter(jobDescription: jobDescription, profile: selectedProfile, additionalInstructions: additionalInstructions) { result in
+                            DispatchQueue.main.async {
+                            if let result = result {
+                                generatedText = result
+                                editableText = result
+                            } else {
+                                    errorMessage = language == "fr" ? "Erreur lors de la génération" : "Generation failed"
+                                }
+                                isGenerating = false
+                                generatingText = nil
+                            }
+                        }
+                    }
                     .buttonStyle(.borderedProminent)
-                    .disabled(title.isEmpty)
+                    .disabled(jobDescription.isEmpty || isGenerating)
                 }
-                .padding(.horizontal)
+            } else {
+                VStack(spacing: 20) {
+                    Text(language == "fr" ? "Lettre Générée" : "Generated Letter")
+                        .font(.headline)
+                    TextEditor(text: $editableText)
+                        .frame(height: 200)
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(8)
+                        .padding(.vertical, 5)
+
+                    Form {
+                        TextField(language == "fr" ? "Entreprise" : "Company", text: $company)
+                            .textFieldStyle(.roundedBorder)
+                        TextField(language == "fr" ? "Poste" : "Position", text: $position)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    .frame(minWidth: 300)
+
+                    HStack {
+                         Button(language == "fr" ? "Utiliser dans Lettre" : "Use in Letter") {
+                             let coverLetter = CoverLetter(
+                                 title: language == "fr" ? "Lettre Générée" : "Generated Letter",
+                                 content: NSAttributedString.fromMarkdown(editableText).rtf(
+                                     from: NSRange(location: 0, length: NSAttributedString.fromMarkdown(editableText).length)) ?? Data()
+                             )
+                             modelContext.insert(coverLetter)
+                             try? modelContext.save()
+                             dismiss()
+                         }
+                        .buttonStyle(.borderedProminent)
+                        Spacer()
+                         Button(language == "fr" ? "Exporter en PDF" : "Export to PDF") {
+                             let tempCoverLetter = CoverLetter(
+                                 title: language == "fr" ? "Lettre Générée" : "Generated Letter",
+                                 content: NSAttributedString.fromMarkdown(editableText).rtf(
+                                     from: NSRange(location: 0, length: NSAttributedString.fromMarkdown(editableText).length)) ?? Data()
+                             )
+                             // Don't insert temporary cover letter into context
+                             PDFService.generateCoverLetterPDF(for: tempCoverLetter) { pdfURL in
+                                 if let pdfURL = pdfURL {
+                                     DispatchQueue.main.async {
+                                         NSWorkspace.shared.open(pdfURL)
+                                     }
+                                 }
+                             }
+                         }
+                        .buttonStyle(.bordered)
+                        Spacer()
+                         Button(language == "fr" ? "Sauvegarder dans Candidature" : "Save to Application") {
+                             let coverLetter = CoverLetter(
+                                 title: language == "fr" ? "Lettre pour \(company)" : "Letter for \(company)",
+                                 content: NSAttributedString.fromMarkdown(editableText).rtf(
+                                     from: NSRange(location: 0, length: NSAttributedString.fromMarkdown(editableText).length)) ?? Data()
+                             )
+                             modelContext.insert(coverLetter)
+                             let application = Application(
+                                 company: company,
+                                 position: position,
+                                 coverLetter: coverLetter
+                             )
+                             application.profile = selectedProfile
+                             modelContext.insert(application)
+                             try? modelContext.save()
+                             dismiss()
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(company.isEmpty || position.isEmpty)
+                        Spacer()
+                        Button(language == "fr" ? "Fermer" : "Close") {
+                            dismiss()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
             }
-            .padding()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            if let text = generatingText {
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text(text)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 10)
+            }
         }
-        .navigationTitle(language == "fr" ? "Modifier Lettre" : "Edit Letter")
+        .padding()
+        .navigationTitle(language == "fr" ? "Générer Lettre avec AI" : "Generate Letter with AI")
+        .alert(isPresented: .constant(errorMessage != nil), content: {
+            Alert(
+                title: Text(language == "fr" ? "Erreur" : "Error"),
+                message: Text(errorMessage ?? ""),
+                dismissButton: .default(Text(language == "fr" ? "OK" : "OK")) {
+                    errorMessage = nil
+                }
+            )
+        })
     }
 }
 

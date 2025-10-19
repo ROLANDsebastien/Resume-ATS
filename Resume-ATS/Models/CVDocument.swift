@@ -12,11 +12,11 @@ import SwiftData
 final class CVDocument {
     var name: String
     var dateCreated: Date
-    var pdfBookmark: Data?
+    var pdfData: Data?
 
-    init(name: String, dateCreated: Date = Date(), pdfBookmark: Data? = nil) {
+    init(name: String, dateCreated: Date = Date(), pdfData: Data? = nil) {
         self.name = name
         self.dateCreated = dateCreated
-        self.pdfBookmark = pdfBookmark
+        self.pdfData = pdfData
     }
 }

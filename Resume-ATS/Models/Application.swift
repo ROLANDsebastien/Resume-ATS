@@ -16,8 +16,9 @@ final class Application {
     var status: Status
     var notes: String
     var source: String?
-    var documentBookmarks: [Data]?
+    var documentBookmarks: Data?
     var profile: Profile?
+    @Relationship(deleteRule: .nullify)
     var coverLetter: CoverLetter?
 
     init(
@@ -30,8 +31,36 @@ final class Application {
         self.status = status
         self.notes = notes
         self.source = source
-        self.documentBookmarks = documentBookmarks
+        self.setDocumentBookmarks(documentBookmarks)
         self.coverLetter = coverLetter
+    }
+
+    var documentBookmarksArray: [Data] {
+        get {
+            guard let data = documentBookmarks else { return [] }
+            do {
+                return try JSONDecoder().decode([Data].self, from: data)
+            } catch {
+                print("Error decoding document bookmarks: \(error)")
+                return []
+            }
+        }
+        set {
+            setDocumentBookmarks(newValue)
+        }
+    }
+
+    private func setDocumentBookmarks(_ bookmarks: [Data]?) {
+        guard let bookmarks = bookmarks else {
+            documentBookmarks = nil
+            return
+        }
+        do {
+            documentBookmarks = try JSONEncoder().encode(bookmarks)
+        } catch {
+            print("Error encoding document bookmarks: \(error)")
+            documentBookmarks = nil
+        }
     }
 
     enum Status: String, Codable, CaseIterable {

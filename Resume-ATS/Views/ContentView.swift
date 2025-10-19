@@ -41,7 +41,7 @@ struct TemplatesView: View {
                     }
                     .padding(.horizontal)
 
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 40), GridItem(.flexible(), spacing: 40), GridItem(.flexible())], spacing: 60) {
+                    VStack(spacing: 20) {
                         DashboardTile(
                             title: language == "fr" ? "Modèle ATS" : "ATS Template",
                             subtitle: language == "fr"
@@ -59,23 +59,6 @@ struct TemplatesView: View {
                             },
                             isEnabled: selectedProfile != nil
                         )
-
-                        DashboardTile(
-                            title: language == "fr" ? "Modèle Moderne" : "Modern Template",
-                            subtitle: language == "fr" ? "Design contemporain" : "Contemporary design",
-                            systemImage: "doc.fill"
-                        ) {
-                            // Action to select modern template
-                        }
-
-                        DashboardTile(
-                            title: language == "fr" ? "Modèle Créatif" : "Creative Template",
-                            subtitle: language == "fr"
-                                ? "Pour postes créatifs" : "For creative positions",
-                            systemImage: "paintbrush"
-                        ) {
-                            // Action to select creative template
-                        }
                     }
                     .padding(.horizontal, 20)
                 }
@@ -85,17 +68,7 @@ struct TemplatesView: View {
         }
         .listStyle(.plain)
         .navigationTitle("Resume-ATS")
-        .environment(\.locale, Locale(identifier: selectedProfile?.language ?? "fr"))
-        .environment(\.locale, Locale(identifier: "fr"))
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    selectedSection = "Dashboard"
-                }) {
-                    Image(systemName: "chevron.left")
-                }
-            }
-        }
+        .environment(\.locale, Locale(identifier: selectedProfile?.language ?? language))
 
     }
 
