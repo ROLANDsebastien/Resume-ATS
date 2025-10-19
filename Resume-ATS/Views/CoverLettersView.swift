@@ -12,7 +12,7 @@ import UniformTypeIdentifiers
 struct CoverLettersView: View {
      @Binding var selectedSection: String?
      @Environment(\.modelContext) private var modelContext
-     @Query private var coverLetters: [CoverLetter]
+      @Query(sort: \CoverLetter.creationDate, order: .reverse) private var coverLetters: [CoverLetter]
      @Query private var profiles: [Profile]
      var language: String
 
@@ -184,7 +184,7 @@ struct CoverLetterRow: View {
                 Text(coverLetter.title)
                     .font(.headline)
                 Text(
-                    "\(language == "fr" ? "Créée le" : "Created on"): \(coverLetter.creationDate.formatted(date: .abbreviated, time: .omitted))"
+                    "\(language == "fr" ? "Créée le" : "Created on"): \(coverLetter.creationDate.formatted(date: .abbreviated, time: .shortened))"
                 )
                 .font(.subheadline)
                 .foregroundColor(.secondary)
