@@ -285,6 +285,7 @@ struct AIGenerationView: View {
      @State private var generatingText: String?
      @State private var errorMessage: String?
      @State private var generatedText: String?
+     @State private var editableText = ""
      @State private var company = ""
      @State private var position = ""
 
@@ -343,9 +344,10 @@ struct AIGenerationView: View {
                         generatingText = language == "fr" ? "Génération en cours..." : "Generating..."
                         AIService.generateCoverLetter(jobDescription: jobDescription, profile: selectedProfile, additionalInstructions: additionalInstructions) { result in
                             DispatchQueue.main.async {
-                                if let result = result {
-                                    generatedText = result
-                                } else {
+                            if let result = result {
+                                generatedText = result
+                                editableText = result
+                            } else {
                                     errorMessage = language == "fr" ? "Erreur lors de la génération" : "Generation failed"
                                 }
                                 isGenerating = false
@@ -360,24 +362,23 @@ struct AIGenerationView: View {
                 VStack(spacing: 20) {
                     Text(language == "fr" ? "Lettre Générée" : "Generated Letter")
                         .font(.headline)
-                    ScrollView {
-                        Text(generatedText!)
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .frame(height: 200)
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(8)
+                    TextEditor(text: $editableText)
+                        .frame(height: 200)
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(8)
+                        .padding(.vertical, 5)
 
                     Form {
                         TextField(language == "fr" ? "Entreprise" : "Company", text: $company)
+                            .textFieldStyle(.roundedBorder)
                         TextField(language == "fr" ? "Poste" : "Position", text: $position)
+                            .textFieldStyle(.roundedBorder)
                     }
                     .frame(minWidth: 300)
 
                     HStack {
                         Button(language == "fr" ? "Utiliser dans Lettre" : "Use in Letter") {
-                            onGenerate(generatedText)
+                            onGenerate(editableText)
                             dismiss()
                         }
                         .buttonStyle(.borderedProminent)
@@ -385,8 +386,8 @@ struct AIGenerationView: View {
                         Button(language == "fr" ? "Exporter en PDF" : "Export to PDF") {
                             let tempCoverLetter = CoverLetter(
                                 title: language == "fr" ? "Lettre Générée" : "Generated Letter",
-                                content: NSAttributedString(string: generatedText!).rtf(
-                                    from: NSRange(location: 0, length: generatedText!.count)) ?? Data()
+                                content: NSAttributedString(string: editableText).rtf(
+                                    from: NSRange(location: 0, length: editableText.count)) ?? Data()
                             )
                             PDFService.generateCoverLetterPDF(for: tempCoverLetter) { pdfURL in
                                 if let pdfURL = pdfURL {
@@ -401,8 +402,8 @@ struct AIGenerationView: View {
                         Button(language == "fr" ? "Sauvegarder dans Candidature" : "Save to Application") {
                             let coverLetter = CoverLetter(
                                 title: language == "fr" ? "Lettre pour \(company)" : "Letter for \(company)",
-                                content: NSAttributedString(string: generatedText!).rtf(
-                                    from: NSRange(location: 0, length: generatedText!.count)) ?? Data()
+                                content: NSAttributedString(string: editableText).rtf(
+                                    from: NSRange(location: 0, length: editableText.count)) ?? Data()
                             )
                             modelContext.insert(coverLetter)
                             let application = Application(
