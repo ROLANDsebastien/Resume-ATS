@@ -27,31 +27,31 @@ struct CoverLettersView: View {
                     .fontWeight(.bold)
                     .padding(.top)
 
-                    LazyVGrid(columns: [GridItem(.flexible())], spacing: 60) {
-                        NavigationLink(destination: AddCoverLetterView(language: language)) {
-                            VStack(spacing: 10) {
-                                Image(systemName: "plus")
-                                    .font(.largeTitle)
-                                    .foregroundColor(.blue)
-                                Text(language == "fr" ? "Nouvelle Lettre" : "New Letter")
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                Text(
-                                    language == "fr"
-                                        ? "Créer une nouvelle lettre de motivation"
-                                        : "Create a new cover letter"
-                                )
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                            }
-                            .frame(maxWidth: .infinity, minHeight: 120)
-                            .padding()
-.background(.regularMaterial)
-                            .cornerRadius(8)
-                        }
-                        .buttonStyle(.plain)
-                    }
+                     LazyVGrid(columns: [GridItem(.flexible())], spacing: 60) {
+                         NavigationLink(destination: AIGenerationPageView(language: language, profiles: profiles)) {
+                             VStack(spacing: 10) {
+                                 Image(systemName: "plus")
+                                     .font(.largeTitle)
+                                     .foregroundColor(.blue)
+                                 Text(language == "fr" ? "Nouvelle Lettre" : "New Letter")
+                                     .font(.headline)
+                                     .foregroundColor(.primary)
+                                 Text(
+                                     language == "fr"
+                                         ? "Générer une lettre de motivation avec AI"
+                                         : "Generate a cover letter with AI"
+                                 )
+                                 .font(.subheadline)
+                                 .foregroundColor(.secondary)
+                                 .multilineTextAlignment(.center)
+                             }
+                             .frame(maxWidth: .infinity, minHeight: 120)
+                             .padding()
+ .background(.regularMaterial)
+                             .cornerRadius(8)
+                         }
+                         .buttonStyle(.plain)
+                     }
                     .padding(.horizontal, 20)
 
                     if !coverLetters.isEmpty {
@@ -154,9 +154,8 @@ struct AddCoverLetterView: View {
     @Query private var profiles: [Profile]
     var language: String
 
-    @State private var title = ""
-    @State private var contentAttributedString = NSAttributedString()
-    @State private var showingAIGeneration = false
+     @State private var title = ""
+     @State private var contentAttributedString = NSAttributedString()
 
     var body: some View {
         ScrollView {
@@ -173,38 +172,27 @@ struct AddCoverLetterView: View {
                 }
                 .frame(minWidth: 600, minHeight: 500)
 
-                HStack {
-                    Button(language == "fr" ? "Générer avec AI" : "Generate with AI") {
-                        showingAIGeneration = true
-                    }
-                    .buttonStyle(.bordered)
-                    Spacer()
-                    Button(language == "fr" ? "Ajouter" : "Add") {
-                        let newCoverLetter = CoverLetter(
-                            title: title,
-                            content: contentAttributedString.rtf(
-                                from: NSRange(location: 0, length: contentAttributedString.length))
-                                ?? Data()
-                        )
-                        modelContext.insert(newCoverLetter)
-                        dismiss()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(title.isEmpty)
-                }
-                .padding(.horizontal)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .navigationTitle(language == "fr" ? "Nouvelle Lettre" : "New Letter")
-        .sheet(isPresented: $showingAIGeneration) {
-            AIGenerationView(language: language, profiles: profiles) { generatedText in
-                if let text = generatedText {
-                    self.contentAttributedString = NSAttributedString(string: text)
-                }
-            }
-        }
+                 HStack {
+                     Spacer()
+                     Button(language == "fr" ? "Ajouter" : "Add") {
+                         let newCoverLetter = CoverLetter(
+                             title: title,
+                             content: contentAttributedString.rtf(
+                                 from: NSRange(location: 0, length: contentAttributedString.length))
+                                 ?? Data()
+                         )
+                         modelContext.insert(newCoverLetter)
+                         dismiss()
+                     }
+                     .buttonStyle(.borderedProminent)
+                     .disabled(title.isEmpty)
+                 }
+                 .padding(.horizontal)
+             }
+             .padding()
+             .frame(maxWidth: .infinity, maxHeight: .infinity)
+         }
+         .navigationTitle(language == "fr" ? "Nouvelle Lettre" : "New Letter")
     }
 }
 
@@ -215,9 +203,8 @@ struct EditCoverLetterView: View {
     var coverLetter: CoverLetter
     var language: String
 
-    @State private var title: String
-    @State private var contentAttributedString: NSAttributedString
-    @State private var showingAIGeneration = false
+     @State private var title: String
+     @State private var contentAttributedString: NSAttributedString
 
     init(coverLetter: CoverLetter, language: String) {
         self.coverLetter = coverLetter
@@ -241,42 +228,30 @@ struct EditCoverLetterView: View {
                 }
                 .frame(minWidth: 600, minHeight: 500)
 
-                HStack {
-                    Button(language == "fr" ? "Générer avec AI" : "Generate with AI") {
-                        showingAIGeneration = true
-                    }
-                    .buttonStyle(.bordered)
-                    Spacer()
-                    Button(language == "fr" ? "Sauvegarder" : "Save") {
-                        coverLetter.title = title
-                        coverLetter.contentAttributedString = contentAttributedString
-                        dismiss()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(title.isEmpty)
-                }
-                .padding(.horizontal)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .navigationTitle(language == "fr" ? "Modifier Lettre" : "Edit Letter")
-        .sheet(isPresented: $showingAIGeneration) {
-            AIGenerationView(language: language, profiles: profiles) { generatedText in
-                if let text = generatedText {
-                    self.contentAttributedString = NSAttributedString(string: text)
-                }
-            }
-        }
+                 HStack {
+                     Spacer()
+                     Button(language == "fr" ? "Sauvegarder" : "Save") {
+                         coverLetter.title = title
+                         coverLetter.contentAttributedString = contentAttributedString
+                         dismiss()
+                     }
+                     .buttonStyle(.borderedProminent)
+                     .disabled(title.isEmpty)
+                 }
+                 .padding(.horizontal)
+             }
+             .padding()
+             .frame(maxWidth: .infinity, maxHeight: .infinity)
+         }
+         .navigationTitle(language == "fr" ? "Modifier Lettre" : "Edit Letter")
     }
 }
 
-struct AIGenerationView: View {
+struct AIGenerationPageView: View {
      @Environment(\.dismiss) private var dismiss
      @Environment(\.modelContext) private var modelContext
      var language: String
      var profiles: [Profile]
-     var onGenerate: (String?) -> Void
 
      @State private var jobDescription = ""
      @State private var selectedProfile: Profile?
@@ -289,12 +264,11 @@ struct AIGenerationView: View {
      @State private var company = ""
      @State private var position = ""
 
-    init(language: String, profiles: [Profile], onGenerate: @escaping (String?) -> Void, additionalInstructions: String = "") {
-        self.language = language
-        self.profiles = profiles
-        self.onGenerate = onGenerate
-        _additionalInstructions = State(initialValue: additionalInstructions)
-    }
+     init(language: String, profiles: [Profile], additionalInstructions: String = "") {
+         self.language = language
+         self.profiles = profiles
+         _additionalInstructions = State(initialValue: additionalInstructions)
+     }
 
     var body: some View {
         VStack(spacing: 20) {
@@ -378,7 +352,12 @@ struct AIGenerationView: View {
 
                     HStack {
                         Button(language == "fr" ? "Utiliser dans Lettre" : "Use in Letter") {
-                            onGenerate(editableText)
+                            let coverLetter = CoverLetter(
+                                title: language == "fr" ? "Lettre Générée" : "Generated Letter",
+                                content: NSAttributedString(string: editableText).rtf(
+                                    from: NSRange(location: 0, length: editableText.count)) ?? Data()
+                            )
+                            modelContext.insert(coverLetter)
                             dismiss()
                         }
                         .buttonStyle(.borderedProminent)
@@ -437,7 +416,7 @@ struct AIGenerationView: View {
             }
         }
         .padding()
-        .frame(minWidth: 600, minHeight: 500)
+        .navigationTitle(language == "fr" ? "Générer Lettre avec AI" : "Generate Letter with AI")
         .alert(isPresented: .constant(errorMessage != nil), content: {
             Alert(
                 title: Text(language == "fr" ? "Erreur" : "Error"),
