@@ -272,19 +272,23 @@ struct EditCoverLetterView: View {
 }
 
 struct AIGenerationView: View {
-    @Environment(\.dismiss) private var dismiss
-    var language: String
-    var profiles: [Profile]
-    var onGenerate: (String?) -> Void
+     @Environment(\.dismiss) private var dismiss
+     @Environment(\.modelContext) private var modelContext
+     var language: String
+     var profiles: [Profile]
+     var onGenerate: (String?) -> Void
 
-    @State private var jobDescription = ""
-    @State private var selectedProfile: Profile?
-    @State private var additionalInstructions: String
-    @State private var isGenerating = false
-    @State private var generatingText: String?
-    @State private var errorMessage: String?
+     @State private var jobDescription = ""
+     @State private var selectedProfile: Profile?
+     @State private var additionalInstructions: String
+     @State private var isGenerating = false
+     @State private var generatingText: String?
+     @State private var errorMessage: String?
+     @State private var generatedText: String?
+     @State private var company = ""
+     @State private var position = ""
 
-    init(language: String, profiles: [Profile], additionalInstructions: String = "", onGenerate: @escaping (String?) -> Void) {
+    init(language: String, profiles: [Profile], onGenerate: @escaping (String?) -> Void, additionalInstructions: String = "") {
         self.language = language
         self.profiles = profiles
         self.onGenerate = onGenerate
@@ -327,30 +331,98 @@ struct AIGenerationView: View {
             }
             .frame(minWidth: 400)
 
-            HStack {
-                Button(language == "fr" ? "Annuler" : "Cancel") {
-                    dismiss()
-                }
-                .buttonStyle(.bordered)
-                Spacer()
-                Button(language == "fr" ? "Générer" : "Generate") {
-                    isGenerating = true
-                    generatingText = language == "fr" ? "Génération en cours..." : "Generating..."
-                    AIService.generateCoverLetter(jobDescription: jobDescription, profile: selectedProfile) { result in
-                        DispatchQueue.main.async {
-                            if let result = result {
-                                onGenerate(result)
-                                dismiss()
-                            } else {
-                                errorMessage = language == "fr" ? "Erreur lors de la génération" : "Generation failed"
+            if generatedText == nil {
+                HStack {
+                    Button(language == "fr" ? "Annuler" : "Cancel") {
+                        dismiss()
+                    }
+                    .buttonStyle(.bordered)
+                    Spacer()
+                    Button(language == "fr" ? "Générer" : "Generate") {
+                        isGenerating = true
+                        generatingText = language == "fr" ? "Génération en cours..." : "Generating..."
+                        AIService.generateCoverLetter(jobDescription: jobDescription, profile: selectedProfile, additionalInstructions: additionalInstructions) { result in
+                            DispatchQueue.main.async {
+                                if let result = result {
+                                    generatedText = result
+                                } else {
+                                    errorMessage = language == "fr" ? "Erreur lors de la génération" : "Generation failed"
+                                }
+                                isGenerating = false
+                                generatingText = nil
                             }
-                            isGenerating = false
-                            generatingText = nil
                         }
                     }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(jobDescription.isEmpty || isGenerating)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(jobDescription.isEmpty || isGenerating)
+            } else {
+                VStack(spacing: 20) {
+                    Text(language == "fr" ? "Lettre Générée" : "Generated Letter")
+                        .font(.headline)
+                    ScrollView {
+                        Text(generatedText!)
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(height: 200)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+
+                    Form {
+                        TextField(language == "fr" ? "Entreprise" : "Company", text: $company)
+                        TextField(language == "fr" ? "Poste" : "Position", text: $position)
+                    }
+                    .frame(minWidth: 300)
+
+                    HStack {
+                        Button(language == "fr" ? "Utiliser dans Lettre" : "Use in Letter") {
+                            onGenerate(generatedText)
+                            dismiss()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        Spacer()
+                        Button(language == "fr" ? "Exporter en PDF" : "Export to PDF") {
+                            let tempCoverLetter = CoverLetter(
+                                title: language == "fr" ? "Lettre Générée" : "Generated Letter",
+                                content: NSAttributedString(string: generatedText!).rtf(
+                                    from: NSRange(location: 0, length: generatedText!.count)) ?? Data()
+                            )
+                            PDFService.generateCoverLetterPDF(for: tempCoverLetter) { pdfURL in
+                                if let pdfURL = pdfURL {
+                                    DispatchQueue.main.async {
+                                        NSWorkspace.shared.open(pdfURL)
+                                    }
+                                }
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        Spacer()
+                        Button(language == "fr" ? "Sauvegarder dans Candidature" : "Save to Application") {
+                            let coverLetter = CoverLetter(
+                                title: language == "fr" ? "Lettre pour \(company)" : "Letter for \(company)",
+                                content: NSAttributedString(string: generatedText!).rtf(
+                                    from: NSRange(location: 0, length: generatedText!.count)) ?? Data()
+                            )
+                            modelContext.insert(coverLetter)
+                            let application = Application(
+                                company: company,
+                                position: position,
+                                coverLetter: coverLetter
+                            )
+                            application.profile = selectedProfile
+                            modelContext.insert(application)
+                            dismiss()
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(company.isEmpty || position.isEmpty)
+                        Spacer()
+                        Button(language == "fr" ? "Fermer" : "Close") {
+                            dismiss()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
             }
 
             if let text = generatingText {
@@ -362,33 +434,6 @@ struct AIGenerationView: View {
                 }
                 .padding(.top, 10)
             }
-
-            HStack {
-                Button(language == "fr" ? "Annuler" : "Cancel") {
-                    dismiss()
-                }
-                .buttonStyle(.bordered)
-                Spacer()
-                Button(language == "fr" ? "Générer" : "Generate") {
-                    isGenerating = true
-                    generatingText = language == "fr" ? "Génération en cours..." : "Generating..."
-                    AIService.generateCoverLetter(jobDescription: jobDescription, profile: selectedProfile) { result in
-                        DispatchQueue.main.async {
-                            if let result = result {
-                                onGenerate(result)
-                                dismiss()
-                            } else {
-                                errorMessage = language == "fr" ? "Erreur lors de la génération" : "Generation failed"
-                            }
-                            isGenerating = false
-                            generatingText = nil
-                        }
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(jobDescription.isEmpty || isGenerating)
-            }
-            .padding(.horizontal)
         }
         .padding()
         .frame(minWidth: 600, minHeight: 500)
