@@ -15,6 +15,7 @@ struct DashboardTile: View {
     var isEnabled: Bool = true
     var isSelected: Bool = false
 
+    @Environment(\.colorScheme) var colorScheme
     @State private var isHovered = false
 
     var body: some View {
@@ -25,15 +26,17 @@ struct DashboardTile: View {
                     .foregroundColor(isEnabled ? (isSelected ? .white : .blue) : .gray)
                 Text(title)
                     .font(.headline)
+                    .fontWeight(.regular)
                     .foregroundColor(isSelected ? .white : .primary)
                 Text(subtitle)
                     .font(.subheadline)
+                    .fontWeight(.regular)
                     .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
             }
             .frame(maxWidth: .infinity, minHeight: 120)
-            .background(isSelected ? Color.blue : Color.gray.opacity(0.1))
+            .background(isSelected ? Color.blue : (colorScheme == .dark ? Color.gray.opacity(0.1) : Color.gray.opacity(0.05)))
             .cornerRadius(12)
-            .shadow(radius: isHovered && isEnabled ? 8 : 4)
+            .shadow(radius: colorScheme == .dark ? (isHovered && isEnabled ? 8 : 4) : 0)
             .scaleEffect(isHovered && isEnabled ? 1.02 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: isHovered)
         }

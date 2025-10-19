@@ -236,7 +236,6 @@ struct SettingsView: View {
             }
             .padding(.horizontal)
         }
-        .background(.regularMaterial)
         .alert(
             appLanguage == "fr" ? "Export réussi" : "Export Successful",
             isPresented: $showingExportSuccess
