@@ -7,11 +7,11 @@
 import Foundation
 
 class AIService {
-    static func generateCoverLetter(jobDescription: String, profile: Profile?, completion: @escaping (String?) -> Void) {
+    static func generateCoverLetter(jobDescription: String, profile: Profile?, additionalInstructions: String, completion: @escaping (String?) -> Void) {
         let prompt = """
-        Generate a professional cover letter based on the following job description and the candidate's profile.
+        Generate a professional cover letter based on the following job posting and the candidate's profile.
 
-        Job Description:
+        Job Posting:
         \(jobDescription)
 
         Candidate Profile:
@@ -19,7 +19,10 @@ class AIService {
         Skills: \(profile?.skills.flatMap { $0.skills }.joined(separator: ", ") ?? "No skills listed")
         Experience: \(profile?.experiences.map { "\($0.position ?? "") at \($0.company)" }.joined(separator: "; ") ?? "No experience listed")
 
-        Please write a compelling cover letter that highlights relevant skills and experiences.
+        Additional Instructions:
+        \(additionalInstructions.isEmpty ? "None" : additionalInstructions)
+
+        Please write a compelling cover letter that highlights relevant skills and experiences, tailored to the job posting.
         """
 
         DispatchQueue.global(qos: .userInitiated).async {

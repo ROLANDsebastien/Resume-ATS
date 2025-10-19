@@ -279,9 +279,17 @@ struct AIGenerationView: View {
 
     @State private var jobDescription = ""
     @State private var selectedProfile: Profile?
+    @State private var additionalInstructions: String
     @State private var isGenerating = false
     @State private var generatingText: String?
     @State private var errorMessage: String?
+
+    init(language: String, profiles: [Profile], additionalInstructions: String = "", onGenerate: @escaping (String?) -> Void) {
+        self.language = language
+        self.profiles = profiles
+        self.onGenerate = onGenerate
+        _additionalInstructions = State(initialValue: additionalInstructions)
+    }
 
     var body: some View {
         VStack(spacing: 20) {
@@ -290,13 +298,31 @@ struct AIGenerationView: View {
                 .fontWeight(.bold)
 
             Form {
-                TextField(language == "fr" ? "Description du poste" : "Job Description", text: $jobDescription)
-                    .textFieldStyle(.roundedBorder)
-                Picker(language == "fr" ? "Profil" : "Profile", selection: $selectedProfile) {
-                    Text(language == "fr" ? "Aucun" : "None").tag(nil as Profile?)
-                    ForEach(profiles) { profile in
-                        Text(profile.name).tag(profile as Profile?)
+                Section(header: Text(language == "fr" ? "Annonce de Poste" : "Job Posting")) {
+                    TextEditor(text: $jobDescription)
+                        .frame(minHeight: 100)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                        )
+                        .padding(.vertical, 5)
+                }
+                Section(header: Text(language == "fr" ? "Profil (optionnel)" : "Profile (optional)")) {
+                    Picker(language == "fr" ? "Sélectionner un profil" : "Select a profile", selection: $selectedProfile) {
+                        Text(language == "fr" ? "Aucun" : "None").tag(nil as Profile?)
+                        ForEach(profiles) { profile in
+                            Text(profile.name).tag(profile as Profile?)
+                        }
                     }
+                }
+                Section(header: Text(language == "fr" ? "Instructions Supplémentaires (optionnel)" : "Additional Instructions (optional)")) {
+                    TextEditor(text: $additionalInstructions)
+                        .frame(minHeight: 60)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                        )
+                        .padding(.vertical, 5)
                 }
             }
             .frame(minWidth: 400)
@@ -328,15 +354,13 @@ struct AIGenerationView: View {
             }
 
             if let text = generatingText {
-                Text(text)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 10)
-            }
-
-            if let text = generatingText {
-                Text(text)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 10)
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text(text)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 10)
             }
 
             HStack {
@@ -367,7 +391,7 @@ struct AIGenerationView: View {
             .padding(.horizontal)
         }
         .padding()
-        .frame(minWidth: 450, minHeight: 300)
+        .frame(minWidth: 600, minHeight: 500)
         .alert(isPresented: .constant(errorMessage != nil), content: {
             Alert(
                 title: Text(language == "fr" ? "Erreur" : "Error"),
