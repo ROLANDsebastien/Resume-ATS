@@ -32,6 +32,7 @@ class DataService {
     // Serializable structs
     struct SerializableProfile: Codable {
         let name: String
+        let language: String?
         let firstName: String?
         let lastName: String?
         let email: String?
@@ -50,6 +51,7 @@ class DataService {
         let showSkills: Bool
         let showCertifications: Bool
         let showLanguages: Bool
+        let sectionsOrder: [SectionType]?
         let experiences: [SerializableExperience]
         let educations: [SerializableEducation]
         let references: [SerializableReference]
@@ -136,6 +138,7 @@ class DataService {
         let serializableProfiles = profiles.map { profile in
             SerializableProfile(
                 name: profile.name,
+                language: profile.language,
                 firstName: profile.firstName,
                 lastName: profile.lastName,
                 email: profile.email,
@@ -154,6 +157,7 @@ class DataService {
                 showSkills: profile.showSkills,
                 showCertifications: profile.showCertifications,
                 showLanguages: profile.showLanguages,
+                sectionsOrder: profile.sectionsOrder,
                 experiences: profile.experiences.map { exp in
                     SerializableExperience(
                         company: exp.company,
@@ -265,7 +269,7 @@ class DataService {
             applications: serializableApplications,
             cvDocuments: serializableCVs,
             exportDate: Date(),
-            version: "1.2"
+            version: "1.4"
         )
 
         // Écrire le fichier JSON
@@ -352,6 +356,7 @@ class DataService {
         where !existingProfileNames.contains(serializableProfile.name) {
             let profile = Profile(
                 name: serializableProfile.name,
+                language: serializableProfile.language ?? "fr",
                 firstName: serializableProfile.firstName,
                 lastName: serializableProfile.lastName,
                 email: serializableProfile.email,
@@ -369,7 +374,12 @@ class DataService {
                 showReferences: serializableProfile.showReferences,
                 showSkills: serializableProfile.showSkills,
                 showCertifications: serializableProfile.showCertifications,
-                showLanguages: serializableProfile.showLanguages
+                showLanguages: serializableProfile.showLanguages,
+                sectionsOrder: serializableProfile.sectionsOrder ?? [
+                    SectionType.summary, SectionType.experiences, SectionType.educations,
+                    SectionType.references, SectionType.certifications, SectionType.languages,
+                    SectionType.skills,
+                ]
             )
 
             // Add experiences
