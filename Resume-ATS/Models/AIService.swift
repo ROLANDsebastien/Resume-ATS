@@ -15,13 +15,14 @@ class AIService {
         \(jobDescription)
 
         Candidate Profile:
+        Name: \(profile?.firstName ?? "") \(profile?.lastName ?? "")
         \(profile?.summaryString ?? "No summary available")
                     Skills: \(profile?.skills.flatMap { $0.skillsArray }.joined(separator: ", ") ?? "No skills listed")        Experience: \(profile?.experiences.map { "\($0.position ?? "") at \($0.company)" }.joined(separator: "; ") ?? "No experience listed")
 
         Additional Instructions:
         \(additionalInstructions.isEmpty ? "None" : additionalInstructions)
 
-        Please write a compelling cover letter that highlights relevant skills and experiences, tailored to the job posting.
+        Please write the cover letter body only, starting directly with the salutation (e.g., "Dear Hiring Manager,"). Do not include any header information like name, address, date, or placeholders. Use the candidate's actual name instead of placeholders. Do not use any markdown formatting like **bold** or *italic*. Write plain text only.
         """
 
         DispatchQueue.global(qos: .userInitiated).async {

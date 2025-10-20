@@ -102,6 +102,11 @@ struct RichTextToolbar: View {
             }
             .buttonStyle(.bordered)
 
+            Button(action: { toggleUnderline() }) {
+                Image(systemName: "underline")
+            }
+            .buttonStyle(.bordered)
+
             if #available(macOS 15.0, *) {
                 Button(action: {
                     NSApp.sendAction(
@@ -136,12 +141,17 @@ struct RichTextToolbar: View {
                 selectedRange.length,
                 attributedString.length - min(selectedRange.location, attributedString.length)))
         let range = validRange.length > 0 ? validRange : NSRange(location: 0, length: mutableString.length)
-        mutableString.enumerateAttribute(.font, in: range, options: []) { value, range, _ in
+
+        // Ensure the range has a font attribute
+        mutableString.addAttribute(.font, value: NSFont.systemFont(ofSize: NSFont.systemFontSize), range: range)
+
+        // Then convert the fonts in the range
+        mutableString.enumerateAttribute(.font, in: range, options: []) { value, subrange, _ in
             if let font = value as? NSFont {
                 let trait = NSFontTraitMask.boldFontMask
                 let hasTrait = fontManager.traits(of: font).contains(trait)
                 let newFont = hasTrait ? fontManager.convert(font, toNotHaveTrait: trait) : fontManager.convert(font, toHaveTrait: trait)
-                mutableString.addAttribute(.font, value: newFont, range: range)
+                mutableString.addAttribute(.font, value: newFont, range: subrange)
             }
         }
         DispatchQueue.main.async {
@@ -158,13 +168,36 @@ struct RichTextToolbar: View {
                 selectedRange.length,
                 attributedString.length - min(selectedRange.location, attributedString.length)))
         let range = validRange.length > 0 ? validRange : NSRange(location: 0, length: mutableString.length)
-        mutableString.enumerateAttribute(.font, in: range, options: []) { value, range, _ in
+
+        // Ensure the range has a font attribute
+        mutableString.addAttribute(.font, value: NSFont.systemFont(ofSize: NSFont.systemFontSize), range: range)
+
+        // Then convert the fonts in the range
+        mutableString.enumerateAttribute(.font, in: range, options: []) { value, subrange, _ in
             if let font = value as? NSFont {
                 let trait = NSFontTraitMask.italicFontMask
                 let hasTrait = fontManager.traits(of: font).contains(trait)
                 let newFont = hasTrait ? fontManager.convert(font, toNotHaveTrait: trait) : fontManager.convert(font, toHaveTrait: trait)
-                mutableString.addAttribute(.font, value: newFont, range: range)
+                mutableString.addAttribute(.font, value: newFont, range: subrange)
             }
+        }
+        DispatchQueue.main.async {
+            attributedString = mutableString
+        }
+    }
+
+    private func toggleUnderline() {
+        let mutableString = NSMutableAttributedString(attributedString: attributedString)
+        let validRange = NSRange(
+            location: min(selectedRange.location, attributedString.length),
+            length: min(
+                selectedRange.length,
+                attributedString.length - min(selectedRange.location, attributedString.length)))
+        let range = validRange.length > 0 ? validRange : NSRange(location: 0, length: mutableString.length)
+        mutableString.enumerateAttribute(.underlineStyle, in: range, options: []) { value, range, _ in
+            let currentStyle = (value as? NSNumber)?.intValue ?? 0
+            let newStyle = currentStyle == 0 ? NSUnderlineStyle.single.rawValue : 0
+            mutableString.addAttribute(.underlineStyle, value: newStyle, range: range)
         }
         DispatchQueue.main.async {
             attributedString = mutableString

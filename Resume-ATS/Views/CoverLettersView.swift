@@ -326,10 +326,10 @@ struct AIGenerationPageView: View {
      @State private var isGenerating = false
      @State private var generatingText: String?
      @State private var errorMessage: String?
-     @State private var generatedText: String?
-     @State private var editableText = ""
-     @State private var company = ""
-     @State private var position = ""
+      @State private var generatedText: String?
+      @State private var editableAttributedText = NSAttributedString()
+      @State private var company = ""
+      @State private var position = ""
 
      init(language: String, profiles: [Profile], additionalInstructions: String = "") {
          self.language = language
@@ -387,16 +387,16 @@ struct AIGenerationPageView: View {
                         isGenerating = true
                         generatingText = language == "fr" ? "Génération en cours..." : "Generating..."
                         AIService.generateCoverLetter(jobDescription: jobDescription, profile: selectedProfile, additionalInstructions: additionalInstructions) { result in
-                            DispatchQueue.main.async {
-                            if let result = result {
-                                generatedText = result
-                                editableText = result
-                            } else {
-                                    errorMessage = language == "fr" ? "Erreur lors de la génération" : "Generation failed"
-                                }
-                                isGenerating = false
-                                generatingText = nil
-                            }
+                             DispatchQueue.main.async {
+                             if let result = result {
+                                 generatedText = result
+                                 editableAttributedText = NSAttributedString(string: result)
+                             } else {
+                                     errorMessage = language == "fr" ? "Erreur lors de la génération" : "Generation failed"
+                                 }
+                                 isGenerating = false
+                                 generatingText = nil
+                             }
                         }
                     }
                     .buttonStyle(.borderedProminent)
@@ -404,13 +404,10 @@ struct AIGenerationPageView: View {
                 }
             } else {
                 VStack(spacing: 20) {
-                    Text(language == "fr" ? "Lettre Générée" : "Generated Letter")
-                        .font(.headline)
-                    TextEditor(text: $editableText)
-                        .frame(height: 200)
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(8)
-                        .padding(.vertical, 5)
+                     Text(language == "fr" ? "Lettre Générée" : "Generated Letter")
+                         .font(.headline)
+                     RichTextEditorWithToolbar(attributedString: $editableAttributedText)
+                         .frame(height: 200)
 
                     Form {
                         TextField(language == "fr" ? "Entreprise" : "Company", text: $company)
@@ -420,53 +417,53 @@ struct AIGenerationPageView: View {
                     }
                     .frame(minWidth: 300)
 
-                    HStack {
-                         Button(language == "fr" ? "Utiliser dans Lettre" : "Use in Letter") {
-                             let coverLetter = CoverLetter(
-                                 title: language == "fr" ? "Lettre Générée" : "Generated Letter",
-                                 content: NSAttributedString.fromMarkdown(editableText).rtf(
-                                     from: NSRange(location: 0, length: NSAttributedString.fromMarkdown(editableText).length)) ?? Data()
-                             )
-                             modelContext.insert(coverLetter)
-                             try? modelContext.save()
-                             dismiss()
-                         }
+                     HStack {
+                          Button(language == "fr" ? "Utiliser dans Lettre" : "Use in Letter") {
+                              let coverLetter = CoverLetter(
+                                  title: language == "fr" ? "Lettre Générée" : "Generated Letter",
+                                  content: editableAttributedText.rtf(
+                                      from: NSRange(location: 0, length: editableAttributedText.length)) ?? Data()
+                              )
+                              modelContext.insert(coverLetter)
+                              try? modelContext.save()
+                              dismiss()
+                          }
                         .buttonStyle(.borderedProminent)
-                        Spacer()
+                         Spacer()
                          Button(language == "fr" ? "Exporter en PDF" : "Export to PDF") {
-                             let tempCoverLetter = CoverLetter(
-                                 title: language == "fr" ? "Lettre Générée" : "Generated Letter",
-                                 content: NSAttributedString.fromMarkdown(editableText).rtf(
-                                     from: NSRange(location: 0, length: NSAttributedString.fromMarkdown(editableText).length)) ?? Data()
-                             )
-                             // Don't insert temporary cover letter into context
-                             PDFService.generateCoverLetterPDF(for: tempCoverLetter) { pdfURL in
-                                 if let pdfURL = pdfURL {
-                                     DispatchQueue.main.async {
-                                         NSWorkspace.shared.open(pdfURL)
-                                     }
-                                 }
-                             }
-                         }
+                              let tempCoverLetter = CoverLetter(
+                                  title: language == "fr" ? "Lettre Générée" : "Generated Letter",
+                                  content: editableAttributedText.rtf(
+                                      from: NSRange(location: 0, length: editableAttributedText.length)) ?? Data()
+                              )
+                              // Don't insert temporary cover letter into context
+                              PDFService.generateCoverLetterPDF(for: tempCoverLetter) { pdfURL in
+                                  if let pdfURL = pdfURL {
+                                      DispatchQueue.main.async {
+                                          NSWorkspace.shared.open(pdfURL)
+                                      }
+                                  }
+                              }
+                          }
                         .buttonStyle(.bordered)
-                        Spacer()
+                         Spacer()
                          Button(language == "fr" ? "Sauvegarder dans Candidature" : "Save to Application") {
-                             let coverLetter = CoverLetter(
-                                 title: language == "fr" ? "Lettre pour \(company)" : "Letter for \(company)",
-                                 content: NSAttributedString.fromMarkdown(editableText).rtf(
-                                     from: NSRange(location: 0, length: NSAttributedString.fromMarkdown(editableText).length)) ?? Data()
-                             )
-                             modelContext.insert(coverLetter)
-                             let application = Application(
-                                 company: company,
-                                 position: position,
-                                 coverLetter: coverLetter
-                             )
-                             application.profile = selectedProfile
-                             modelContext.insert(application)
-                             try? modelContext.save()
-                             dismiss()
-                        }
+                              let coverLetter = CoverLetter(
+                                  title: language == "fr" ? "Lettre pour \(company)" : "Letter for \(company)",
+                                  content: editableAttributedText.rtf(
+                                      from: NSRange(location: 0, length: editableAttributedText.length)) ?? Data()
+                              )
+                              modelContext.insert(coverLetter)
+                              let application = Application(
+                                  company: company,
+                                  position: position,
+                                  coverLetter: coverLetter
+                              )
+                              application.profile = selectedProfile
+                              modelContext.insert(application)
+                              try? modelContext.save()
+                              dismiss()
+                         }
                         .buttonStyle(.bordered)
                         .disabled(company.isEmpty || position.isEmpty)
                         Spacer()
