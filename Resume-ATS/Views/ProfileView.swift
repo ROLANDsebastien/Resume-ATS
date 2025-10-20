@@ -177,7 +177,13 @@ struct ProfileView: View {
         .navigationTitle("Resume-ATS")
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                Button(action: { selectedSection = "Dashboard" }) {
+                Button(action: {
+                    if selectedProfile != nil {
+                        selectedProfile = nil
+                    } else {
+                        selectedSection = "Dashboard"
+                    }
+                }) {
                     Image(systemName: "chevron.left")
                 }
             }
