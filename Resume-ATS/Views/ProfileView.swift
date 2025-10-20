@@ -175,6 +175,13 @@ struct ProfileView: View {
         .listStyle(.plain)
         .background(.regularMaterial)
         .navigationTitle("Resume-ATS")
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: { selectedSection = "Dashboard" }) {
+                    Image(systemName: "chevron.left")
+                }
+            }
+        }
         .environment(\.locale, Locale(identifier: selectedProfile?.language ?? "fr"))
         .alert(localizedTitle(for: "rename_profile"), isPresented: $showRenameAlert) {
             TextField(localizedTitle(for: "new_profile_name"), text: $renameProfileName)

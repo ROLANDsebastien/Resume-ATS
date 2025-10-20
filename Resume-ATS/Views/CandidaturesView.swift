@@ -140,6 +140,13 @@ struct CandidaturesView: View {
             DocumentsView(application: application, language: language)
         }
         .navigationTitle("Resume-ATS")
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: { selectedSection = "Dashboard" }) {
+                    Image(systemName: "chevron.left")
+                }
+            }
+        }
     }
 }
 

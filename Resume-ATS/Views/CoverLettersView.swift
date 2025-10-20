@@ -131,6 +131,13 @@ struct CoverLettersView: View {
                 .padding(.horizontal)
             }
          .navigationTitle("Resume-ATS")
+         .toolbar {
+             ToolbarItem(placement: .navigation) {
+                 Button(action: { selectedSection = "Dashboard" }) {
+                     Image(systemName: "chevron.left")
+                 }
+             }
+         }
          .fileImporter(
              isPresented: $showingFileImporter,
              allowedContentTypes: [UTType.rtf, UTType.plainText],
