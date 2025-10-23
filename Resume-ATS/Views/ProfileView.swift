@@ -10,10 +10,6 @@ struct ProfileView: View {
     @Query private var profiles: [Profile]
     @AppStorage("appLanguage") private var appLanguage: String = "fr"
 
-    private let debugLog = {
-        print("🔍 DEBUG ProfileView initialized")
-    }()
-
     @State private var selectedProfile: Profile?
     @State private var newProfileName: String = ""
     @State private var renameProfileName: String = ""
