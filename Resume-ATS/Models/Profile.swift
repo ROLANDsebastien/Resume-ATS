@@ -142,7 +142,7 @@ final class Experience {
     var endDate: Date?
     var details: Data
     var isVisible: Bool = true
-    var profile: Profile?
+    @Relationship(deleteRule: .nullify) var profile: Profile?
 
     init(
         company: String, position: String? = nil, startDate: Date, endDate: Date? = nil,
@@ -199,7 +199,7 @@ final class Education {
     var endDate: Date?
     var details: Data
     var isVisible: Bool = true
-    var profile: Profile?
+    @Relationship(deleteRule: .nullify) var profile: Profile?
 
     init(
         institution: String, degree: String, startDate: Date, endDate: Date? = nil,
@@ -256,7 +256,7 @@ final class Reference {
     var email: String
     var phone: String
     var isVisible: Bool = true
-    var profile: Profile?
+    @Relationship(deleteRule: .nullify) var profile: Profile?
 
     init(
         name: String, position: String, company: String, email: String, phone: String,
@@ -275,7 +275,7 @@ final class Reference {
 final class SkillGroup {
     var title: String
     var skills: Data
-    var profile: Profile?
+    @Relationship(deleteRule: .nullify) var profile: Profile?
 
     init(title: String, skills: [String]) {
         self.title = title
@@ -309,7 +309,7 @@ final class Certification {
     var certificationNumber: String?
     var webLink: String?
     var isVisible: Bool = true
-    var profile: Profile?
+    @Relationship(deleteRule: .nullify) var profile: Profile?
 
     init(
         name: String, date: Date? = nil, certificationNumber: String? = nil, webLink: String? = nil,
@@ -328,7 +328,7 @@ final class Language {
     var name: String
     var level: String?
     var isVisible: Bool = true
-    var profile: Profile?
+    @Relationship(deleteRule: .nullify) var profile: Profile?
 
     init(name: String, level: String? = nil, isVisible: Bool = true) {
         self.name = name

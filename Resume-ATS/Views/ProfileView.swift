@@ -10,6 +10,10 @@ struct ProfileView: View {
     @Query private var profiles: [Profile]
     @AppStorage("appLanguage") private var appLanguage: String = "fr"
 
+    private let debugLog = {
+        print("🔍 DEBUG ProfileView initialized")
+    }()
+
     @State private var selectedProfile: Profile?
     @State private var newProfileName: String = ""
     @State private var renameProfileName: String = ""
@@ -153,6 +157,12 @@ struct ProfileView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
                         .padding(.top)
+                        .onAppear {
+                            print("📊 ProfileView @Query retourne \(self.profiles.count) profil(s)")
+                            for (index, profile) in self.profiles.enumerated() {
+                                print("   [\(index)] \(profile.name)")
+                            }
+                        }
 
                     profileSelector
 
@@ -317,9 +327,11 @@ struct ProfileView: View {
                 }
 
                 if profile.showExperiences {
-                    ForEach(profile.experiences.sorted(by: {
-                        ($0.endDate ?? Date.distantFuture) > ($1.endDate ?? Date.distantFuture)
-                    })) { experience in
+                    ForEach(
+                        profile.experiences.sorted(by: {
+                            ($0.endDate ?? Date.distantFuture) > ($1.endDate ?? Date.distantFuture)
+                        })
+                    ) { experience in
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
                                 Toggle(
@@ -392,9 +404,11 @@ struct ProfileView: View {
                 }
 
                 if profile.showEducations {
-                    ForEach(profile.educations.sorted(by: {
-                        ($0.endDate ?? Date.distantFuture) > ($1.endDate ?? Date.distantFuture)
-                    })) { education in
+                    ForEach(
+                        profile.educations.sorted(by: {
+                            ($0.endDate ?? Date.distantFuture) > ($1.endDate ?? Date.distantFuture)
+                        })
+                    ) { education in
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
                                 Toggle(
@@ -758,23 +772,34 @@ struct ProfileView: View {
             }
 
             if selectedProfile == nil {
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20),
-                        GridItem(.flexible()),
-                    ], spacing: 20
-                ) {
-                    ForEach(profiles) { profile in
-                        DashboardTile(
-                            title: profile.name,
-                            subtitle: "",
-                            systemImage: "person.circle",
-                            action: {
-                                selectedProfile = profile
-                            },
-                            isEnabled: true,
-                            isSelected: false
-                        )
+                if profiles.isEmpty {
+                    VStack {
+                        Text("❌ Aucun profil trouvé")
+                            .foregroundColor(.red)
+                        Text("Essayez de créer un nouveau profil ci-dessus")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .padding()
+                } else {
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20),
+                            GridItem(.flexible()),
+                        ], spacing: 20
+                    ) {
+                        ForEach(profiles) { profile in
+                            DashboardTile(
+                                title: profile.name,
+                                subtitle: "",
+                                systemImage: "person.circle",
+                                action: {
+                                    selectedProfile = profile
+                                },
+                                isEnabled: true,
+                                isSelected: false
+                            )
+                        }
                     }
                 }
             }
@@ -836,9 +861,10 @@ struct ProfileView: View {
                     name: ref.name, position: ref.position, company: ref.company, email: ref.email,
                     phone: ref.phone, isVisible: ref.isVisible)
             },
-                                    skills: profile.skills.map { skillGroup in
-                                        SkillGroup(title: skillGroup.title, skills: skillGroup.skillsArray)
-                                    },            certifications: profile.certifications.map { cert in
+            skills: profile.skills.map { skillGroup in
+                SkillGroup(title: skillGroup.title, skills: skillGroup.skillsArray)
+            },
+            certifications: profile.certifications.map { cert in
                 Certification(
                     name: cert.name, date: cert.date, certificationNumber: cert.certificationNumber,
                     webLink: cert.webLink, isVisible: cert.isVisible)
