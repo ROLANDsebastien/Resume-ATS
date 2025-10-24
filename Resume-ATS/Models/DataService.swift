@@ -121,7 +121,8 @@ class DataService {
     }
 
     static func exportProfiles(
-        _ profiles: [Profile], coverLetters: [CoverLetter], applications: [Application], cvDocuments: [CVDocument]
+        _ profiles: [Profile], coverLetters: [CoverLetter], applications: [Application],
+        cvDocuments: [CVDocument]
     ) -> URL? {
         let fileManager = FileManager.default
 
@@ -188,9 +189,10 @@ class DataService {
                         isVisible: ref.isVisible
                     )
                 },
-                            skills: profile.skills.map { skillGroup in
-                                SerializableSkillGroup(title: skillGroup.title, skills: skillGroup.skillsArray)
-                            },                certifications: profile.certifications.map { cert in
+                skills: profile.skills.map { skillGroup in
+                    SerializableSkillGroup(title: skillGroup.title, skills: skillGroup.skillsArray)
+                },
+                certifications: profile.certifications.map { cert in
                     SerializableCertification(
                         name: cert.name, date: cert.date,
                         certificationNumber: cert.certificationNumber, webLink: cert.webLink,
@@ -221,23 +223,42 @@ class DataService {
             documentPaths = []
             for bookmark in bookmarks {
                 do {
-                        var isStale = false
-                        let url = try URL(
-                            resolvingBookmarkData: bookmark, options: .withSecurityScope,
-                            relativeTo: nil, bookmarkDataIsStale: &isStale)
+                    var isStale = false
+                    let url = try URL(
+                        resolvingBookmarkData: bookmark, options: .withSecurityScope,
+                        relativeTo: nil, bookmarkDataIsStale: &isStale)
 
-                        if !isStale && url.startAccessingSecurityScopedResource() {
-                            defer { url.stopAccessingSecurityScopedResource() }
-                            let documentName = url.lastPathComponent
-                            let destinationURL = documentsDir.appendingPathComponent(documentName)
+                    if !isStale && url.startAccessingSecurityScopedResource() {
+                        defer { url.stopAccessingSecurityScopedResource() }
+                        let documentName = url.lastPathComponent
 
-                            // Copier le fichier
-                            try fileManager.copyItem(at: url, to: destinationURL)
-                            documentPaths?.append(documentName)
+                        // Déterminer le nom du fichier renommé
+                        let profile = application.profile
+                        let lastName = profile?.lastName ?? "Candidat"
+                        let firstName = profile?.firstName ?? ""
+                        let language = profile?.language ?? "fr"
+
+                        var renamedFileName = documentName
+
+                        // Vérifier le type de document et renommer en conséquence
+                        if documentName.lowercased().contains("cv") {
+                            renamedFileName = "\(lastName)_\(firstName)_CV.pdf"
+                        } else if documentName.lowercased().contains("lettre")
+                            || documentName.lowercased().contains("motivation")
+                        {
+                            let letterName = language == "fr" ? "lettre" : "letter"
+                            renamedFileName = "\(lastName)_\(firstName)_\(letterName).pdf"
                         }
-                    } catch {
-                        print("Erreur lors de la copie du document: \(error)")
+
+                        let destinationURL = documentsDir.appendingPathComponent(renamedFileName)
+
+                        // Copier le fichier
+                        try fileManager.copyItem(at: url, to: destinationURL)
+                        documentPaths?.append(renamedFileName)
                     }
+                } catch {
+                    print("Erreur lors de la copie du document: \(error)")
+                }
             }
 
             let serializableApp = SerializableApplication(
@@ -569,7 +590,8 @@ class DataService {
 
         // Importer les CVs
         if let serializableCVs = exportData.cvDocuments {
-            for serializableCV in serializableCVs where !existingCVNames.contains(serializableCV.name) {
+            for serializableCV in serializableCVs
+            where !existingCVNames.contains(serializableCV.name) {
                 let cvDocument = CVDocument(
                     name: serializableCV.name,
                     dateCreated: serializableCV.dateCreated,

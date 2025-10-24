@@ -10,25 +10,26 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct CandidaturesView: View {
-     @Binding var selectedSection: String?
-     @Environment(\.modelContext) private var modelContext
-     @Query(
-         FetchDescriptor<Application>(
-             sortBy: [SortDescriptor(\.dateApplied, order: .reverse)]
-         )
-     ) private var applications: [Application]
-     @State private var showingAddApplication = false
-     @State private var selectedStatus: Application.Status? = nil
-     @State private var editingApplication: Application?
-     @State private var showingDocumentsFor: Application?
-     var language: String
+    @Binding var selectedSection: String?
+    @Environment(\.modelContext) private var modelContext
+    @Query(
+        FetchDescriptor<Application>(
+            sortBy: [SortDescriptor(\.dateApplied, order: .reverse)]
+        )
+    ) private var applications: [Application]
+    @State private var showingAddApplication = false
+    @State private var selectedStatus: Application.Status? = nil
+    @State private var editingApplication: Application?
+    @State private var showingDocumentsFor: Application?
+    var language: String
 
     var filteredApplications: [Application] {
-        let filtered = if let status = selectedStatus {
-            applications.filter { $0.status == status }
-        } else {
-            applications
-        }
+        let filtered =
+            if let status = selectedStatus {
+                applications.filter { $0.status == status }
+            } else {
+                applications
+            }
         return filtered.sorted(by: { $0.dateApplied > $1.dateApplied })
     }
 
@@ -172,13 +173,13 @@ struct ApplicationRow: View {
                 )
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-                 if let coverLetter = application.coverLetter {
-                     // Safely access cover letter properties
-                     let title = coverLetter.title
-                     Text("\(language == "fr" ? "Lettre" : "Letter"): \(title)")
-                         .font(.subheadline)
-                         .foregroundColor(.secondary)
-                 }
+                if let coverLetter = application.coverLetter {
+                    // Safely access cover letter properties
+                    let title = coverLetter.title
+                    Text("\(language == "fr" ? "Lettre" : "Letter"): \(title)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
             }
             Spacer()
         }
@@ -436,15 +437,16 @@ struct DocumentsView: View {
                         HStack {
                             Text(profile.name)
                             Spacer()
-                             Button(language == "fr" ? "Voir" : "View") {
-                                 PDFService.generateATSResumePDFWithPagination(for: profile) { pdfURL in
-                                     if let pdfURL = pdfURL {
-                                         DispatchQueue.main.async {
-                                             NSWorkspace.shared.open(pdfURL)
-                                         }
-                                     }
-                                 }
-                             }
+                            Button(language == "fr" ? "Voir" : "View") {
+                                PDFService.generateATSResumePDFWithPagination(for: profile) {
+                                    pdfURL in
+                                    if let pdfURL = pdfURL {
+                                        DispatchQueue.main.async {
+                                            NSWorkspace.shared.open(pdfURL)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -573,29 +575,35 @@ struct DocumentsView: View {
                     try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
                     var exportTasks = 0
 
-                     if let profile = application.profile {
-                         exportTasks += 1
-                         PDFService.generateATSResumePDFWithPagination(for: profile) { pdfURL in
-                             if let pdfURL = pdfURL {
-                                 let destURL = url.appendingPathComponent("CV.pdf")
-                                 do {
-                                     try fileManager.copyItem(at: pdfURL, to: destURL)
-                                 } catch {
-                                     print("Error copying CV PDF: \(error)")
-                                 }
-                             }
-                             exportTasks -= 1
-                             checkCompletion()
-                         }
-                     }
+                    if let profile = application.profile {
+                        exportTasks += 1
+                        PDFService.generateATSResumePDFWithPagination(for: profile) { pdfURL in
+                            if let pdfURL = pdfURL {
+                                let lastName = profile.lastName ?? "Candidat"
+                                let firstName = profile.firstName ?? ""
+                                let cvFileName = "\(lastName)_\(firstName)_CV.pdf"
+                                let destURL = url.appendingPathComponent(cvFileName)
+                                do {
+                                    try fileManager.copyItem(at: pdfURL, to: destURL)
+                                } catch {
+                                    print("Error copying CV PDF: \(error)")
+                                }
+                            }
+                            exportTasks -= 1
+                            checkCompletion()
+                        }
+                    }
 
                     if let coverLetter = application.coverLetter {
                         exportTasks += 1
                         PDFService.generateCoverLetterPDF(for: coverLetter) { pdfURL in
                             if let pdfURL = pdfURL {
-                                let destURL = url.appendingPathComponent(
-                                    language == "fr"
-                                        ? "Lettre_de_Motivation.pdf" : "Cover_Letter.pdf")
+                                let lastName = application.profile?.lastName ?? "Candidat"
+                                let firstName = application.profile?.firstName ?? ""
+                                let letterName =
+                                    application.profile?.language == "fr" ? "lettre" : "letter"
+                                let letterFileName = "\(lastName)_\(firstName)_\(letterName).pdf"
+                                let destURL = url.appendingPathComponent(letterFileName)
                                 do {
                                     try fileManager.copyItem(at: pdfURL, to: destURL)
                                 } catch {
