@@ -20,9 +20,6 @@ struct SettingsView: View {
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var showingClearDataConfirmation = false
-    @State private var showingDatabaseInfo = false
-    @State private var databaseInfoMessage = ""
-    @State private var showingResetConfirmation = false
 
     var body: some View {
         ScrollView {
@@ -233,93 +230,6 @@ struct SettingsView: View {
                     .cornerRadius(10)
                 }
 
-                // Diagnostic et Réparation Section
-                VStack(alignment: .leading, spacing: 15) {
-                    HStack {
-                        Image(systemName: "wrench.and.screwdriver.fill")
-                            .foregroundColor(.orange)
-                        Text(
-                            appLanguage == "fr"
-                                ? "Diagnostic et Réparation" : "Diagnostics & Repair"
-                        )
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                    }
-
-                    VStack(spacing: 10) {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(
-                                    appLanguage == "fr"
-                                        ? "Vérifier la base de données" : "Check Database"
-                                )
-                                .foregroundColor(.primary)
-                                Text(
-                                    appLanguage == "fr"
-                                        ? "Afficher les informations de la base et l'état des données"
-                                        : "Display database information and data status"
-                                )
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Button(appLanguage == "fr" ? "Vérifier" : "Check") {
-                                checkDatabase()
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(
-                                    appLanguage == "fr"
-                                        ? "Créer une sauvegarde urgente" : "Emergency Backup"
-                                )
-                                .foregroundColor(.primary)
-                                Text(
-                                    appLanguage == "fr"
-                                        ? "Créer une copie de secours de la base de données"
-                                        : "Create an emergency backup of the database"
-                                )
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Button(appLanguage == "fr" ? "Sauvegarder" : "Backup") {
-                                createEmergencyBackup()
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.orange)
-                        }
-
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(
-                                    appLanguage == "fr" ? "Réinitialiser la base" : "Reset Database"
-                                )
-                                .foregroundColor(.red)
-                                Text(
-                                    appLanguage == "fr"
-                                        ? "Supprimer la base corrompue et en créer une nouvelle (une sauvegarde sera créée)"
-                                        : "Delete corrupted database and create a new one (a backup will be created)"
-                                )
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Button(appLanguage == "fr" ? "Réinitialiser" : "Reset") {
-                                showingResetConfirmation = true
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.red)
-                        }
-                    }
-                    .padding()
-                    .background(.regularMaterial)
-                    .cornerRadius(10)
-                }
-
                 Spacer()
             }
             .padding(.horizontal)
@@ -369,32 +279,7 @@ struct SettingsView: View {
                     : "This action will permanently delete all profiles, applications, CVs and attached documents. This action is irreversible."
             )
         }
-        .alert(
-            appLanguage == "fr" ? "Informations de la base" : "Database Information",
-            isPresented: $showingDatabaseInfo
-        ) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(databaseInfoMessage)
-        }
-        .alert(
-            appLanguage == "fr" ? "Confirmer la réinitialisation" : "Confirm Reset",
-            isPresented: $showingResetConfirmation
-        ) {
-            Button(appLanguage == "fr" ? "Annuler" : "Cancel", role: .cancel) {}
-            Button(
-                appLanguage == "fr" ? "Réinitialiser" : "Reset",
-                role: .destructive
-            ) {
-                resetDatabase()
-            }
-        } message: {
-            Text(
-                appLanguage == "fr"
-                    ? "Cette action supprimera la base de données corrompue et en créera une nouvelle. Une sauvegarde sera créée en premier lieu."
-                    : "This action will delete the corrupted database and create a new one. A backup will be created first."
-            )
-        }
+
         .navigationTitle("Resume-ATS")
         .toolbar {
             ToolbarItem(placement: .navigation) {
@@ -473,77 +358,6 @@ struct SettingsView: View {
                 "Erreur lors de la suppression des données: \(error.localizedDescription)"
             showingError = true
         }
-    }
-
-    private func checkDatabase() {
-        print("\n🔍 VÉRIFICATION DE LA BASE DE DONNÉES DEMANDÉE PAR L'UTILISATEUR")
-        DatabaseRepair.logDatabaseInfo()
-
-        let fileManager = FileManager.default
-        let storeURL = DatabaseRepair.getStoreURL()
-
-        var infoLines: [String] = []
-        infoLines.append("📊 ÉTAT DE LA BASE DE DONNÉES:")
-        infoLines.append("")
-
-        // Vérifier les fichiers
-        let files = [
-            ("Store", storeURL.path),
-            ("WAL", storeURL.path + "-wal"),
-            ("SHM", storeURL.path + "-shm"),
-        ]
-
-        for (name, path) in files {
-            if fileManager.fileExists(atPath: path) {
-                do {
-                    let attributes = try fileManager.attributesOfItem(atPath: path)
-                    if let size = attributes[FileAttributeKey.size] as? Int {
-                        infoLines.append("✅ \(name): \(formatBytes(size))")
-                    }
-                } catch {
-                    infoLines.append("⚠️  \(name): Impossible de lire")
-                }
-            } else {
-                infoLines.append("❌ \(name): Non trouvé")
-            }
-        }
-
-        infoLines.append("")
-        infoLines.append("📈 DONNÉES CHARGÉES:")
-        infoLines.append("   • Profils: \(profiles.count)")
-        infoLines.append("   • Candidatures: \(applications.count)")
-        infoLines.append("   • Lettres: \(coverLetters.count)")
-        infoLines.append("   • CVs: \(cvDocuments.count)")
-
-        databaseInfoMessage = infoLines.joined(separator: "\n")
-        showingDatabaseInfo = true
-    }
-
-    private func createEmergencyBackup() {
-        if let backupURL = DatabaseRepair.createBackup() {
-            errorMessage =
-                appLanguage == "fr"
-                ? "✅ Sauvegarde créée:\n\(backupURL.lastPathComponent)"
-                : "✅ Backup created:\n\(backupURL.lastPathComponent)"
-            showingError = true
-        } else {
-            errorMessage =
-                appLanguage == "fr"
-                ? "❌ Impossible de créer la sauvegarde"
-                : "❌ Unable to create backup"
-            showingError = true
-        }
-    }
-
-    private func resetDatabase() {
-        DatabaseRepair.resetDatabase(backup: true)
-
-        // Afficher un message indiquant qu'il faut redémarrer
-        errorMessage =
-            appLanguage == "fr"
-            ? "✅ Base de données réinitialisée.\n\nRedémarrez l'application pour que les changements soient appliqués."
-            : "✅ Database has been reset.\n\nPlease restart the application for changes to take effect."
-        showingError = true
     }
 
     private func formatBytes(_ bytes: Int) -> String {

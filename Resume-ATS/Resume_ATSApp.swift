@@ -1,31 +1,88 @@
+import Combine
 import SwiftData
 import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+    var modelContainer: ModelContainer?
+    var autoSaveTimer: Timer?
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
     }
 
     func windowWillClose(_ notification: Notification) {
+        saveData()
         NSApplication.shared.terminate(nil)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        // Auto-export data on app close to prevent data loss
-        autoExportData()
+        autoSaveTimer?.invalidate()
+        saveData()
     }
 
-    private func autoExportData() {
-        print("App terminating - consider exporting data manually")
+    private func saveData() {
+        guard let container = modelContainer else { return }
+
+        do {
+            print("💾 Sauvegarde des données avant fermeture...")
+            let context = ModelContext(container)
+            try context.save()
+            print("✅ Données sauvegardées avec succès")
+        } catch {
+            print("❌ Erreur lors de la sauvegarde: \(error)")
+        }
     }
 }
 
 @main
 struct Resume_ATSApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @State private var sharedModelContainer: ModelContainer?
+    @State private var isInitialized = false
+    @AppStorage("colorScheme") private var colorScheme: Int = 2
 
-    var sharedModelContainer: ModelContainer = {
-        // First, log database info
+    var body: some Scene {
+        WindowGroup {
+            if let container = sharedModelContainer {
+                ContentView()
+                    .preferredColorScheme(
+                        colorScheme == 0 ? .light : (colorScheme == 1 ? .dark : nil)
+                    )
+                    .onAppear {
+                        startAutoSave()
+                    }
+                    .onReceive(
+                        Timer.publish(every: 30, on: .main, in: .common).autoconnect(),
+                        perform: { _ in
+                            autoSaveData()
+                        }
+                    )
+                    .modelContainer(container)
+            } else {
+                ProgressView("Initialisation...")
+                    .onAppear {
+                        if !isInitialized {
+                            isInitialized = true
+                            initializeModelContainer()
+                        }
+                    }
+            }
+        }
+        .windowToolbarStyle(.unified)
+        .commands {
+            CommandGroup(replacing: .appTermination) {
+                Button("Quitter") {
+                    autoSaveData()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        NSApplication.shared.terminate(nil)
+                    }
+                }
+                .keyboardShortcut("q", modifiers: .command)
+            }
+        }
+    }
+
+    private func initializeModelContainer() {
         print("")
         print("============================================================")
         print("🚀 DÉMARRAGE DE L'APPLICATION")
@@ -55,6 +112,9 @@ struct Resume_ATSApp: App {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
             print("✅ ModelContainer créé avec succès")
             print("")
+
+            // Store container in AppDelegate for termination handling
+            appDelegate.modelContainer = container
 
             // DEBUG: Vérifier les données existantes
             do {
@@ -101,13 +161,13 @@ struct Resume_ATSApp: App {
             } catch {
                 print("❌ Erreur lors de la lecture des données: \(error)")
                 print("   Type: \(type(of: error))")
-                if let decodingError = error as? DecodingError {
+                if error is DecodingError {
                     print("   C'est une erreur de décodage - problème de compatibilité")
                 }
             }
 
             print("")
-            return container
+            sharedModelContainer = container
 
         } catch {
             print("")
@@ -160,24 +220,23 @@ struct Resume_ATSApp: App {
             print("")
             fatalError("Unable to initialize SwiftData ModelContainer")
         }
-    }()
+    }
 
-    @AppStorage("colorScheme") private var colorScheme: Int = 2  // 0=light, 1=dark, 2=system
-
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .preferredColorScheme(colorScheme == 0 ? .light : (colorScheme == 1 ? .dark : nil))
+    private func startAutoSave() {
+        appDelegate.autoSaveTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in
+            autoSaveData()
         }
-        .modelContainer(sharedModelContainer)
-        .windowToolbarStyle(.unified)
-        .commands {
-            CommandGroup(replacing: .appTermination) {
-                Button("Quitter") {
-                    NSApplication.shared.terminate(nil)
-                }
-                .keyboardShortcut("q", modifiers: .command)
-            }
+    }
+
+    private func autoSaveData() {
+        guard let container = sharedModelContainer else { return }
+
+        do {
+            let context = ModelContext(container)
+            try context.save()
+            print("✅ Auto-save réussi à \(Date().formatted(date: .abbreviated, time: .standard))")
+        } catch {
+            print("⚠️  Erreur lors de l'auto-save: \(error)")
         }
     }
 }
