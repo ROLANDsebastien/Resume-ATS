@@ -38,10 +38,6 @@ struct Resume_ATSApp: App {
                             }
                         }
                     )
-                    .onAppear {
-                        NSApplication.shared.windows.first?.setContentSize(
-                            NSSize(width: windowWidth, height: windowHeight))
-                    }
             } else {
                 VStack(spacing: 20) {
                     ProgressView("Initialisation...")
@@ -77,25 +73,7 @@ struct Resume_ATSApp: App {
             }
         }
         .windowToolbarStyle(.unified)
-        .onChange(of: scenePhase) { oldPhase, newPhase in
-            if newPhase == .background {
-                // Créer un backup avant de passer en arrière-plan
-                // avec un délai pour laisser SwiftData finaliser la sauvegarde
-                if sharedModelContainer != nil {
-                    print("📱 App passe en arrière-plan - création d'un backup...")
-                    DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 1.0) {
-                        _ = DatabaseVersioningService.shared.createBackup(
-                            reason: "Backup avant arrière-plan")
-                    }
-                } else {
-                    print("⚠️  Backup ignoré - conteneur non initialisé")
-                }
-            } else if newPhase == .active {
-                print("📱 App retournée au premier plan")
-                // Invalider le cache du chemin de la BD pour rechercher la plus récente
-                DatabaseVersioningService.shared.invalidateDatabasePathCache()
-            }
-        }
+        .defaultSize(width: windowWidth, height: windowHeight)
     }
 
     private func initializeModelContainer() {
