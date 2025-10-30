@@ -16,6 +16,7 @@ struct DatabaseRecoveryView: View {
     @State private var showingError = false
     @State private var successMessage: String?
     @State private var showingSuccess = false
+    @State private var showDiagnostics = false
     @Environment(\.dismiss) private var dismiss
 
     var language: String
@@ -49,7 +50,7 @@ struct DatabaseRecoveryView: View {
                 }
                 .frame(maxHeight: .infinity)
             } else if availableVersions.isEmpty {
-                VStack(spacing: 12) {
+                VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 48))
                         .foregroundColor(.orange)
@@ -61,14 +62,61 @@ struct DatabaseRecoveryView: View {
                     )
                     .font(.headline)
 
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(
+                            language == "fr"
+                                ? "Cela peut signifier:"
+                                : "This could mean:"
+                        )
+                        .font(.caption)
+                        .fontWeight(.semibold)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(
+                                language == "fr"
+                                    ? "• Aucune donnée n'a encore été sauvegardée"
+                                    : "• No data has been saved yet"
+                            )
+                            .font(.caption)
+
+                            Text(
+                                language == "fr"
+                                    ? "• Tous les backups ont été supprimés"
+                                    : "• All backups have been deleted"
+                            )
+                            .font(.caption)
+
+                            Text(
+                                language == "fr"
+                                    ? "• Les backups sont vides ou corrompus"
+                                    : "• Backups are empty or corrupted"
+                            )
+                            .font(.caption)
+                        }
+                        .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(8)
+                    .background(Color.yellow.opacity(0.1))
+                    .cornerRadius(4)
+
                     Text(
                         language == "fr"
-                            ? "L'application créera automatiquement des versions de secours lors de la prochaine utilisation."
-                            : "The application will automatically create backup versions on the next use."
+                            ? "L'application créera des versions de secours lors de la prochaine utilisation avec des données."
+                            : "The application will create backup versions when data is saved."
                     )
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
+
+                    Button(action: { showDiagnostics = true }) {
+                        Label(
+                            language == "fr" ? "Afficher les infos" : "Show Info",
+                            systemImage: "info.circle"
+                        )
+                        .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
@@ -179,6 +227,9 @@ struct DatabaseRecoveryView: View {
                         ? "Base de données restaurée avec succès"
                         : "Database restored successfully"))
         }
+        .sheet(isPresented: $showDiagnostics) {
+            DiagnosticsView(language: language)
+        }
     }
 
     private func loadVersions() {
@@ -224,7 +275,90 @@ struct DatabaseRecoveryView: View {
             }
         }
     }
+}
 
+struct DiagnosticsView: View {
+    let language: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(language == "fr" ? "Informations de Diagnostic" : "Diagnostic Information")
+                    .font(.headline)
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(language == "fr" ? "Chemin des données:" : "Data Path:")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+
+                    Text("~/Library/Application Support/com.sebastienroland.Resume-ATS/")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+
+                    Text(language == "fr" ? "Chemin des backups:" : "Backup Path:")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+
+                    Text("~/Library/Application Support/ResumeATS_DBVersions/")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+
+                    Divider()
+
+                    Text(language == "fr" ? "Points importants:" : "Important Notes:")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(
+                            language == "fr"
+                                ? "• Les backups ne sont créés que si la BD contient des données"
+                                : "• Backups are only created if the database contains data"
+                        )
+                        .font(.caption)
+
+                        Text(
+                            language == "fr"
+                                ? "• Les backups vides ou corrompus sont automatiquement ignorés"
+                                : "• Empty or corrupted backups are automatically ignored"
+                        )
+                        .font(.caption)
+
+                        Text(
+                            language == "fr"
+                                ? "• Maximum 20 versions sont conservées"
+                                : "• Maximum 20 versions are kept"
+                        )
+                        .font(.caption)
+
+                        Text(
+                            language == "fr"
+                                ? "• Un backup est créé toutes les heures et avant arrière-plan"
+                                : "• A backup is created every hour and before background"
+                        )
+                        .font(.caption)
+                    }
+                    .foregroundColor(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+
+            Spacer()
+
+            Button(language == "fr" ? "Fermer" : "Close") {
+                dismiss()
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+        }
+        .frame(minWidth: 400, minHeight: 300)
+    }
 }
 
 struct DatabaseRecoveryView_Previews: PreviewProvider {

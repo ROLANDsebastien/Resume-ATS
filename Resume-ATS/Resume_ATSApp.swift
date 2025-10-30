@@ -27,13 +27,20 @@ struct Resume_ATSApp: App {
                     .onReceive(
                         Timer.publish(every: 3600, on: .main, in: .common).autoconnect(),
                         perform: { _ in
-                            // Créer un backup automatique chaque heure
-                            let _ = DatabaseVersioningService.shared.createBackup(
-                                reason: "Auto-backup automatique")
+                            // Créer un backup automatique toutes les heures
+                            // IMPORTANT: SwiftData sauvegarde automatiquement avant ce timer
+                            print("⏰ Timer d'auto-backup déclenché (toutes les heures)")
+                            DispatchQueue.global(qos: .background).asyncAfter(
+                                deadline: .now() + 0.5
+                            ) {
+                                let _ = DatabaseVersioningService.shared.createBackup(
+                                    reason: "Auto-backup (toutes les heures)")
+                            }
                         }
                     )
                     .onAppear {
-                        NSApplication.shared.windows.first?.setContentSize(NSSize(width: windowWidth, height: windowHeight))
+                        NSApplication.shared.windows.first?.setContentSize(
+                            NSSize(width: windowWidth, height: windowHeight))
                     }
             } else {
                 VStack(spacing: 20) {
@@ -73,33 +80,22 @@ struct Resume_ATSApp: App {
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .background {
                 // Créer un backup avant de passer en arrière-plan
-                // Vérifier que le conteneur est bien initialisé
+                // avec un délai pour laisser SwiftData finaliser la sauvegarde
                 if sharedModelContainer != nil {
-                    _ = DatabaseVersioningService.shared.createBackup(
-                        reason: "Backup avant arrière-plan")
+                    print("📱 App passe en arrière-plan - création d'un backup...")
+                    DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 1.0) {
+                        _ = DatabaseVersioningService.shared.createBackup(
+                            reason: "Backup avant arrière-plan")
+                    }
                 } else {
                     print("⚠️  Backup ignoré - conteneur non initialisé")
                 }
-
-                // Persister les données actuelles (important!)
-                persistCurrentData()
             } else if newPhase == .active {
-                // Optionnel: vérifier l'intégrité au retour au premier plan
                 print("📱 App retournée au premier plan")
+                // Invalider le cache du chemin de la BD pour rechercher la plus récente
+                DatabaseVersioningService.shared.invalidateDatabasePathCache()
             }
         }
-    }
-
-    /// CORRECTION CRITIQUE: Utiliser le contexte existant, pas en créer un nouveau
-    /// Cette fonction ne doit pas créer de nouveau contexte qui serait vierge
-    private func persistCurrentData() {
-        // La persistance est déjà gérée par:
-        // 1. L'auto-save toutes les 30 secondes dans ContentView
-        // 2. Les modifications immédiates via modelContext.insert/delete
-        // 3. SwiftData qui auto-persiste les changements
-
-        // Cette fonction est surtout pour les logs et le backup
-        print("💾 Préparation de l'arrière-plan - backup créé")
     }
 
     private func initializeModelContainer() {
@@ -181,7 +177,7 @@ struct Resume_ATSApp: App {
             print("")
 
             // Créer le premier backup après initialisation réussie
-            // Attendre un peu pour s'assurer que les données sont bien sauvegardées
+            // IMPORTANT: Attendre que SwiftData ait bien initialisé et sauvegardé les données
             DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2.0) {
                 print("📦 Création du backup initial après démarrage...")
                 _ = DatabaseVersioningService.shared.createBackup(
@@ -202,8 +198,8 @@ struct Resume_ATSApp: App {
             print("⚠️  IMPORTANT: Vos données n'ont PAS été supprimées")
             print("   Elles sont toujours sauvegardées sur votre ordinateur")
             print("")
-            print("Fichier de la base de données:")
-            print("~/Library/Application Support/com.sebastienroland.Resume-AT/")
+            print("Localisation de la base de données:")
+            print("~/Library/Application Support/com.sebastienroland.Resume-ATS/")
             print("  default.store")
             print("")
             print("Solutions:")
@@ -237,9 +233,6 @@ struct Resume_ATSApp: App {
 
             databaseLoadError =
                 "Erreur lors de l'initialisation de la base de données: \(error.localizedDescription)"
-
-            // NE PAS faire fatalError - laisser l'utilisateur restaurer une version
-            // fatalError("Unable to initialize SwiftData ModelContainer")
         }
     }
 }
