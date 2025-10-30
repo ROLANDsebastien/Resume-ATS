@@ -2,84 +2,104 @@ import Combine
 import SwiftData
 import SwiftUI
 
-class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
-    var modelContainer: ModelContainer?
-    var autoSaveTimer: Timer?
-
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return true
-    }
-
-    func windowWillClose(_ notification: Notification) {
-        saveData()
-        NSApplication.shared.terminate(nil)
-    }
-
-    func applicationWillTerminate(_ notification: Notification) {
-        autoSaveTimer?.invalidate()
-        saveData()
-    }
-
-    private func saveData() {
-        guard let container = modelContainer else { return }
-
-        do {
-            print("💾 Sauvegarde des données avant fermeture...")
-            let context = ModelContext(container)
-            try context.save()
-            print("✅ Données sauvegardées avec succès")
-        } catch {
-            print("❌ Erreur lors de la sauvegarde: \(error)")
-        }
-    }
-}
-
 @main
 struct Resume_ATSApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var sharedModelContainer: ModelContainer?
     @State private var isInitialized = false
+    @State private var showDatabaseRecovery = false
+    @State private var databaseLoadError: String?
     @AppStorage("colorScheme") private var colorScheme: Int = 2
+    @AppStorage("windowWidth") private var windowWidth: Double = 1200
+    @AppStorage("windowHeight") private var windowHeight: Double = 800
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
-            if let container = sharedModelContainer {
+            if showDatabaseRecovery {
+                DatabaseRecoveryView(language: "fr")
+            } else if let container = sharedModelContainer {
                 ContentView()
                     .preferredColorScheme(
                         colorScheme == 0 ? .light : (colorScheme == 1 ? .dark : nil)
                     )
-                    .onAppear {
-                        startAutoSave()
-                    }
+                    .modelContainer(container)
                     .onReceive(
-                        Timer.publish(every: 30, on: .main, in: .common).autoconnect(),
+                        Timer.publish(every: 3600, on: .main, in: .common).autoconnect(),
                         perform: { _ in
-                            autoSaveData()
+                            // Créer un backup automatique chaque heure
+                            let _ = DatabaseVersioningService.shared.createBackup(
+                                reason: "Auto-backup automatique")
                         }
                     )
-                    .modelContainer(container)
-            } else {
-                ProgressView("Initialisation...")
                     .onAppear {
-                        if !isInitialized {
-                            isInitialized = true
-                            initializeModelContainer()
-                        }
+                        NSApplication.shared.windows.first?.setContentSize(NSSize(width: windowWidth, height: windowHeight))
                     }
+            } else {
+                VStack(spacing: 20) {
+                    ProgressView("Initialisation...")
+
+                    if let error = databaseLoadError {
+                        VStack(spacing: 12) {
+                            Text("Erreur de chargement de la base de données")
+                                .font(.headline)
+                                .foregroundColor(.red)
+
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+
+                            Button(action: { showDatabaseRecovery = true }) {
+                                Label(
+                                    "Restaurer une version antérieure",
+                                    systemImage: "arrow.counterclockwise")
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .padding()
+                    }
+                }
+                .padding()
+                .onAppear {
+                    if !isInitialized {
+                        isInitialized = true
+                        initializeModelContainer()
+                    }
+                }
             }
         }
         .windowToolbarStyle(.unified)
-        .commands {
-            CommandGroup(replacing: .appTermination) {
-                Button("Quitter") {
-                    autoSaveData()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        NSApplication.shared.terminate(nil)
-                    }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            if newPhase == .background {
+                // Créer un backup avant de passer en arrière-plan
+                // Vérifier que le conteneur est bien initialisé
+                if sharedModelContainer != nil {
+                    _ = DatabaseVersioningService.shared.createBackup(
+                        reason: "Backup avant arrière-plan")
+                } else {
+                    print("⚠️  Backup ignoré - conteneur non initialisé")
                 }
-                .keyboardShortcut("q", modifiers: .command)
+
+                // Persister les données actuelles (important!)
+                persistCurrentData()
+            } else if newPhase == .active {
+                // Optionnel: vérifier l'intégrité au retour au premier plan
+                print("📱 App retournée au premier plan")
             }
         }
+    }
+
+    /// CORRECTION CRITIQUE: Utiliser le contexte existant, pas en créer un nouveau
+    /// Cette fonction ne doit pas créer de nouveau contexte qui serait vierge
+    private func persistCurrentData() {
+        // La persistance est déjà gérée par:
+        // 1. L'auto-save toutes les 30 secondes dans ContentView
+        // 2. Les modifications immédiates via modelContext.insert/delete
+        // 3. SwiftData qui auto-persiste les changements
+
+        // Cette fonction est surtout pour les logs et le backup
+        print("💾 Préparation de l'arrière-plan - backup créé")
     }
 
     private func initializeModelContainer() {
@@ -87,7 +107,6 @@ struct Resume_ATSApp: App {
         print("============================================================")
         print("🚀 DÉMARRAGE DE L'APPLICATION")
         print("============================================================")
-        DatabaseRepair.logDatabaseInfo()
 
         let schema = Schema([
             Profile.self,
@@ -113,9 +132,6 @@ struct Resume_ATSApp: App {
             print("✅ ModelContainer créé avec succès")
             print("")
 
-            // Store container in AppDelegate for termination handling
-            appDelegate.modelContainer = container
-
             // DEBUG: Vérifier les données existantes
             do {
                 let context = ModelContext(container)
@@ -125,15 +141,6 @@ struct Resume_ATSApp: App {
                 let profiles = try context.fetch(profileDescriptor)
                 print("📊 DONNÉES CHARGÉES:")
                 print("   • Profils: \(profiles.count)")
-                for profile in profiles {
-                    print("     - '\(profile.name)'")
-                    print("       • Expériences: \(profile.experiences.count)")
-                    print("       • Formations: \(profile.educations.count)")
-                    print("       • Références: \(profile.references.count)")
-                    print("       • Compétences: \(profile.skills.count)")
-                    print("       • Certifications: \(profile.certifications.count)")
-                    print("       • Langues: \(profile.languages.count)")
-                }
 
                 // Fetch Applications
                 let appDescriptor = FetchDescriptor<Application>()
@@ -142,13 +149,13 @@ struct Resume_ATSApp: App {
 
                 // Fetch CoverLetters
                 let letterDescriptor = FetchDescriptor<CoverLetter>()
-                let letters = try context.fetch(letterDescriptor)
-                print("   • Lettres de motivation: \(letters.count)")
+                let coverLetters = try context.fetch(letterDescriptor)
+                print("   • Lettres de Motivation: \(coverLetters.count)")
 
                 // Fetch CVDocuments
                 let cvDescriptor = FetchDescriptor<CVDocument>()
-                let cvs = try context.fetch(cvDescriptor)
-                print("   • Documents CV: \(cvs.count)")
+                let cvDocuments = try context.fetch(cvDescriptor)
+                print("   • Documents CV: \(cvDocuments.count)")
 
                 print("")
                 if profiles.isEmpty {
@@ -161,12 +168,26 @@ struct Resume_ATSApp: App {
             } catch {
                 print("❌ Erreur lors de la lecture des données: \(error)")
                 print("   Type: \(type(of: error))")
+
                 if error is DecodingError {
                     print("   C'est une erreur de décodage - problème de compatibilité")
+                    databaseLoadError =
+                        "Erreur de compatibilité de la base de données. Vous pouvez restaurer une version antérieure ou continuer."
+                } else {
+                    databaseLoadError = error.localizedDescription
                 }
             }
 
             print("")
+
+            // Créer le premier backup après initialisation réussie
+            // Attendre un peu pour s'assurer que les données sont bien sauvegardées
+            DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2.0) {
+                print("📦 Création du backup initial après démarrage...")
+                _ = DatabaseVersioningService.shared.createBackup(
+                    reason: "Backup après démarrage réussi")
+            }
+
             sharedModelContainer = container
 
         } catch {
@@ -182,14 +203,14 @@ struct Resume_ATSApp: App {
             print("   Elles sont toujours sauvegardées sur votre ordinateur")
             print("")
             print("Fichier de la base de données:")
-            print("~/Library/Containers/com.sebastienroland.Resume-AT/")
-            print("  Data/Library/Application Support/default.store")
+            print("~/Library/Application Support/com.sebastienroland.Resume-AT/")
+            print("  default.store")
             print("")
             print("Solutions:")
-            print("1. Redémarrez l'application")
-            print("2. Vérifiez l'espace disque disponible")
-            print("3. Exportez vos données via Settings si possible")
-            print("4. Contactez le support avec ce message d'erreur")
+            print("1. Restaurez une version antérieure via l'écran de récupération")
+            print("2. Redémarrez l'application")
+            print("3. Vérifiez l'espace disque disponible")
+            print("4. Exportez vos données via Settings si possible")
             print("")
 
             // Analyse détaillée de l'erreur
@@ -199,44 +220,26 @@ struct Resume_ATSApp: App {
                 print("   avec les données anciennes.")
                 print("")
                 switch decodingError {
-                case .dataCorrupted(let context):
-                    print("   • Données corrompues à: \(context.codingPath)")
-                    print("   • Description: \(context.debugDescription)")
-                case .keyNotFound(let key, let context):
-                    print("   • Clé manquante: '\(key)'")
-                    print("   • Contexte: \(context.debugDescription)")
-                case .typeMismatch(let type, let context):
-                    print("   • Type incompatible: \(type)")
-                    print("   • À: \(context.codingPath)")
-                    print("   • Description: \(context.debugDescription)")
-                case .valueNotFound(let type, let context):
-                    print("   • Valeur manquante pour: \(type)")
-                    print("   • À: \(context.codingPath)")
+                case .dataCorrupted(_):
+                    print("   • Les données semblent corrompues")
+                case .keyNotFound(_, _):
+                    print("   • Une clé attendue est manquante")
+                case .typeMismatch(_, _):
+                    print("   • Un type de données ne correspond pas")
+                case .valueNotFound(_, _):
+                    print("   • Une valeur attendue est manquante")
                 @unknown default:
                     print("   • Erreur de décodage inconnue")
                 }
             }
 
             print("")
-            fatalError("Unable to initialize SwiftData ModelContainer")
-        }
-    }
 
-    private func startAutoSave() {
-        appDelegate.autoSaveTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in
-            autoSaveData()
-        }
-    }
+            databaseLoadError =
+                "Erreur lors de l'initialisation de la base de données: \(error.localizedDescription)"
 
-    private func autoSaveData() {
-        guard let container = sharedModelContainer else { return }
-
-        do {
-            let context = ModelContext(container)
-            try context.save()
-            print("✅ Auto-save réussi à \(Date().formatted(date: .abbreviated, time: .standard))")
-        } catch {
-            print("⚠️  Erreur lors de l'auto-save: \(error)")
+            // NE PAS faire fatalError - laisser l'utilisateur restaurer une version
+            // fatalError("Unable to initialize SwiftData ModelContainer")
         }
     }
 }

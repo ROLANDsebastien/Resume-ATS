@@ -5,6 +5,7 @@
 //  Created by ROLAND Sébastien on 21/09/2025.
 //
 
+import Combine
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
@@ -29,7 +30,8 @@ struct TemplatesView: View {
                     VStack(alignment: .leading) {
                         Text(language == "fr" ? "Sélectionner un profil:" : "Select a profile:")
                             .font(.headline)
-                        Picker(language == "fr" ? "Profil" : "Profile", selection: $selectedProfile) {
+                        Picker(language == "fr" ? "Profil" : "Profile", selection: $selectedProfile)
+                        {
                             Text(language == "fr" ? "Choisir un profil" : "Choose a profile").tag(
                                 nil as Profile?)
                             ForEach(profiles) { profile in
@@ -49,7 +51,8 @@ struct TemplatesView: View {
                             systemImage: "doc",
                             action: {
                                 guard let profile = selectedProfile else { return }
-                                PDFService.generateATSResumePDFWithPagination(for: profile) { pdfURL in
+                                PDFService.generateATSResumePDFWithPagination(for: profile) {
+                                    pdfURL in
                                     if let pdfURL = pdfURL {
                                         DispatchQueue.main.async {
                                             NSWorkspace.shared.open(pdfURL)
@@ -84,6 +87,11 @@ struct TemplatesView: View {
 struct ContentView: View {
     @State private var selectedSection: String? = "Dashboard"
     @AppStorage("appLanguage") private var appLanguage: String = "fr"
+    @AppStorage("autoSave") private var autoSave = true
+    @Environment(\.modelContext) private var modelContext
+    @State private var autoSaveTimer: Timer?
+    @State private var lastSaveTime: Date?
+    @State private var saveErrorCount = 0
 
     var body: some View {
         NavigationSplitView {
@@ -120,6 +128,7 @@ struct ContentView: View {
                 }
             }
             .navigationTitle(appLanguage == "fr" ? "Sections" : "Sections")
+            .frame(minWidth: 220)
         } detail: {
             switch selectedSection {
             case "Dashboard":
@@ -144,10 +153,62 @@ struct ContentView: View {
         }
         .navigationSplitViewStyle(.balanced)
         .environment(\.locale, Locale(identifier: appLanguage))
+        .onAppear {
+            if autoSave {
+                startAutoSave()
+            }
+        }
+        .onDisappear {
+            autoSaveTimer?.invalidate()
+        }
+        .onReceive(
+            Timer.publish(every: 30, on: .main, in: .common).autoconnect(),
+            perform: { _ in
+                if autoSave {
+                    autoSaveData()
+                }
+            }
+        )
+    }
+
+    private func startAutoSave() {
+        autoSaveTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in
+            autoSaveData()
+        }
+    }
+
+    private func autoSaveData() {
+        do {
+            try modelContext.save()
+            lastSaveTime = Date()
+            saveErrorCount = 0
+
+            let timeString = Date().formatted(date: .abbreviated, time: .standard)
+            print("✅ Auto-save réussi à \(timeString)")
+
+            // Créer un backup si assez de temps s'est écoulé
+            DispatchQueue.global(qos: .background).async {
+                DatabaseVersioningService.shared.createBackupIfNeeded()
+            }
+        } catch {
+            saveErrorCount += 1
+            print("⚠️  Erreur lors de l'auto-save (tentative \(saveErrorCount)): \(error)")
+
+            // Si trop d'erreurs consécutives, logger plus de détails
+            if saveErrorCount >= 3 {
+                print("🚨 ATTENTION: Multiples erreurs de sauvegarde détectées!")
+                print(
+                    "   Dernière tentative: \(Date().formatted(date: .abbreviated, time: .standard))"
+                )
+                print("   Erreur: \(error.localizedDescription)")
+            }
+        }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: [Profile.self, Application.self, CoverLetter.self, CVDocument.self], inMemory: true)
+        .modelContainer(
+            for: [Profile.self, Application.self, CoverLetter.self, CVDocument.self], inMemory: true
+        )
 }

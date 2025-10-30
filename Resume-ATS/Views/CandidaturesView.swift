@@ -112,9 +112,10 @@ struct CandidaturesView: View {
                             application: application,
                             onEdit: { editingApplication = application },
                             onDocuments: { showingDocumentsFor = application },
-                            onDelete: {
-                                modelContext.delete(application)
-                            },
+                             onDelete: {
+                                 print("Deleting application: \(application.company)")
+                                 modelContext.delete(application)
+                             },
                             language: language
                         )
                         .listRowSeparator(.hidden)

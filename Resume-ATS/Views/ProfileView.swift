@@ -880,6 +880,7 @@ struct ProfileView: View {
 
     private func confirmDeleteProfile() {
         guard let profile = selectedProfile else { return }
+        print("Deleting profile: \(profile.name)")
         modelContext.delete(profile)
         selectedProfile = nil
     }

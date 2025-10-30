@@ -61,9 +61,10 @@ struct CVsView: View {
                             document: document,
                             onPreview: { previewCV(document) },
                             onExport: { exportCV(document) },
-                            onDelete: {
-                                modelContext.delete(document)
-                            },
+                             onDelete: {
+                                 print("Deleting CV: \(document.name)")
+                                 modelContext.delete(document)
+                             },
                             language: language
                         )
                         .listRowSeparator(.hidden)

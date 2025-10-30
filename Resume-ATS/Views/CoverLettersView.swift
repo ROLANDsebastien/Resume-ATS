@@ -111,9 +111,10 @@ struct CoverLettersView: View {
                                     ) {
                                         CoverLetterRow(
                                             coverLetter: coverLetter,
-                                            onDelete: {
-                                                modelContext.delete(coverLetter)
-                                            },
+                                             onDelete: {
+                                                 print("Deleting cover letter: \(coverLetter.title)")
+                                                 modelContext.delete(coverLetter)
+                                             },
                                             language: language
                                         )
                                     }

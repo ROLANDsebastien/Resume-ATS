@@ -608,6 +608,7 @@ class DataService {
     }
 
     static func clearAllData(context: ModelContext) throws {
+        print("Clearing all data")
         // Supprimer tous les profils (les expériences, éducations et références seront supprimées en cascade)
         let profiles = try context.fetch(FetchDescriptor<Profile>())
         for profile in profiles {
