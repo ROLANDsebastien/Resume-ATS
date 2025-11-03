@@ -20,9 +20,6 @@ struct SettingsView: View {
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var showingClearDataConfirmation = false
-    @State private var showingDatabaseVersions = false
-    @State private var availableDatabaseVersions: [DatabaseVersion] = []
-    @State private var totalBackupSize = 0
 
     var body: some View {
         ScrollView {
@@ -32,9 +29,6 @@ struct SettingsView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
                     .padding(.top)
-                    .onAppear {
-                        loadDatabaseVersions()
-                    }
 
                 // Apparence Section
                 VStack(alignment: .leading, spacing: 15) {
@@ -237,97 +231,6 @@ struct SettingsView: View {
                     .cornerRadius(10)
                 }
 
-                // Gestion des versions de BD Section
-                VStack(alignment: .leading, spacing: 15) {
-                    HStack {
-                        Image(systemName: "clock.badge.checkmark.fill")
-                            .foregroundColor(.accentColor)
-                        Text(
-                            appLanguage == "fr"
-                                ? "Versioning de la Base de Données"
-                                : "Database Versioning"
-                        )
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                    }
-
-                    VStack(spacing: 10) {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(
-                                    appLanguage == "fr"
-                                        ? "Backups automatiques"
-                                        : "Automatic Backups"
-                                )
-                                .foregroundColor(.primary)
-                                Text(
-                                    appLanguage == "fr"
-                                        ? "Versions sauvegardées automatiquement"
-                                        : "Automatically saved versions"
-                                )
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Text("\(availableDatabaseVersions.count)")
-                                .fontWeight(.bold)
-                                .foregroundColor(.blue)
-                        }
-
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(
-                                    appLanguage == "fr"
-                                        ? "Espace utilisé"
-                                        : "Space Used"
-                                )
-                                .foregroundColor(.primary)
-                                Text(
-                                    appLanguage == "fr"
-                                        ? "Taille totale des backups"
-                                        : "Total size of backups"
-                                )
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Text(formatBytes(totalBackupSize))
-                                .fontWeight(.bold)
-                                .foregroundColor(.blue)
-                        }
-
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(
-                                    appLanguage == "fr"
-                                        ? "Restaurer une version"
-                                        : "Restore a Version"
-                                )
-                                .foregroundColor(.primary)
-                                Text(
-                                    appLanguage == "fr"
-                                        ? "Récupérer vos données depuis une version antérieure"
-                                        : "Recover your data from a previous version"
-                                )
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Button(
-                                appLanguage == "fr" ? "Gérer" : "Manage"
-                            ) {
-                                loadDatabaseVersions()
-                                showingDatabaseVersions = true
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-                    }
-                    .padding()
-                    .background(.regularMaterial)
-                    .cornerRadius(10)
-                }
-
                 Spacer()
             }
             .padding(.horizontal)
@@ -373,13 +276,9 @@ struct SettingsView: View {
         } message: {
             Text(
                 appLanguage == "fr"
-                    ? "Cette action supprimera définitivement tous les profils, candidatures, CVs et documents joints. Cette action est irréversible."
+                    ? "Cette action supprimera définitiveiment tous les profils, candidatures, CVs et documents joints. Cette action est irréversible."
                     : "This action will permanently delete all profiles, applications, CVs and attached documents. This action is irreversible."
             )
-        }
-
-        .sheet(isPresented: $showingDatabaseVersions) {
-            DatabaseRecoveryView(language: appLanguage)
         }
         .navigationTitle("Resume-ATS")
         .toolbar {
@@ -459,25 +358,6 @@ struct SettingsView: View {
                 "Erreur lors de la suppression des données: \(error.localizedDescription)"
             showingError = true
         }
-    }
-
-    private func loadDatabaseVersions() {
-        DispatchQueue.global(qos: .userInitiated).async {
-            let versions = DatabaseVersioningService.shared.listAvailableVersions()
-            let size = DatabaseVersioningService.shared.getTotalBackupSize()
-
-            DispatchQueue.main.async {
-                self.availableDatabaseVersions = versions
-                self.totalBackupSize = size
-            }
-        }
-    }
-
-    private func formatBytes(_ bytes: Int) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.allowedUnits = [.useKB, .useMB, .useGB]
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: Int64(bytes))
     }
 }
 

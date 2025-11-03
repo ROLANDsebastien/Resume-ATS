@@ -185,11 +185,6 @@ struct ContentView: View {
 
             let timeString = Date().formatted(date: .abbreviated, time: .standard)
             print("✅ Auto-save réussi à \(timeString)")
-
-            // Créer un backup si assez de temps s'est écoulé
-            DispatchQueue.global(qos: .background).async {
-                DatabaseVersioningService.shared.createBackupIfNeeded()
-            }
         } catch {
             saveErrorCount += 1
             print("⚠️  Erreur lors de l'auto-save (tentative \(saveErrorCount)): \(error)")

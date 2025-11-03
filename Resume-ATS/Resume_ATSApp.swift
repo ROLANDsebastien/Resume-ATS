@@ -7,7 +7,6 @@ struct Resume_ATSApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var sharedModelContainer: ModelContainer?
     @State private var isInitialized = false
-    @State private var showDatabaseRecovery = false
     @State private var databaseLoadError: String?
     @AppStorage("colorScheme") private var colorScheme: Int = 2
     @AppStorage("windowWidth") private var windowWidth: Double = 1200
@@ -16,28 +15,12 @@ struct Resume_ATSApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if showDatabaseRecovery {
-                DatabaseRecoveryView(language: "fr")
-            } else if let container = sharedModelContainer {
+            if let container = sharedModelContainer {
                 ContentView()
                     .preferredColorScheme(
                         colorScheme == 0 ? .light : (colorScheme == 1 ? .dark : nil)
                     )
                     .modelContainer(container)
-                    .onReceive(
-                        Timer.publish(every: 3600, on: .main, in: .common).autoconnect(),
-                        perform: { _ in
-                            // Créer un backup automatique toutes les heures
-                            // IMPORTANT: SwiftData sauvegarde automatiquement avant ce timer
-                            print("⏰ Timer d'auto-backup déclenché (toutes les heures)")
-                            DispatchQueue.global(qos: .background).asyncAfter(
-                                deadline: .now() + 0.5
-                            ) {
-                                let _ = DatabaseVersioningService.shared.createBackup(
-                                    reason: "Auto-backup (toutes les heures)")
-                            }
-                        }
-                    )
             } else {
                 VStack(spacing: 20) {
                     ProgressView("Initialisation...")
@@ -52,13 +35,6 @@ struct Resume_ATSApp: App {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
-
-                            Button(action: { showDatabaseRecovery = true }) {
-                                Label(
-                                    "Restaurer une version antérieure",
-                                    systemImage: "arrow.counterclockwise")
-                            }
-                            .buttonStyle(.borderedProminent)
                         }
                         .padding()
                     }
@@ -153,14 +129,6 @@ struct Resume_ATSApp: App {
             }
 
             print("")
-
-            // Créer le premier backup après initialisation réussie
-            // IMPORTANT: Attendre que SwiftData ait bien initialisé et sauvegardé les données
-            DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2.0) {
-                print("📦 Création du backup initial après démarrage...")
-                _ = DatabaseVersioningService.shared.createBackup(
-                    reason: "Backup après démarrage réussi")
-            }
 
             sharedModelContainer = container
 
