@@ -157,33 +157,6 @@ struct ContentView: View {
             if autoSave {
                 startAutoSave()
             }
-
-            // Restaurer la taille et position de la fenêtre après tout chargement
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                let windowWidth = UserDefaults.standard.double(forKey: "windowWidth")
-                let windowHeight = UserDefaults.standard.double(forKey: "windowHeight")
-                let windowX = UserDefaults.standard.double(forKey: "windowX")
-                let windowY = UserDefaults.standard.double(forKey: "windowY")
-
-                if let window = NSApplication.shared.windows.first {
-                    var frame = window.frame
-                    frame.size = NSSize(width: windowWidth > 0 ? windowWidth : 1200, height: windowHeight > 0 ? windowHeight : 800)
-
-                    if windowX >= 0 && windowY >= 0 {
-                        frame.origin = NSPoint(x: windowX, y: windowY)
-                    } else {
-                        // Center the window on screen
-                        if let screen = NSScreen.main {
-                            let screenFrame = screen.visibleFrame
-                            let centerX = screenFrame.midX - frame.size.width / 2
-                            let centerY = screenFrame.midY - frame.size.height / 2
-                            frame.origin = NSPoint(x: centerX, y: centerY)
-                        }
-                    }
-
-                    window.setFrame(frame, display: false)
-                }
-            }
         }
         .onDisappear {
             autoSaveTimer?.invalidate()
