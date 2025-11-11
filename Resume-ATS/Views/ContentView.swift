@@ -179,15 +179,23 @@ struct ContentView: View {
 
     private func autoSaveData() {
         do {
-            try modelContext.save()
-            lastSaveTime = Date()
-            saveErrorCount = 0
+            // Check if there are changes before saving to avoid unnecessary operations
+            if modelContext.hasChanges {
+                try modelContext.save()
+                lastSaveTime = Date()
+                saveErrorCount = 0
 
-            let timeString = Date().formatted(date: .abbreviated, time: .standard)
-            print("✅ Auto-save réussi à \(timeString)")
+                let timeString = Date().formatted(date: .abbreviated, time: .standard)
+                print("✅ Sauvegarde réussie à \(timeString)")
+
+                // Create a backup periodically
+                DispatchQueue.global(qos: .background).async {
+                    _ = DatabaseBackupService.shared.createBackup(reason: "Auto-save")
+                }
+            }
         } catch {
             saveErrorCount += 1
-            print("⚠️  Erreur lors de l'auto-save (tentative \(saveErrorCount)): \(error)")
+            print("⚠️  Erreur lors de la sauvegarde (tentative \(saveErrorCount)): \(error)")
 
             // Si trop d'erreurs consécutives, logger plus de détails
             if saveErrorCount >= 3 {

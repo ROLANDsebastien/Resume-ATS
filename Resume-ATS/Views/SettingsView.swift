@@ -206,6 +206,28 @@ struct SettingsView: View {
                             VStack(alignment: .leading) {
                                 Text(
                                     appLanguage == "fr"
+                                        ? "Sauvegardes automatiques" : "Automatic Backups"
+                                )
+                                .foregroundColor(.primary)
+                                Text(
+                                    appLanguage == "fr"
+                                        ? "Gérer les sauvegardes automatiques de la base de données"
+                                        : "Manage automatic database backups"
+                                )
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Button(appLanguage == "fr" ? "Gérer" : "Manage") {
+                                manageBackups()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(
+                                    appLanguage == "fr"
                                         ? "Effacer toutes les données" : "Clear All Data"
                                 )
                                 .foregroundColor(.red)
@@ -358,6 +380,55 @@ struct SettingsView: View {
                 "Erreur lors de la suppression des données: \(error.localizedDescription)"
             showingError = true
         }
+    }
+    
+    private func manageBackups() {
+        let backupCount = DatabaseBackupService.shared.listBackups().count
+        let totalSize = DatabaseBackupService.shared.getTotalBackupSize()
+        
+        let alert = NSAlert()
+        alert.messageText = appLanguage == "fr" ? "Gestion des sauvegardes" : "Backup Management"
+        
+        let messageText = appLanguage == "fr" 
+            ? String(format: "Nombre de sauvegardes: %d\nTaille totale: %@", backupCount, formatBytes(totalSize))
+            : String(format: "Number of backups: %d\nTotal size: %@", backupCount, formatBytes(totalSize))
+        
+        alert.informativeText = messageText
+        
+        alert.addButton(withTitle: appLanguage == "fr" ? "Créer une sauvegarde" : "Create Backup")
+        alert.addButton(withTitle: appLanguage == "fr" ? "Annuler" : "Cancel")
+        
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {  // Create Backup button
+            DispatchQueue.global(qos: .background).async {
+                if DatabaseBackupService.shared.createBackup(reason: "Manual backup from settings") != nil {
+                    DispatchQueue.main.async {
+                        let successAlert = NSAlert()
+                        successAlert.messageText = appLanguage == "fr" ? "Sauvegarde créée" : "Backup Created"
+                        successAlert.informativeText = appLanguage == "fr" 
+                            ? "La sauvegarde a été créée avec succès." 
+                            : "Backup was created successfully."
+                        successAlert.runModal()
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        let errorAlert = NSAlert()
+                        errorAlert.messageText = appLanguage == "fr" ? "Erreur" : "Error"
+                        errorAlert.informativeText = appLanguage == "fr" 
+                            ? "Échec de la création de la sauvegarde." 
+                            : "Failed to create backup."
+                        errorAlert.runModal()
+                    }
+                }
+            }
+        }
+    }
+    
+    private func formatBytes(_ bytes: Int) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB, .useGB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: Int64(bytes))
     }
 }
 

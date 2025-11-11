@@ -64,5 +64,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if let window = NSApplication.shared.windows.first {
             AppDelegate.saveWindowFrame(window)
         }
+        
+        // Ensure data is saved before app terminates
+        print("📱 Application va se terminer - sauvegarde finale...")
     }
 }

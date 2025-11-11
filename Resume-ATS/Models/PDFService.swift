@@ -136,13 +136,43 @@ class PDFService {
         let statsView = StatisticsPDFView(
             applications: applications, language: language, selectedYear: selectedYear)
 
+        // Use a hosting view with proper size constraints
         let hostingView = NSHostingView(rootView: statsView)
-        hostingView.frame = CGRect(x: 0, y: 0, width: 595, height: 842)
+        let a4Size = NSSize(width: 595, height: 842)
+        
+        // Set frame with reasonable constraints
+        hostingView.frame = CGRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height)
+        hostingView.layoutSubtreeIfNeeded()
+        
+        // Get the actual required height by measuring the content
+        let requiredHeight = hostingView.fittingSize.height
+        
+        // Ensure we have at least one page
+        let finalHeight = max(requiredHeight, a4Size.height)
+        hostingView.frame.size.height = finalHeight
+        hostingView.layoutSubtreeIfNeeded()
 
-        let pdfData = hostingView.dataWithPDF(inside: hostingView.bounds)
+        let pdfDocument = PDFDocument()
+        let pageCount = Int(ceil(finalHeight / a4Size.height))
 
-        let pdfDocument = PDFDocument(data: pdfData)
-        pdfDocument?.write(to: tempURL)
+        for i in 0..<pageCount {
+            let pageRect = CGRect(x: 0, y: CGFloat(i) * a4Size.height, width: a4Size.width, height: a4Size.height)
+            
+            // Create a new hosting view for each page to ensure proper rendering
+            let pageHostingView = NSHostingView(rootView: statsView)
+            pageHostingView.frame = CGRect(x: 0, y: -CGFloat(i) * a4Size.height, width: a4Size.width, height: finalHeight)
+            pageHostingView.layoutSubtreeIfNeeded()
+            
+            // Render the current page
+            let pdfDataForPage = pageHostingView.dataWithPDF(inside: pageRect)
+            
+            if let pdfDocumentForPage = PDFDocument(data: pdfDataForPage),
+               let page = pdfDocumentForPage.page(at: 0) {
+                pdfDocument.insert(page, at: pdfDocument.pageCount)
+            }
+        }
+
+        pdfDocument.write(to: tempURL)
 
         print("Statistics PDF generated successfully")
         completion(tempURL)
