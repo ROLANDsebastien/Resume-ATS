@@ -45,6 +45,7 @@ struct CVsView: View {
                         exportAllCVs()
                     }
                 }
+                .padding(.top, 30)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
             }
@@ -56,15 +57,16 @@ struct CVsView: View {
                     header: Text(language == "fr" ? "CVs" : "CVs").font(.title2)
                         .fontWeight(.semibold).padding(.top, 20)
                 ) {
-                    ForEach(cvDocuments.sorted(by: { $0.dateCreated > $1.dateCreated })) { document in
+                    ForEach(cvDocuments.sorted(by: { $0.dateCreated > $1.dateCreated })) {
+                        document in
                         CVRow(
                             document: document,
                             onPreview: { previewCV(document) },
                             onExport: { exportCV(document) },
-                             onDelete: {
-                                 print("Deleting CV: \(document.name)")
-                                 modelContext.delete(document)
-                             },
+                            onDelete: {
+                                print("Deleting CV: \(document.name)")
+                                modelContext.delete(document)
+                            },
                             language: language
                         )
                         .listRowSeparator(.hidden)
@@ -128,7 +130,8 @@ struct CVsView: View {
     private func previewCV(_ document: CVDocument) {
         guard let pdfData = document.pdfData else { return }
         do {
-            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(document.name).pdf")
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
+                "\(document.name).pdf")
             try pdfData.write(to: tempURL)
             NSWorkspace.shared.open(tempURL)
         } catch {
@@ -162,16 +165,16 @@ struct CVsView: View {
                 let fileManager = FileManager.default
                 do {
                     try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
-                     for document in cvDocuments {
-                         if let pdfData = document.pdfData {
-                             do {
-                                 let destURL = url.appendingPathComponent("\(document.name).pdf")
-                                 try pdfData.write(to: destURL)
-                             } catch {
-                                 print("Error writing CV: \(error)")
-                             }
-                         }
-                     }
+                    for document in cvDocuments {
+                        if let pdfData = document.pdfData {
+                            do {
+                                let destURL = url.appendingPathComponent("\(document.name).pdf")
+                                try pdfData.write(to: destURL)
+                            } catch {
+                                print("Error writing CV: \(error)")
+                            }
+                        }
+                    }
                     DispatchQueue.main.async {
                         NSWorkspace.shared.open(url)
                     }
@@ -222,9 +225,9 @@ struct CVRow: View {
     }
 }
 
-
-
 #Preview {
     CVsView(selectedSection: .constant(nil), language: "fr")
-        .modelContainer(for: [Profile.self, Application.self, CoverLetter.self, CVDocument.self], inMemory: true)
+        .modelContainer(
+            for: [Profile.self, Application.self, CoverLetter.self, CVDocument.self], inMemory: true
+        )
 }

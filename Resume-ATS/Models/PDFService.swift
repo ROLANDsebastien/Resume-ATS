@@ -158,7 +158,7 @@ class PDFService {
                 else {
                     return (nil, newPageData)
                 }
-                var pageInfo: [CFString: Any] = [:]
+                let pageInfo: [CFString: Any] = [:]
                 context.beginPDFPage(pageInfo as CFDictionary)
                 return (context, newPageData)
             }
@@ -358,13 +358,16 @@ class PDFService {
                     currentY = margin + 10
                 }
 
-                // Draw application box background
+                // Draw application box background with rounded corners
                 context.saveGState()
                 context.setFillColor(NSColor(white: 0.95, alpha: 1.0).cgColor)
                 let boxRect = CGRect(
                     x: margin, y: pageHeight - currentY - boxHeight, width: contentWidth,
                     height: boxHeight)
-                context.fill(boxRect)
+                let roundedPath = CGPath(
+                    roundedRect: boxRect, cornerWidth: 8, cornerHeight: 8, transform: nil)
+                context.addPath(roundedPath)
+                context.fillPath()
                 context.restoreGState()
 
                 // Calculate text positions (from currentY going down)
