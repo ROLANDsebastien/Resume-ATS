@@ -91,7 +91,9 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var autoSaveTimer: Timer?
     @State private var lastSaveTime: Date?
+    @State private var lastBackupTime: Date?
     @State private var saveErrorCount = 0
+    private let backupInterval: TimeInterval = 300  // Backup every 5 minutes instead of every save
 
     var body: some View {
         NavigationSplitView {
@@ -188,9 +190,33 @@ struct ContentView: View {
                 let timeString = Date().formatted(date: .abbreviated, time: .standard)
                 print("✅ Sauvegarde réussie à \(timeString)")
 
-                // Create a backup periodically
-                DispatchQueue.global(qos: .background).async {
-                    _ = DatabaseBackupService.shared.createBackup(reason: "Auto-save")
+                // Create a backup only every 5 minutes (not every 30 seconds)
+                // This prevents excessive I/O and potential race conditions
+                let now = Date()
+                let shouldBackup =
+                    lastBackupTime == nil
+                    || now.timeIntervalSince(lastBackupTime!) >= backupInterval
+
+                if shouldBackup {
+                    print("⏱️  Intervalle de backup atteint - création backup...")
+
+                    // Capture modelContext to avoid issues with struct mutation
+                    let context = modelContext
+
+                    // Use utility queue (not background) to ensure backup completes
+                    DispatchQueue.global(qos: .utility).async {
+                        // Pass the ModelContext to ensure it's saved before backup
+                        _ = DatabaseBackupService.shared.createBackup(
+                            reason: "Auto-save periodic backup",
+                            modelContext: context
+                        )
+                    }
+
+                    // Update last backup time immediately
+                    lastBackupTime = now
+                } else {
+                    let timeSinceLastBackup = Int(now.timeIntervalSince(lastBackupTime ?? now))
+                    print("ℹ️  Backup pas nécessaire (dernier: il y a \(timeSinceLastBackup)s)")
                 }
             }
         } catch {

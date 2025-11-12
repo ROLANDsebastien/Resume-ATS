@@ -1,6 +1,10 @@
+import SwiftData
 import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+
+    // Keep reference to ModelContainer for saving on termination
+    static var sharedModelContainer: ModelContainer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Restaurer la position et la taille de la fenêtre au démarrage
@@ -53,7 +57,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             AppDelegate.saveWindowFrame(window)
         }
     }
-    
+
     func windowDidResize(_ notification: Notification) {
         if let window = notification.object as? NSWindow {
             AppDelegate.saveWindowFrame(window)
@@ -61,11 +65,46 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
+        print("")
+        print("═══════════════════════════════════════════════════════════")
+        print("🛑 APPLICATION VA SE TERMINER")
+        print("═══════════════════════════════════════════════════════════")
+
+        // Save window frame
         if let window = NSApplication.shared.windows.first {
             AppDelegate.saveWindowFrame(window)
         }
-        
-        // Ensure data is saved before app terminates
-        print("📱 Application va se terminer - sauvegarde finale...")
+
+        // CRITICAL: Save and backup database before terminating
+        if let container = AppDelegate.sharedModelContainer {
+            print("")
+            print("💾 Sauvegarde finale de la base de données...")
+
+            let context = ModelContext(container)
+
+            // Save any pending changes
+            if context.hasChanges {
+                do {
+                    try context.save()
+                    print("   ✅ Changements sauvegardés")
+                } catch {
+                    print("   ❌ Erreur sauvegarde: \(error)")
+                }
+            } else {
+                print("   ℹ️  Aucun changement en attente")
+            }
+
+            // Create final backup before exit
+            print("")
+            print("📦 Création backup final avant fermeture...")
+            _ = DatabaseBackupService.shared.createBackup(
+                reason: "App termination",
+                modelContext: context
+            )
+        }
+
+        print("═══════════════════════════════════════════════════════════")
+        print("👋 Fermeture de l'application")
+        print("")
     }
 }

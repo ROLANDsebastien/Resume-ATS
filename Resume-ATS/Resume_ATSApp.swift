@@ -53,14 +53,29 @@ struct Resume_ATSApp: App {
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .background {
                 // Create a backup when the app goes to background
-                if sharedModelContainer != nil {
-                    print("📱 Application mise en arrière-plan - création backup automatique")
-                    DispatchQueue.global(qos: .background).async {
-                        _ = DatabaseBackupService.shared.createBackup(reason: "App background")
+                if let container = sharedModelContainer {
+                    print("📱 Application mise en arrière-plan - sauvegarde et backup")
+
+                    // Create a temporary ModelContext for saving before backup
+                    let context = ModelContext(container)
+
+                    // Perform backup on utility queue (not background to ensure it completes)
+                    DispatchQueue.global(qos: .utility).async {
+                        _ = DatabaseBackupService.shared.createBackup(
+                            reason: "App background",
+                            modelContext: context
+                        )
                     }
                 }
             } else if newPhase == .active {
                 print("📱 Application activée")
+
+                // Verify database integrity when app becomes active
+                if sharedModelContainer != nil {
+                    DispatchQueue.global(qos: .utility).async {
+                        self.verifyDatabaseIntegrity()
+                    }
+                }
             }
         }
     }
@@ -84,7 +99,7 @@ struct Resume_ATSApp: App {
             Certification.self,
             Language.self,
         ])
-        
+
         let modelConfiguration = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: false,
@@ -95,6 +110,30 @@ struct Resume_ATSApp: App {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
             print("✅ ModelContainer créé avec succès")
             print("")
+
+            // CRITICAL: Verify database integrity on startup
+            if let dbPath = getDatabasePath() {
+                print("🔍 Vérification de l'intégrité de la base de données...")
+                if !SQLiteHelper.verifyDatabaseIntegrity(at: dbPath) {
+                    print("❌ CORRUPTION DÉTECTÉE au démarrage!")
+                    print("   Tentative de récupération...")
+
+                    // Try to checkpoint the database to fix potential WAL issues
+                    if SQLiteHelper.checkpointDatabase(at: dbPath) {
+                        print("   ✅ Checkpoint effectué - nouvelle vérification...")
+                        if SQLiteHelper.verifyDatabaseIntegrity(at: dbPath) {
+                            print("   ✅ Base de données réparée!")
+                        } else {
+                            print("   ❌ Impossible de réparer - restaurez depuis un backup")
+                            databaseLoadError =
+                                "Base de données corrompue - veuillez restaurer depuis un backup"
+                        }
+                    }
+                } else {
+                    print("✅ Intégrité de la base de données vérifiée")
+                }
+                print("")
+            }
 
             // DEBUG: Vérifier les données existantes
             do {
@@ -143,9 +182,12 @@ struct Resume_ATSApp: App {
             }
 
             print("")
-            
+
             // Store the container
             sharedModelContainer = container
+
+            // Also store in AppDelegate for proper cleanup on termination
+            AppDelegate.sharedModelContainer = container
 
         } catch let containerError {
             print("")
@@ -169,7 +211,7 @@ struct Resume_ATSApp: App {
             print("3. Exportez vos données via Settings si possible")
             print("")
 
-            // Enhanced error analysis 
+            // Enhanced error analysis
             if let decodingError = containerError as? DecodingError {
                 print("🔍 ANALYSE: Erreur de décodage détectée")
                 print("   Cela peut indiquer une incompatibilité de schéma")
@@ -183,7 +225,9 @@ struct Resume_ATSApp: App {
                 case .typeMismatch(let type, let context):
                     print("   • Type incompatible: \(type) dans contexte: \(context.codingPath)")
                 case .valueNotFound(let type, let context):
-                    print("   • Valeur manquante de type: \(type) dans contexte: \(context.codingPath)")
+                    print(
+                        "   • Valeur manquante de type: \(type) dans contexte: \(context.codingPath)"
+                    )
                 @unknown default:
                     print("   • Erreur de décodage inconnue")
                 }
@@ -193,11 +237,11 @@ struct Resume_ATSApp: App {
             }
 
             print("")
-            
+
             // CRITICAL: Try to create a container as a fallback and preserve existing data
             do {
                 print("🔄 Tentative de récupération...")
-                
+
                 // Try to create container with minimal schema if possible
                 let fallbackSchema = Schema([
                     Profile.self,
@@ -211,20 +255,25 @@ struct Resume_ATSApp: App {
                     Certification.self,
                     Language.self,
                 ])
-                
+
                 let fallbackConfig = ModelConfiguration(
                     schema: fallbackSchema,
                     isStoredInMemoryOnly: false,
                     allowsSave: true
                 )
-                
-                let fallbackContainer = try ModelContainer(for: fallbackSchema, configurations: [fallbackConfig])
+
+                let fallbackContainer = try ModelContainer(
+                    for: fallbackSchema, configurations: [fallbackConfig])
                 sharedModelContainer = fallbackContainer
+
+                // Also store in AppDelegate
+                AppDelegate.sharedModelContainer = fallbackContainer
+
                 print("✅ Conteneur de récupération créé avec succès")
-                
+
             } catch {
                 print("❌ Échec de la création du conteneur de récupération: \(error)")
-                
+
                 // Even if fallback fails, we still want to show error but allow partial functionality
                 databaseLoadError =
                     "Erreur critique: Impossible d'initialiser la base de données. \(containerError.localizedDescription)"
@@ -235,6 +284,49 @@ struct Resume_ATSApp: App {
             // Continue with normal initialization
             if sharedModelContainer != nil {
                 print("✅ Réinitialisation terminée avec conteneur de secours")
+            }
+        }
+    }
+
+    /// Gets the path to the main SwiftData database
+    private func getDatabasePath() -> URL? {
+        guard
+            let appSupport = FileManager.default.urls(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask
+            ).first
+        else {
+            return nil
+        }
+
+        // Look for the main database file
+        let bundleID = "com.sebastienroland.Resume-ATS"
+        let dbPath = appSupport.appendingPathComponent(bundleID).appendingPathComponent(
+            "default.store")
+
+        if FileManager.default.fileExists(atPath: dbPath.path) {
+            return dbPath
+        }
+
+        // Fallback: direct path in Application Support
+        let fallbackPath = appSupport.appendingPathComponent("default.store")
+        if FileManager.default.fileExists(atPath: fallbackPath.path) {
+            return fallbackPath
+        }
+
+        return nil
+    }
+
+    /// Verifies database integrity periodically
+    private func verifyDatabaseIntegrity() {
+        guard let dbPath = getDatabasePath() else { return }
+
+        if !SQLiteHelper.verifyDatabaseIntegrity(at: dbPath) {
+            print("⚠️  CORRUPTION DÉTECTÉE lors de la vérification périodique!")
+
+            DispatchQueue.main.async {
+                self.databaseLoadError =
+                    "Corruption détectée - sauvegardez vos données et restaurez depuis un backup"
             }
         }
     }

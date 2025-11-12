@@ -398,6 +398,273 @@ struct StatisticsPDFView: View {
     }
 }
 
+struct StatisticsPage1View: View {
+    let applications: [Application]
+    let language: String
+    let selectedYear: Int
+
+    var statusDistribution: [Application.Status: Int] {
+        Dictionary(grouping: applications, by: { $0.status }).mapValues { $0.count }
+    }
+
+    var totalApplications: Int {
+        applications.count
+    }
+
+    var responseRate: Double {
+        guard totalApplications > 0 else { return 0 }
+        let responded = totalApplications - (statusDistribution[.pending] ?? 0)
+        return Double(responded) / Double(totalApplications) * 100
+    }
+
+    var interviewConversionRate: Double {
+        guard totalApplications > 0 else { return 0 }
+        let interviewed =
+            (statusDistribution[.interviewing] ?? 0) + (statusDistribution[.accepted] ?? 0)
+        return Double(interviewed) / Double(totalApplications) * 100
+    }
+
+    var averageDuration: TimeInterval? {
+        let completedApplications = applications.filter {
+            $0.status != .pending && $0.status != .applied
+        }
+        guard !completedApplications.isEmpty else { return nil }
+        let totalDuration = completedApplications.reduce(0) {
+            $0 + Date().timeIntervalSince($1.dateApplied)
+        }
+        return totalDuration / Double(completedApplications.count)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header
+            Text(
+                language == "fr"
+                    ? "Rapport de Statistiques - \(selectedYear)"
+                    : "Statistics Report - \(selectedYear)"
+            )
+            .font(.largeTitle)
+            .fontWeight(.bold)
+
+            // KPIs Section
+            VStack(alignment: .leading, spacing: 12) {
+                Text(language == "fr" ? "Indicateurs Clés" : "Key Indicators")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+
+                HStack(spacing: 40) {
+                    VStack {
+                        Text(String(format: "%.1f%%", responseRate))
+                            .font(.title)
+                            .fontWeight(.bold)
+                        Text(language == "fr" ? "Taux de Réponse" : "Response Rate")
+                            .font(.caption)
+                    }
+
+                    VStack {
+                        Text(String(format: "%.1f%%", interviewConversionRate))
+                            .font(.title)
+                            .fontWeight(.bold)
+                        Text(language == "fr" ? "Conversion Entretien" : "Interview Conversion")
+                            .font(.caption)
+                    }
+
+                    if let avgDuration = averageDuration {
+                        VStack {
+                            Text(String(format: "%.0f", avgDuration / 86400))
+                                .font(.title)
+                                .fontWeight(.bold)
+                            Text(language == "fr" ? "Jours Moyens" : "Avg Days")
+                                .font(.caption)
+                        }
+                    }
+                }
+                .padding(.bottom, 8)
+            }
+
+            // Status Distribution - Start on page 1
+            VStack(alignment: .leading, spacing: 8) {
+                Text(language == "fr" ? "Répartition par Statut" : "Status Distribution")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+
+                ForEach(Array(Application.Status.allCases.prefix(3)), id: \.self) { status in
+                    HStack {
+                        Text(status.localizedString(language: language))
+                        Spacer()
+                        Text("\(statusDistribution[status] ?? 0)")
+                    }
+                    .font(.body)
+                }
+            }
+
+            Spacer()
+
+            // Page number
+            Text(language == "fr" ? "Page 1/3" : "Page 1/3")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+struct StatisticsPage2View: View {
+    let applications: [Application]
+    let language: String
+    let selectedYear: Int
+
+    var statusDistribution: [Application.Status: Int] {
+        Dictionary(grouping: applications, by: { $0.status }).mapValues { $0.count }
+    }
+
+    var successRateBySource: [SourceRate] {
+        let grouped = Dictionary(
+            grouping: applications, by: { $0.source ?? (language == "fr" ? "Inconnue" : "Unknown") }
+        )
+        var rates: [SourceRate] = []
+        for (source, apps) in grouped {
+            let successful = apps.filter { $0.status == .interviewing || $0.status == .accepted }
+                .count
+            let total = apps.count
+            let rate = total > 0 ? Double(successful) / Double(total) * 100 : 0
+            rates.append(SourceRate(source: source, rate: rate))
+        }
+        return rates.sorted(by: { $0.rate > $1.rate })
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Continue Status Distribution (remaining statuses)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(language == "fr" ? "Répartition par Statut (suite)" : "Status Distribution (cont.)")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+
+                ForEach(Array(Application.Status.allCases.dropFirst(3)), id: \.self) { status in
+                    HStack {
+                        Text(status.localizedString(language: language))
+                        Spacer()
+                        Text("\(statusDistribution[status] ?? 0)")
+                    }
+                    .font(.body)
+                }
+            }
+            .padding(.bottom, 16)
+
+            // Success Rate by Source
+            VStack(alignment: .leading, spacing: 8) {
+                Text(language == "fr" ? "Taux de Succès par Source" : "Success Rate by Source")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+
+                ForEach(Array(successRateBySource.prefix(8)), id: \.source) { item in
+                    HStack {
+                        Text(item.source)
+                            .font(.body)
+                        Spacer()
+                        Text(String(format: "%.1f%%", item.rate))
+                            .font(.body)
+                            .fontWeight(.medium)
+                    }
+                }
+            }
+
+            // Start Applications List
+            VStack(alignment: .leading, spacing: 8) {
+                Text(language == "fr" ? "Liste des Candidatures" : "Applications List")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+
+                ForEach(Array(applications.sorted(by: { $0.dateApplied > $1.dateApplied }).prefix(5)), id: \.id) { app in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("\(app.company) - \(app.position)")
+                            .font(.headline)
+                        Text(
+                            "\(language == "fr" ? "Statut" : "Status"): \(app.status.localizedString(language: language))"
+                        )
+                        .font(.caption)
+                        Text(
+                            "\(language == "fr" ? "Source" : "Source"): \(app.source ?? (language == "fr" ? "Inconnue" : "Unknown"))"
+                        )
+                        .font(.caption)
+                        Text(
+                            "\(language == "fr" ? "Date" : "Date"): \(app.dateApplied.formatted(date: .abbreviated, time: .omitted))"
+                        )
+                        .font(.caption)
+                    }
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 10)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(4)
+                }
+            }
+
+            Spacer()
+
+            Text(language == "fr" ? "Page 2/3" : "Page 2/3")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+struct StatisticsPage3View: View {
+    let applications: [Application]
+    let language: String
+    let selectedYear: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Continue Applications List
+            VStack(alignment: .leading, spacing: 8) {
+                Text(language == "fr" ? "Liste des Candidatures (suite)" : "Applications List (cont.)")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 6) {
+                        ForEach(Array(applications.sorted(by: { $0.dateApplied > $1.dateApplied }).dropFirst(5)), id: \.id) { app in
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("\(app.company) - \(app.position)")
+                                    .font(.headline)
+                                Text(
+                                    "\(language == "fr" ? "Statut" : "Status"): \(app.status.localizedString(language: language))"
+                                )
+                                .font(.caption)
+                                Text(
+                                    "\(language == "fr" ? "Source" : "Source"): \(app.source ?? (language == "fr" ? "Inconnue" : "Unknown"))"
+                                )
+                                .font(.caption)
+                                Text(
+                                    "\(language == "fr" ? "Date" : "Date"): \(app.dateApplied.formatted(date: .abbreviated, time: .omitted))"
+                                )
+                                .font(.caption)
+                            }
+                            .padding(.vertical, 5)
+                            .padding(.horizontal, 10)
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(4)
+                        }
+                    }
+                }
+            }
+
+            Text(language == "fr" ? "Page 3/3" : "Page 3/3")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
 struct PDFExportView: View {
     let applications: [Application]
     let language: String

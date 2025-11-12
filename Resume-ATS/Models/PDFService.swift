@@ -133,49 +133,62 @@ class PDFService {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
             "Statistics_Report.pdf")
 
-        let statsView = StatisticsPDFView(
-            applications: applications, language: language, selectedYear: selectedYear)
+        // Create separate views for each section to avoid layout recursion
+        let page1View = StatisticsPage1View(
+            applications: applications,
+            language: language,
+            selectedYear: selectedYear
+        )
 
-        // Use a hosting view with proper size constraints
-        let hostingView = NSHostingView(rootView: statsView)
+        let page2View = StatisticsPage2View(
+            applications: applications,
+            language: language,
+            selectedYear: selectedYear
+        )
+
+        let page3View = StatisticsPage3View(
+            applications: applications,
+            language: language,
+            selectedYear: selectedYear
+        )
+
         let a4Size = NSSize(width: 595, height: 842)
-        
-        // Set frame with reasonable constraints
-        hostingView.frame = CGRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height)
-        hostingView.layoutSubtreeIfNeeded()
-        
-        // Get the actual required height by measuring the content
-        let requiredHeight = hostingView.fittingSize.height
-        
-        // Ensure we have at least one page
-        let finalHeight = max(requiredHeight, a4Size.height)
-        hostingView.frame.size.height = finalHeight
-        hostingView.layoutSubtreeIfNeeded()
-
         let pdfDocument = PDFDocument()
-        let pageCount = Int(ceil(finalHeight / a4Size.height))
 
-        for i in 0..<pageCount {
-            let pageRect = CGRect(x: 0, y: CGFloat(i) * a4Size.height, width: a4Size.width, height: a4Size.height)
-            
-            // Create a new hosting view for each page to ensure proper rendering
-            let pageHostingView = NSHostingView(rootView: statsView)
-            pageHostingView.frame = CGRect(x: 0, y: -CGFloat(i) * a4Size.height, width: a4Size.width, height: finalHeight)
-            pageHostingView.layoutSubtreeIfNeeded()
-            
-            // Render the current page
-            let pdfDataForPage = pageHostingView.dataWithPDF(inside: pageRect)
-            
-            if let pdfDocumentForPage = PDFDocument(data: pdfDataForPage),
-               let page = pdfDocumentForPage.page(at: 0) {
-                pdfDocument.insert(page, at: pdfDocument.pageCount)
-            }
+        // Generate Page 1 - Overview and KPIs
+        let hostingView1 = NSHostingView(rootView: page1View)
+        hostingView1.frame = NSRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height)
+        let pageData1 = hostingView1.dataWithPDF(
+            inside: NSRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height))
+        if let pdfDoc1 = PDFDocument(data: pageData1), let page1 = pdfDoc1.page(at: 0) {
+            pdfDocument.insert(page1, at: 0)
         }
 
-        pdfDocument.write(to: tempURL)
+        // Generate Page 2 - Status Distribution and Sources
+        let hostingView2 = NSHostingView(rootView: page2View)
+        hostingView2.frame = NSRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height)
+        let pageData2 = hostingView2.dataWithPDF(
+            inside: NSRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height))
+        if let pdfDoc2 = PDFDocument(data: pageData2), let page2 = pdfDoc2.page(at: 0) {
+            pdfDocument.insert(page2, at: 1)
+        }
 
-        print("Statistics PDF generated successfully")
-        completion(tempURL)
+        // Generate Page 3 - Applications List
+        let hostingView3 = NSHostingView(rootView: page3View)
+        hostingView3.frame = NSRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height)
+        let pageData3 = hostingView3.dataWithPDF(
+            inside: NSRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height))
+        if let pdfDoc3 = PDFDocument(data: pageData3), let page3 = pdfDoc3.page(at: 0) {
+            pdfDocument.insert(page3, at: 2)
+        }
+
+        // Save to temporary file
+        if pdfDocument.write(to: tempURL) {
+            print("Statistics PDF generated successfully with 3 pages")
+            completion(tempURL)
+        } else {
+            completion(nil)
+        }
     }
 
     /// Nouvelle fonction : Génération PDF paginée pour le CV ATS
@@ -697,7 +710,9 @@ class PDFService {
                             localizedTitle(for: "education", language: profile.language),
                             font: NSFont.boldSystemFont(ofSize: 18), color: .black, x: margin,
                             maxWidth: pageWidth - 2 * margin)
-                        for education in profile.educations.filter({ $0.isVisible }).sorted(by: { ($0.endDate ?? Date.distantFuture) > ($1.endDate ?? Date.distantFuture) }) {
+                        for education in profile.educations.filter({ $0.isVisible }).sorted(by: {
+                            ($0.endDate ?? Date.distantFuture) > ($1.endDate ?? Date.distantFuture)
+                        }) {
                             // Institution on left, dates on right
                             let leftText = education.institution
                             let dateText: String = {
@@ -893,9 +908,12 @@ class PDFService {
                                 .font: NSFont.systemFont(ofSize: 10),
                                 .foregroundColor: NSColor.black,
                             ]
-                            let leftCompanyAttr = NSAttributedString(string: leftCompany, attributes: companyAttributes)
-                            let rightCompanyAttr = NSAttributedString(string: rightCompany, attributes: companyAttributes)
-                            let companyLineHeight = max(leftCompanyAttr.size().height, rightCompanyAttr.size().height)
+                            let leftCompanyAttr = NSAttributedString(
+                                string: leftCompany, attributes: companyAttributes)
+                            let rightCompanyAttr = NSAttributedString(
+                                string: rightCompany, attributes: companyAttributes)
+                            let companyLineHeight = max(
+                                leftCompanyAttr.size().height, rightCompanyAttr.size().height)
 
                             if companyLineHeight > 0 {
                                 // Pagination if needed
@@ -903,25 +921,43 @@ class PDFService {
                                     addPageToDocument(context, pageData)
                                     pageIndex += 1
                                     let result = createPage()
-                                    if let newContext = result.0 { context = newContext } else { return }
+                                    if let newContext = result.0 {
+                                        context = newContext
+                                    } else {
+                                        return
+                                    }
                                     pageData = result.1
                                     currentY = marginTop
                                 }
 
                                 let companyYPos = pageHeight - currentY - companyLineHeight
                                 if !leftCompany.isEmpty {
-                                    let leftCompanyRect = CGRect(x: margin, y: companyYPos, width: (pageWidth - 2 * margin) / 2, height: companyLineHeight)
-                                    let leftCompanyPath = CGMutablePath(); leftCompanyPath.addRect(leftCompanyRect)
-                                    let leftCompanyFramesetter = CTFramesetterCreateWithAttributedString(leftCompanyAttr)
-                                    let leftCompanyFrame = CTFramesetterCreateFrame(leftCompanyFramesetter, CFRange(location: 0, length: 0), leftCompanyPath, nil)
+                                    let leftCompanyRect = CGRect(
+                                        x: margin, y: companyYPos,
+                                        width: (pageWidth - 2 * margin) / 2,
+                                        height: companyLineHeight)
+                                    let leftCompanyPath = CGMutablePath()
+                                    leftCompanyPath.addRect(leftCompanyRect)
+                                    let leftCompanyFramesetter =
+                                        CTFramesetterCreateWithAttributedString(leftCompanyAttr)
+                                    let leftCompanyFrame = CTFramesetterCreateFrame(
+                                        leftCompanyFramesetter, CFRange(location: 0, length: 0),
+                                        leftCompanyPath, nil)
                                     CTFrameDraw(leftCompanyFrame, context)
                                 }
 
                                 if !rightCompany.isEmpty {
-                                    let rightCompanyRect = CGRect(x: margin + (pageWidth - 2 * margin) / 2, y: companyYPos, width: (pageWidth - 2 * margin) / 2, height: companyLineHeight)
-                                    let rightCompanyPath = CGMutablePath(); rightCompanyPath.addRect(rightCompanyRect)
-                                    let rightCompanyFramesetter = CTFramesetterCreateWithAttributedString(rightCompanyAttr)
-                                    let rightCompanyFrame = CTFramesetterCreateFrame(rightCompanyFramesetter, CFRange(location: 0, length: 0), rightCompanyPath, nil)
+                                    let rightCompanyRect = CGRect(
+                                        x: margin + (pageWidth - 2 * margin) / 2, y: companyYPos,
+                                        width: (pageWidth - 2 * margin) / 2,
+                                        height: companyLineHeight)
+                                    let rightCompanyPath = CGMutablePath()
+                                    rightCompanyPath.addRect(rightCompanyRect)
+                                    let rightCompanyFramesetter =
+                                        CTFramesetterCreateWithAttributedString(rightCompanyAttr)
+                                    let rightCompanyFrame = CTFramesetterCreateFrame(
+                                        rightCompanyFramesetter, CFRange(location: 0, length: 0),
+                                        rightCompanyPath, nil)
                                     CTFrameDraw(rightCompanyFrame, context)
                                 }
                                 currentY += companyLineHeight + 2
