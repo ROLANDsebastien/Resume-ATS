@@ -32,7 +32,7 @@ struct StatistiquesView: View {
     @Binding var selectedSection: String?
     @Query private var applications: [Application]
     @State private var selectedYear: Int = 2025
-    @State private var showingPDFExport = false
+
     var language: String
 
     var monthlyStats: [MonthlyStat] {
@@ -209,28 +209,33 @@ struct StatistiquesView: View {
                 }
                 .padding(.vertical)
 
-                // PDF Export Button
-                Button(action: {
-                    showingPDFExport = true
-                }) {
-                    Label(
-                        language == "fr" ? "Exporter en PDF" : "Export to PDF",
-                        systemImage: "square.and.arrow.up")
-                }
-                .buttonStyle(.borderedProminent)
-                .padding(.top)
             }
             .padding()
-        }
-        .sheet(isPresented: $showingPDFExport) {
-            PDFExportView(
-                applications: applications, language: language, selectedYear: selectedYear)
         }
         .navigationTitle("Resume-ATS")
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button(action: { selectedSection = "Dashboard" }) {
                     Image(systemName: "chevron.left")
+                }
+            }
+
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: {
+                    // Generate and open PDF directly
+                    PDFService.generateStatisticsPDF(
+                        applications: applications,
+                        language: language,
+                        selectedYear: selectedYear
+                    ) { url in
+                        if let url = url {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                }) {
+                    Label(
+                        language == "fr" ? "Exporter en PDF" : "Export to PDF",
+                        systemImage: "square.and.arrow.up")
                 }
             }
         }
@@ -639,54 +644,6 @@ struct StatisticsPage3View: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-}
-
-struct PDFExportView: View {
-    let applications: [Application]
-    let language: String
-    let selectedYear: Int
-    @Environment(\.dismiss) private var dismiss
-    @State private var isGenerating = false
-    @State private var generatedURL: URL?
-
-    var body: some View {
-        VStack {
-            if isGenerating {
-                ProgressView(language == "fr" ? "Génération du PDF..." : "Generating PDF...")
-            } else if let url = generatedURL {
-                Text(language == "fr" ? "PDF généré avec succès !" : "PDF generated successfully!")
-                Button(language == "fr" ? "Ouvrir le PDF" : "Open PDF") {
-                    NSWorkspace.shared.open(url)
-                    dismiss()
-                }
-                .buttonStyle(.borderedProminent)
-                Button(language == "fr" ? "Fermer" : "Close") {
-                    dismiss()
-                }
-                .buttonStyle(.bordered)
-            } else {
-                Text(language == "fr" ? "Erreur lors de la génération" : "Error generating PDF")
-                Button(language == "fr" ? "Fermer" : "Close") {
-                    dismiss()
-                }
-                .buttonStyle(.bordered)
-            }
-        }
-        .padding()
-        .onAppear {
-            generatePDF()
-        }
-    }
-
-    private func generatePDF() {
-        isGenerating = true
-        PDFService.generateStatisticsPDF(
-            applications: applications, language: language, selectedYear: selectedYear
-        ) { url in
-            isGenerating = false
-            generatedURL = url
-        }
     }
 }
 
