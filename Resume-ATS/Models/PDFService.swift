@@ -128,66 +128,331 @@ class PDFService {
         applications: [Application], language: String, selectedYear: Int,
         completion: @escaping (URL?) -> Void
     ) {
-        print("Generating statistics PDF")
+        print("🎨 Génération PDF Statistiques avec pagination dynamique")
+        print("   Candidatures à traiter: \(applications.count)")
 
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
             "Statistics_Report.pdf")
 
-        // Create separate views for each section to avoid layout recursion
-        let page1View = StatisticsPage1View(
-            applications: applications,
-            language: language,
-            selectedYear: selectedYear
-        )
+        DispatchQueue.global(qos: .userInitiated).async {
+            let pageWidth: CGFloat = 595.0  // A4 width
+            let pageHeight: CGFloat = 842.0  // A4 height
+            let margin: CGFloat = 40.0
+            let contentWidth = pageWidth - 2 * margin
 
-        let page2View = StatisticsPage2View(
-            applications: applications,
-            language: language,
-            selectedYear: selectedYear
-        )
+            let pdfDocument = PDFDocument()
+            var pageData = NSMutableData()
+            var pageIndex = 0
+            var currentY: CGFloat = margin
 
-        let page3View = StatisticsPage3View(
-            applications: applications,
-            language: language,
-            selectedYear: selectedYear
-        )
+            // Helper function to create new page
+            func createPage() -> (CGContext?, NSMutableData) {
+                let newPageData = NSMutableData()
+                var mediaBox = CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight)
+                guard
+                    let context = CGContext(
+                        consumer: CGDataConsumer(data: newPageData as CFMutableData)!,
+                        mediaBox: &mediaBox,
+                        nil
+                    )
+                else {
+                    return (nil, newPageData)
+                }
+                var pageInfo: [CFString: Any] = [:]
+                context.beginPDFPage(pageInfo as CFDictionary)
+                return (context, newPageData)
+            }
 
-        let a4Size = NSSize(width: 595, height: 842)
-        let pdfDocument = PDFDocument()
+            // Helper to add page to document
+            func addPageToDocument(_ context: CGContext, _ data: NSMutableData) {
+                context.endPDFPage()
+                context.closePDF()
+                if let pdfPageDoc = PDFDocument(data: data as Data),
+                    let pdfPage = pdfPageDoc.page(at: 0)
+                {
+                    pdfDocument.insert(pdfPage, at: pdfDocument.pageCount)
+                }
+            }
 
-        // Generate Page 1 - Overview and KPIs
-        let hostingView1 = NSHostingView(rootView: page1View)
-        hostingView1.frame = NSRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height)
-        let pageData1 = hostingView1.dataWithPDF(
-            inside: NSRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height))
-        if let pdfDoc1 = PDFDocument(data: pageData1), let page1 = pdfDoc1.page(at: 0) {
-            pdfDocument.insert(page1, at: 0)
-        }
+            // Helper to draw text using Core Text
+            func drawText(
+                _ text: String, font: NSFont, color: NSColor, y: CGFloat, bold: Bool = false,
+                context: CGContext
+            ) -> CGFloat {
+                let attributes: [NSAttributedString.Key: Any] = [
+                    .font: bold ? NSFont.boldSystemFont(ofSize: font.pointSize) : font,
+                    .foregroundColor: color,
+                ]
+                let attributedString = NSAttributedString(string: text, attributes: attributes)
+                let size = attributedString.size()
+                let rect = CGRect(
+                    x: margin, y: pageHeight - y - size.height, width: contentWidth,
+                    height: size.height)
 
-        // Generate Page 2 - Status Distribution and Sources
-        let hostingView2 = NSHostingView(rootView: page2View)
-        hostingView2.frame = NSRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height)
-        let pageData2 = hostingView2.dataWithPDF(
-            inside: NSRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height))
-        if let pdfDoc2 = PDFDocument(data: pageData2), let page2 = pdfDoc2.page(at: 0) {
-            pdfDocument.insert(page2, at: 1)
-        }
+                // Use Core Text for PDF rendering
+                let path = CGMutablePath()
+                path.addRect(rect)
+                let framesetter = CTFramesetterCreateWithAttributedString(attributedString)
+                let frame = CTFramesetterCreateFrame(
+                    framesetter, CFRange(location: 0, length: 0), path, nil)
+                CTFrameDraw(frame, context)
 
-        // Generate Page 3 - Applications List
-        let hostingView3 = NSHostingView(rootView: page3View)
-        hostingView3.frame = NSRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height)
-        let pageData3 = hostingView3.dataWithPDF(
-            inside: NSRect(x: 0, y: 0, width: a4Size.width, height: a4Size.height))
-        if let pdfDoc3 = PDFDocument(data: pageData3), let page3 = pdfDoc3.page(at: 0) {
-            pdfDocument.insert(page3, at: 2)
-        }
+                return size.height
+            }
 
-        // Save to temporary file
-        if pdfDocument.write(to: tempURL) {
-            print("Statistics PDF generated successfully with 3 pages")
-            completion(tempURL)
-        } else {
-            completion(nil)
+            // Helper to draw key-value pair
+            func drawKeyValue(key: String, value: String, y: CGFloat, context: CGContext)
+                -> CGFloat
+            {
+                let keyAttr: [NSAttributedString.Key: Any] = [
+                    .font: NSFont.systemFont(ofSize: 11),
+                    .foregroundColor: NSColor.darkGray,
+                ]
+                let valueAttr: [NSAttributedString.Key: Any] = [
+                    .font: NSFont.boldSystemFont(ofSize: 11),
+                    .foregroundColor: NSColor.black,
+                ]
+
+                let keyString = NSAttributedString(string: key, attributes: keyAttr)
+                let valueString = NSAttributedString(string: value, attributes: valueAttr)
+
+                let keyRect = CGRect(
+                    x: margin, y: pageHeight - y - 15, width: contentWidth * 0.6, height: 15)
+                let valueRect = CGRect(
+                    x: margin + contentWidth * 0.6, y: pageHeight - y - 15,
+                    width: contentWidth * 0.4, height: 15)
+
+                // Use Core Text for PDF rendering
+                let keyPath = CGMutablePath()
+                keyPath.addRect(keyRect)
+                let keyFramesetter = CTFramesetterCreateWithAttributedString(keyString)
+                let keyFrame = CTFramesetterCreateFrame(
+                    keyFramesetter, CFRange(location: 0, length: 0), keyPath, nil)
+                CTFrameDraw(keyFrame, context)
+
+                let valuePath = CGMutablePath()
+                valuePath.addRect(valueRect)
+                let valueFramesetter = CTFramesetterCreateWithAttributedString(valueString)
+                let valueFrame = CTFramesetterCreateFrame(
+                    valueFramesetter, CFRange(location: 0, length: 0), valuePath, nil)
+                CTFrameDraw(valueFrame, context)
+
+                return 20
+            }
+
+            // Start first page
+            var result = createPage()
+            guard var context = result.0 else {
+                completion(nil)
+                return
+            }
+            pageData = result.1
+
+            // ===== PAGE 1: HEADER & KPIs =====
+            currentY += 10
+            let titleHeight = drawText(
+                language == "fr"
+                    ? "Rapport de Statistiques - \(selectedYear)"
+                    : "Statistics Report - \(selectedYear)",
+                font: NSFont.boldSystemFont(ofSize: 22),
+                color: .black,
+                y: currentY,
+                bold: true,
+                context: context
+            )
+            currentY += titleHeight + 20
+
+            // Calculate statistics
+            let statusDistribution = Dictionary(grouping: applications, by: { $0.status }).mapValues
+            { $0.count }
+            let totalApplications = applications.count
+            let responded = totalApplications - (statusDistribution[.pending] ?? 0)
+            let responseRate =
+                totalApplications > 0 ? Double(responded) / Double(totalApplications) * 100 : 0
+            let interviewed =
+                (statusDistribution[.interviewing] ?? 0) + (statusDistribution[.accepted] ?? 0)
+            let interviewRate =
+                totalApplications > 0 ? Double(interviewed) / Double(totalApplications) * 100 : 0
+
+            // KPIs Section
+            let kpiHeight = drawText(
+                language == "fr" ? "Indicateurs Clés" : "Key Indicators",
+                font: NSFont.boldSystemFont(ofSize: 16),
+                color: .black,
+                y: currentY,
+                bold: true,
+                context: context
+            )
+            currentY += kpiHeight + 12
+
+            currentY += drawKeyValue(
+                key: language == "fr" ? "Total de candidatures:" : "Total applications:",
+                value: "\(totalApplications)",
+                y: currentY,
+                context: context
+            )
+            currentY += drawKeyValue(
+                key: language == "fr" ? "Taux de réponse:" : "Response rate:",
+                value: String(format: "%.1f%%", responseRate),
+                y: currentY,
+                context: context
+            )
+            currentY += drawKeyValue(
+                key: language == "fr" ? "Taux d'entretiens:" : "Interview rate:",
+                value: String(format: "%.1f%%", interviewRate),
+                y: currentY,
+                context: context
+            )
+            currentY += 15
+
+            // Status Distribution
+            let statusHeight = drawText(
+                language == "fr" ? "Répartition par Statut" : "Status Distribution",
+                font: NSFont.boldSystemFont(ofSize: 16),
+                color: .black,
+                y: currentY,
+                bold: true,
+                context: context
+            )
+            currentY += statusHeight + 12
+
+            for status in Application.Status.allCases {
+                let count = statusDistribution[status] ?? 0
+                currentY += drawKeyValue(
+                    key: status.localizedString(language: language),
+                    value: "\(count)",
+                    y: currentY,
+                    context: context
+                )
+            }
+            currentY += 15
+
+            // Applications List Section
+            let listHeight = drawText(
+                language == "fr" ? "Liste des Candidatures" : "Applications List",
+                font: NSFont.boldSystemFont(ofSize: 16),
+                color: .black,
+                y: currentY,
+                bold: true,
+                context: context
+            )
+            currentY += listHeight + 12
+
+            // Sort applications by date
+            let sortedApps = applications.sorted(by: { $0.dateApplied > $1.dateApplied })
+
+            // Draw each application
+            for app in sortedApps {
+                let boxHeight: CGFloat = 70
+                let appHeight: CGFloat = boxHeight + 8  // Box height + spacing
+
+                // Check if we need a new page
+                if currentY + appHeight > pageHeight - margin {
+                    addPageToDocument(context, pageData)
+                    pageIndex += 1
+
+                    result = createPage()
+                    guard let newContext = result.0 else { break }
+                    context = newContext
+                    pageData = result.1
+                    currentY = margin + 10
+                }
+
+                // Draw application box background
+                context.saveGState()
+                context.setFillColor(NSColor(white: 0.95, alpha: 1.0).cgColor)
+                let boxRect = CGRect(
+                    x: margin, y: pageHeight - currentY - boxHeight, width: contentWidth,
+                    height: boxHeight)
+                context.fill(boxRect)
+                context.restoreGState()
+
+                // Calculate text positions (from currentY going down)
+                let textX = margin + 8
+                let textWidth = contentWidth - 16
+
+                // Company and Position (first line, 8pt padding from top)
+                let companyY = currentY + 8
+                let companyText = "\(app.company) - \(app.position)"
+                let companyAttr: [NSAttributedString.Key: Any] = [
+                    .font: NSFont.boldSystemFont(ofSize: 12),
+                    .foregroundColor: NSColor.black,
+                ]
+                let companyString = NSAttributedString(string: companyText, attributes: companyAttr)
+
+                // Draw using NSAttributedString directly with NSGraphicsContext
+                let companyDrawRect = CGRect(
+                    x: textX, y: pageHeight - companyY - 14, width: textWidth, height: 14)
+
+                NSGraphicsContext.saveGraphicsState()
+                let nsContext = NSGraphicsContext(cgContext: context, flipped: false)
+                NSGraphicsContext.current = nsContext
+                companyString.draw(in: companyDrawRect)
+                NSGraphicsContext.restoreGraphicsState()
+
+                // Status (second line, 26pt from top)
+                let statusY = currentY + 26
+                let statusText =
+                    "\(language == "fr" ? "Statut" : "Status"): \(app.status.localizedString(language: language))"
+                let detailAttr: [NSAttributedString.Key: Any] = [
+                    .font: NSFont.systemFont(ofSize: 10),
+                    .foregroundColor: NSColor.darkGray,
+                ]
+                let statusString = NSAttributedString(string: statusText, attributes: detailAttr)
+
+                // Draw using NSAttributedString directly with NSGraphicsContext
+                let statusDrawRect = CGRect(
+                    x: textX, y: pageHeight - statusY - 12, width: textWidth, height: 12)
+
+                NSGraphicsContext.saveGraphicsState()
+                let nsContext2 = NSGraphicsContext(cgContext: context, flipped: false)
+                NSGraphicsContext.current = nsContext2
+                statusString.draw(in: statusDrawRect)
+                NSGraphicsContext.restoreGraphicsState()
+
+                // Source and Date (third line, 42pt from top)
+                let infoY = currentY + 42
+                let sourceText =
+                    "\(language == "fr" ? "Source" : "Source"): \(app.source ?? (language == "fr" ? "Inconnue" : "Unknown"))"
+                let dateText =
+                    "\(language == "fr" ? "Date" : "Date"): \(app.dateApplied.formatted(date: .abbreviated, time: .omitted))"
+                let infoText = "\(sourceText)  •  \(dateText)"
+                let infoString = NSAttributedString(string: infoText, attributes: detailAttr)
+
+                // Draw using NSAttributedString directly with NSGraphicsContext
+                let infoDrawRect = CGRect(
+                    x: textX, y: pageHeight - infoY - 12, width: textWidth, height: 12)
+
+                NSGraphicsContext.saveGraphicsState()
+                let nsContext3 = NSGraphicsContext(cgContext: context, flipped: false)
+                NSGraphicsContext.current = nsContext3
+                infoString.draw(in: infoDrawRect)
+                NSGraphicsContext.restoreGraphicsState()
+
+                currentY += appHeight
+            }
+
+            // Add page number to last page
+            currentY = pageHeight - 30
+            let pageNumText = language == "fr" ? "Page \(pageIndex + 1)" : "Page \(pageIndex + 1)"
+            _ = drawText(
+                pageNumText, font: NSFont.systemFont(ofSize: 9), color: .gray, y: currentY,
+                context: context)
+
+            // Add final page
+            addPageToDocument(context, pageData)
+
+            // Save PDF
+            DispatchQueue.main.async {
+                if pdfDocument.write(to: tempURL) {
+                    print("✅ PDF Statistiques généré avec \(pdfDocument.pageCount) page(s)")
+                    print("   Toutes les \(applications.count) candidatures incluses")
+                    completion(tempURL)
+                } else {
+                    print("❌ Échec de l'écriture du PDF")
+                    completion(nil)
+                }
+            }
         }
     }
 

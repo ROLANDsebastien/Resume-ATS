@@ -172,8 +172,6 @@ struct StatistiquesView: View {
                 }
                 .padding(.vertical)
 
-
-
                 // Bar Chart
                 VStack(alignment: .leading) {
                     Text(language == "fr" ? "Candidatures par Mois" : "Applications per Month")
@@ -210,7 +208,6 @@ struct StatistiquesView: View {
 
                 }
                 .padding(.vertical)
-
 
                 // PDF Export Button
                 Button(action: {
@@ -520,28 +517,16 @@ struct StatisticsPage2View: View {
         Dictionary(grouping: applications, by: { $0.status }).mapValues { $0.count }
     }
 
-    var successRateBySource: [SourceRate] {
-        let grouped = Dictionary(
-            grouping: applications, by: { $0.source ?? (language == "fr" ? "Inconnue" : "Unknown") }
-        )
-        var rates: [SourceRate] = []
-        for (source, apps) in grouped {
-            let successful = apps.filter { $0.status == .interviewing || $0.status == .accepted }
-                .count
-            let total = apps.count
-            let rate = total > 0 ? Double(successful) / Double(total) * 100 : 0
-            rates.append(SourceRate(source: source, rate: rate))
-        }
-        return rates.sorted(by: { $0.rate > $1.rate })
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Continue Status Distribution (remaining statuses)
             VStack(alignment: .leading, spacing: 8) {
-                Text(language == "fr" ? "Répartition par Statut (suite)" : "Status Distribution (cont.)")
-                    .font(.title2)
-                    .fontWeight(.semibold)
+                Text(
+                    language == "fr"
+                        ? "Répartition par Statut (suite)" : "Status Distribution (cont.)"
+                )
+                .font(.title2)
+                .fontWeight(.semibold)
 
                 ForEach(Array(Application.Status.allCases.dropFirst(3)), id: \.self) { status in
                     HStack {
@@ -554,31 +539,16 @@ struct StatisticsPage2View: View {
             }
             .padding(.bottom, 16)
 
-            // Success Rate by Source
-            VStack(alignment: .leading, spacing: 8) {
-                Text(language == "fr" ? "Taux de Succès par Source" : "Success Rate by Source")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-
-                ForEach(Array(successRateBySource.prefix(8)), id: \.source) { item in
-                    HStack {
-                        Text(item.source)
-                            .font(.body)
-                        Spacer()
-                        Text(String(format: "%.1f%%", item.rate))
-                            .font(.body)
-                            .fontWeight(.medium)
-                    }
-                }
-            }
-
             // Start Applications List
             VStack(alignment: .leading, spacing: 8) {
                 Text(language == "fr" ? "Liste des Candidatures" : "Applications List")
                     .font(.title2)
                     .fontWeight(.semibold)
 
-                ForEach(Array(applications.sorted(by: { $0.dateApplied > $1.dateApplied }).prefix(5)), id: \.id) { app in
+                ForEach(
+                    Array(applications.sorted(by: { $0.dateApplied > $1.dateApplied }).prefix(5)),
+                    id: \.id
+                ) { app in
                     VStack(alignment: .leading, spacing: 4) {
                         Text("\(app.company) - \(app.position)")
                             .font(.headline)
@@ -623,13 +593,20 @@ struct StatisticsPage3View: View {
         VStack(alignment: .leading, spacing: 16) {
             // Continue Applications List
             VStack(alignment: .leading, spacing: 8) {
-                Text(language == "fr" ? "Liste des Candidatures (suite)" : "Applications List (cont.)")
-                    .font(.title2)
-                    .fontWeight(.semibold)
+                Text(
+                    language == "fr"
+                        ? "Liste des Candidatures (suite)" : "Applications List (cont.)"
+                )
+                .font(.title2)
+                .fontWeight(.semibold)
 
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 6) {
-                        ForEach(Array(applications.sorted(by: { $0.dateApplied > $1.dateApplied }).dropFirst(5)), id: \.id) { app in
+                        ForEach(
+                            Array(
+                                applications.sorted(by: { $0.dateApplied > $1.dateApplied })
+                                    .dropFirst(5)), id: \.id
+                        ) { app in
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("\(app.company) - \(app.position)")
                                     .font(.headline)
