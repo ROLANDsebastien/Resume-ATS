@@ -68,8 +68,11 @@ class DatabaseBackupService: ObservableObject {
             return nil
         }
 
-        // Check minimum interval between backups
-        if let lastTime = lastBackupTime {
+        // Check minimum interval between backups (sauf pour les sauvegardes critiques)
+        let isCriticalBackup =
+            reason.contains("termination") || reason.contains("background")
+            || reason.contains("inactive")
+        if !isCriticalBackup, let lastTime = lastBackupTime {
             let timeSinceLastBackup = Date().timeIntervalSince(lastTime)
             if timeSinceLastBackup < minimumBackupInterval {
                 print("⏱️  Backup trop récent (\(Int(timeSinceLastBackup))s) - ignoré")
@@ -104,18 +107,25 @@ class DatabaseBackupService: ObservableObject {
                     try context.save()
                     print("   ✅ ModelContext sauvegardé")
 
-                    // Give the file system a moment to sync
-                    Thread.sleep(forTimeInterval: 0.3)
+                    // Give the file system a moment to sync (increased for reliability)
+                    Thread.sleep(forTimeInterval: 0.5)
                 } catch {
-                    print("   ❌ Échec sauvegarde ModelContext: \(error)")
-                    print("   ⚠️  BACKUP ANNULÉ pour éviter corruption")
-                    return nil
+                    print("   ❌ ERREUR CRITIQUE: Échec sauvegarde ModelContext: \(error)")
+                    print("   Type d'erreur: \(type(of: error))")
+
+                    // Pour les sauvegardes critiques, on tente quand même le backup
+                    if isCriticalBackup {
+                        print("   ⚠️  Sauvegarde critique - tentative de backup malgré l'erreur")
+                    } else {
+                        print("   ⚠️  BACKUP ANNULÉ pour éviter corruption")
+                        return nil
+                    }
                 }
             } else {
                 print("ℹ️  ModelContext sans changements - pas de sauvegarde nécessaire")
             }
         } else {
-            print("ℹ️  Pas de ModelContext fourni - backup direct")
+            print("⚠️  Pas de ModelContext fourni - backup direct (RISQUÉ)")
         }
 
         // STEP 2: Get database path
@@ -137,31 +147,63 @@ class DatabaseBackupService: ObservableObject {
         print("📍 Base de données localisée:")
         print("   \(dbPath.path)")
 
+        // Vérifier la taille du fichier principal
+        if let attrs = try? fileManager.attributesOfItem(atPath: dbPath.path),
+            let fileSize = attrs[.size] as? Int64
+        {
+            print("   Taille: \(formatBytes(fileSize))")
+
+            // Alerte si la base est anormalement petite (< 10 KB)
+            if fileSize < 10240 {
+                print("   ⚠️  ALERTE: Base de données anormalement petite!")
+                print("   Cela peut indiquer une perte de données récente")
+            }
+        }
+
         // STEP 3: Verify database integrity BEFORE backup
         print("")
         if !SQLiteHelper.verifyDatabaseIntegrity(at: dbPath) {
-            print("❌ CORRUPTION DÉTECTÉE - backup annulé")
+            print("❌ CORRUPTION DÉTECTÉE!")
             print("⚠️  ATTENTION: Votre base de données est corrompue!")
-            print("   Vous devriez restaurer depuis un backup précédent")
-            return nil
+
+            if isCriticalBackup {
+                print("   ⚠️  Sauvegarde critique - backup de la DB corrompue pour analyse")
+                print("   Le backup sera marqué comme 'CORRUPTED'")
+            } else {
+                print("   ⚠️  Backup annulé - restaurez depuis un backup précédent")
+                return nil
+            }
         }
 
         // STEP 4: Force SQLite checkpoint to merge WAL into main file
         print("")
         print("🔄 Checkpoint SQLite (merge WAL)...")
         if !SQLiteHelper.checkpointDatabase(at: dbPath) {
-            print("❌ Checkpoint échoué - backup annulé pour éviter corruption")
-            return nil
+            print("❌ Checkpoint échoué!")
+
+            if isCriticalBackup {
+                print("   ⚠️  Sauvegarde critique - on continue malgré l'échec du checkpoint")
+            } else {
+                print("   ⚠️  Backup annulé pour éviter corruption")
+                return nil
+            }
         }
 
-        // Give SQLite a moment to complete the checkpoint
-        Thread.sleep(forTimeInterval: 0.2)
+        // Give SQLite a moment to complete the checkpoint (increased)
+        Thread.sleep(forTimeInterval: 0.5)
 
         // STEP 5: Create backup with timestamp
         let dateFormatter = ISO8601DateFormatter()
         dateFormatter.formatOptions = [.withFullDate, .withTime, .withTimeZone]
         let timestamp = dateFormatter.string(from: Date()).replacingOccurrences(of: ":", with: "-")
-        let backupFileName = "db_backup_\(timestamp).store"
+
+        // Marquer les backups critiques dans le nom de fichier
+        var backupFileName = "db_backup_\(timestamp)"
+        if isCriticalBackup {
+            backupFileName += "_CRITICAL"
+        }
+        backupFileName += ".store"
+
         let backupURL = backupDir.appendingPathComponent(backupFileName)
 
         print("")
@@ -195,12 +237,24 @@ class DatabaseBackupService: ObservableObject {
                 }
             }
 
+            // STEP 6: Verify backup integrity immediately after creation
+            print("")
+            print("🔍 Vérification du backup créé...")
+            if SQLiteHelper.verifyDatabaseIntegrity(at: backupURL) {
+                print("   ✅ Backup vérifié et intact")
+            } else {
+                print("   ❌ ALERTE: Le backup créé est corrompu!")
+                print("   Suppression du backup corrompu...")
+                try? fileManager.removeItem(at: backupURL)
+                return nil
+            }
+
             print("")
             print("✅ BACKUP CRÉÉ AVEC SUCCÈS")
             print("   Nom: \(backupFileName)")
             print("   Chemin: \(backupURL.path)")
 
-            // STEP 6: Clean up old backups
+            // STEP 7: Clean up old backups (sauf les backups critiques récents)
             print("")
             cleanupOldBackups()
 
@@ -303,12 +357,36 @@ class DatabaseBackupService: ObservableObject {
                 }
             }
 
-            // Only remove if we have more than the maximum allowed
-            if sortedBackups.count > maxBackups {
-                let filesToRemove = Array(sortedBackups.suffix(from: maxBackups))
-                print("   Suppression de \(filesToRemove.count) ancien(s) backup(s)")
+            // Séparer les backups critiques des backups normaux
+            let criticalBackups = sortedBackups.filter { $0.lastPathComponent.contains("CRITICAL") }
+            let normalBackups = sortedBackups.filter { !$0.lastPathComponent.contains("CRITICAL") }
+
+            print("   Backups critiques: \(criticalBackups.count)")
+            print("   Backups normaux: \(normalBackups.count)")
+
+            // Garder tous les backups critiques des dernières 24h
+            let oneDayAgo = Date().addingTimeInterval(-86400)
+            let recentCriticalBackups = criticalBackups.filter { url in
+                if let values = try? url.resourceValues(forKeys: [.creationDateKey]),
+                    let creationDate = values.creationDate
+                {
+                    return creationDate > oneDayAgo
+                }
+                return false
+            }
+
+            // Supprimer les anciens backups normaux si on dépasse la limite
+            let backupsToKeep = recentCriticalBackups.count + 5  // Garder au moins 5 backups normaux
+            if normalBackups.count > backupsToKeep {
+                let filesToRemove = Array(normalBackups.suffix(from: backupsToKeep))
+                print("   Suppression de \(filesToRemove.count) ancien(s) backup(s) normal/normaux")
 
                 for backupFile in filesToRemove {
+                    // Ne pas supprimer si c'est un backup critique récent
+                    if recentCriticalBackups.contains(where: { $0.path == backupFile.path }) {
+                        continue
+                    }
+
                     // Remove main backup file
                     try fileManager.removeItem(at: backupFile)
 
@@ -324,7 +402,7 @@ class DatabaseBackupService: ObservableObject {
                     print("   🗑️  Supprimé: \(backupFile.lastPathComponent)")
                 }
             } else {
-                print("   ✅ Nombre de backups OK (\(backupFiles.count)/\(maxBackups))")
+                print("   ✅ Nombre de backups OK (\(sortedBackups.count) total)")
             }
         } catch {
             print("   ⚠️  Erreur lors du nettoyage: \(error)")

@@ -13,6 +13,9 @@ struct Resume_ATSApp: App {
     @AppStorage("windowHeight") private var windowHeight: Double = 800
     @Environment(\.scenePhase) private var scenePhase
 
+    // NOUVEAU: Service de sauvegarde automatique centralisé
+    @StateObject private var autoSaveService = AutoSaveService.shared
+
     var body: some Scene {
         WindowGroup {
             if let container = sharedModelContainer {
@@ -21,6 +24,14 @@ struct Resume_ATSApp: App {
                         colorScheme == 0 ? .light : (colorScheme == 1 ? .dark : nil)
                     )
                     .modelContainer(container)
+                    .onAppear {
+                        // Configurer et démarrer le service de sauvegarde automatique
+                        autoSaveService.configure(with: container)
+                        autoSaveService.startAutoSave()
+                    }
+                    .onDisappear {
+                        autoSaveService.stopAutoSave()
+                    }
             } else {
                 VStack(spacing: 20) {
                     ProgressView("Initialisation...")
@@ -51,32 +62,134 @@ struct Resume_ATSApp: App {
         .windowToolbarStyle(.unified)
         .defaultSize(width: windowWidth, height: windowHeight)
         .onChange(of: scenePhase) { oldPhase, newPhase in
-            if newPhase == .background {
-                // Create a backup when the app goes to background
-                if let container = sharedModelContainer {
-                    print("📱 Application mise en arrière-plan - sauvegarde et backup")
+            handleScenePhaseChange(oldPhase: oldPhase, newPhase: newPhase)
+        }
+    }
 
-                    // Create a temporary ModelContext for saving before backup
-                    let context = ModelContext(container)
+    // NOUVEAU: Gestion robuste des changements de phase
+    private func handleScenePhaseChange(oldPhase: ScenePhase, newPhase: ScenePhase) {
+        guard let container = sharedModelContainer else { return }
 
-                    // Perform backup on utility queue (not background to ensure it completes)
-                    DispatchQueue.global(qos: .utility).async {
-                        _ = DatabaseBackupService.shared.createBackup(
-                            reason: "App background",
-                            modelContext: context
-                        )
-                    }
-                }
-            } else if newPhase == .active {
-                print("📱 Application activée")
+        switch newPhase {
+        case .background:
+            print("")
+            print("═══════════════════════════════════════════════════════════")
+            print("📱 APPLICATION MISE EN ARRIÈRE-PLAN")
+            print("═══════════════════════════════════════════════════════════")
 
-                // Verify database integrity when app becomes active
-                if sharedModelContainer != nil {
-                    DispatchQueue.global(qos: .utility).async {
-                        self.verifyDatabaseIntegrity()
-                    }
-                }
+            // CRITIQUE: Arrêter le timer et sauvegarder de manière SYNCHRONE
+            autoSaveService.stopAutoSave()
+
+            // Force save avant le backup
+            _ = autoSaveService.forceSave(reason: "App background")
+
+            // Créer un backup synchrone
+            performSynchronousBackup(container: container, reason: "App background")
+
+        case .inactive:
+            print("📱 Application inactive (transition)")
+            // Sauvegarder lors du passage en mode inactif
+            _ = autoSaveService.forceSave(reason: "App inactive")
+
+        case .active:
+            print("")
+            print("═══════════════════════════════════════════════════════════")
+            print("📱 APPLICATION ACTIVÉE")
+            print("═══════════════════════════════════════════════════════════")
+
+            // Relancer le service de sauvegarde automatique
+            autoSaveService.startAutoSave()
+
+            // Vérifier l'intégrité de la base de données
+            verifyDatabaseIntegrity()
+
+            // Vérifier que les données sont toujours présentes
+            verifyDataPresence(container: container)
+
+        @unknown default:
+            print("⚠️  Phase inconnue: \(newPhase)")
+        }
+    }
+
+    // NOUVEAU: Backup synchrone après sauvegarde
+    private func performSynchronousBackup(container: ModelContainer, reason: String) {
+        let context = ModelContext(container)
+
+        // Forcer un checkpoint SQLite
+        if let dbPath = getDatabasePath() {
+            print("🔄 Checkpoint SQLite forcé...")
+            if SQLiteHelper.checkpointDatabase(at: dbPath) {
+                print("   ✅ Checkpoint réussi")
+                Thread.sleep(forTimeInterval: 0.3)
+            } else {
+                print("   ⚠️  Checkpoint échoué")
             }
+        }
+
+        // Créer un backup de manière SYNCHRONE
+        print("📦 Création backup synchrone...")
+        let semaphore = DispatchSemaphore(value: 0)
+        var backupSuccess = false
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            if let backupURL = DatabaseBackupService.shared.createBackup(
+                reason: reason,
+                modelContext: context
+            ) {
+                print("   ✅ Backup créé: \(backupURL.lastPathComponent)")
+                backupSuccess = true
+            } else {
+                print("   ❌ Échec création backup")
+            }
+            semaphore.signal()
+        }
+
+        // Attendre que le backup soit terminé (timeout de 30 secondes)
+        let timeout = DispatchTime.now() + .seconds(30)
+        if semaphore.wait(timeout: timeout) == .timedOut {
+            print("   ⚠️  TIMEOUT: Backup trop long")
+        } else if backupSuccess {
+            print("   ✅ Backup terminé avec succès")
+        }
+
+        print("═══════════════════════════════════════════════════════════")
+        print("")
+    }
+
+    // NOUVEAU: Vérifier que les données sont présentes après activation
+    private func verifyDataPresence(container: ModelContainer) {
+        print("🔍 Vérification présence des données...")
+
+        let context = ModelContext(container)
+
+        do {
+            let profileDescriptor = FetchDescriptor<Profile>()
+            let profiles = try context.fetch(profileDescriptor)
+
+            let appDescriptor = FetchDescriptor<Application>()
+            let applications = try context.fetch(appDescriptor)
+
+            let letterDescriptor = FetchDescriptor<CoverLetter>()
+            let coverLetters = try context.fetch(letterDescriptor)
+
+            print("   • Profils: \(profiles.count)")
+            print("   • Candidatures: \(applications.count)")
+            print("   • Lettres: \(coverLetters.count)")
+
+            if profiles.isEmpty && applications.isEmpty && coverLetters.isEmpty {
+                print("   ⚠️  ALERTE: Toutes les données sont vides!")
+                print("   Cela peut indiquer une perte de données")
+
+                // Proposer de restaurer depuis le dernier backup
+                DispatchQueue.main.async {
+                    self.databaseLoadError =
+                        "Aucune donnée détectée. Restaurez depuis un backup dans Settings."
+                }
+            } else {
+                print("   ✅ Données présentes")
+            }
+        } catch {
+            print("   ❌ Erreur vérification: \(error)")
         }
     }
 
