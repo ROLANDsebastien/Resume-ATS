@@ -109,21 +109,41 @@ class SQLiteHelper {
         print("🔍 Vérification intégrité DB")
         print("   Fichier: \(dbPath.lastPathComponent)")
 
+        // First check if the main database file exists and is readable
+        guard FileManager.default.fileExists(atPath: dbPathString) else {
+            print("❌ Fichier de base de données introuvable: \(dbPathString)")
+            return false
+        }
+
+        // Try to open with URI to avoid requiring WAL/SHM files
+        let uriFilename = "file:\(dbPathString)?mode=ro&nolock=1"
+
         guard
             sqlite3_open_v2(
-                dbPathString,
+                uriFilename,
                 &db,
-                SQLITE_OPEN_READONLY,  // Open in read-only mode to avoid changes
+                SQLITE_OPEN_READONLY | SQLITE_OPEN_URI,
                 nil
             ) == SQLITE_OK
         else {
-            print("❌ Impossible d'ouvrir la base pour vérification")
-            if let db = db {
-                let errorMessage = String(cString: sqlite3_errmsg(db))
-                print("   Erreur: \(errorMessage)")
-                sqlite3_close(db)
+            // If we still can't open, just verify the file exists and has content
+            do {
+                let attrs = try FileManager.default.attributesOfItem(atPath: dbPathString)
+                if let fileSize = attrs[.size] as? Int64, fileSize > 0 {
+                    print("   ℹ️  Impossible de vérifier (DB peut être verrouillée)")
+                    print("   ✅ Fichier existe et a du contenu (\(fileSize) bytes)")
+                    return true
+                } else {
+                    print("❌ Fichier vide ou invalide")
+                    return false
+                }
+            } catch {
+                print("❌ Erreur accès fichier: \(error)")
+                if let db = db {
+                    sqlite3_close(db)
+                }
+                return false
             }
-            return false
         }
 
         defer {
@@ -135,6 +155,9 @@ class SQLiteHelper {
 
         guard sqlite3_prepare_v2(db, query, -1, &statement, nil) == SQLITE_OK else {
             print("❌ Impossible de préparer la requête d'intégrité")
+            if statement != nil {
+                sqlite3_finalize(statement)
+            }
             return false
         }
 

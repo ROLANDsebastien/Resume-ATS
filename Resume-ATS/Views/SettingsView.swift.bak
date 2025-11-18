@@ -1,0 +1,436 @@
+import AppKit
+import SwiftData
+import SwiftUI
+import UniformTypeIdentifiers
+
+struct SettingsView: View {
+    @Binding var selectedSection: String?
+    @Environment(\.colorScheme) private var systemColorScheme
+    @AppStorage("colorScheme") private var colorScheme: Int = 2
+    @AppStorage("autoSave") private var autoSave = true
+    @AppStorage("appLanguage") private var appLanguage: String = "fr"
+    @Environment(\.modelContext) private var modelContext
+    @Query private var profiles: [Profile]
+    @Query private var applications: [Application]
+    @Query private var coverLetters: [CoverLetter]
+    @Query private var cvDocuments: [CVDocument]
+
+    @State private var showingExportSuccess = false
+    @State private var showingImportSuccess = false
+    @State private var showingError = false
+    @State private var errorMessage = ""
+    @State private var showingClearDataConfirmation = false
+    @State private var availableBackups: [URL] = []
+    @State private var selectedBackup: URL?
+    @State private var showingRestoreConfirmation = false
+    @State private var showingRestoreRequiresRestart = false
+    @State private var showingDeleteBackupConfirmation = false
+    @State private var backupToDelete: URL?
+    @AppStorage("pendingRestoreBackupPath") private var pendingRestoreBackupPath: String = ""
+
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: { selectedSection = "Dashboard" }) {
+                    Image(systemName: "chevron.left")
+                }
+            }
+        }
+        .onAppear {
+            loadAvailableBackups()
+        }
+        // MARK: - Alerts
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: { selectedSection = "Dashboard" }) {
+                    Image(systemName: "chevron.left")
+                }
+            }
+        }
+        // MARK: - Alerts
+        .alert(
+            appLanguage == "fr" ? "Export réussi" : "Export Successful",
+            isPresented: $showingExportSuccess
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(
+                appLanguage == "fr"
+                    ? "Les données ont été exportées avec succès."
+                    : "Data has been exported successfully.")
+        }
+        .alert(
+            appLanguage == "fr" ? "Import réussi" : "Import Successful",
+            isPresented: $showingImportSuccess
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(
+                appLanguage == "fr"
+                    ? "Les données ont été importées avec succès."
+                    : "Data has been imported successfully.")
+        }
+        .alert(appLanguage == "fr" ? "Erreur" : "Error", isPresented: $showingError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage)
+        }
+        .alert(
+            appLanguage == "fr" ? "Confirmer la suppression" : "Confirm Deletion",
+            isPresented: $showingClearDataConfirmation
+        ) {
+            Button(appLanguage == "fr" ? "Annuler" : "Cancel", role: .cancel) {}
+            Button(
+                appLanguage == "fr" ? "Effacer définitivement" : "Delete Permanently",
+                role: .destructive
+            ) {
+                clearAllData()
+            }
+        } message: {
+            Text(
+                appLanguage == "fr"
+                    ? "Cette action supprimera définitivement tous les profils, candidatures, CVs et documents. Cette action est irréversible."
+                    : "This action will permanently delete all profiles, applications, CVs and documents. This action is irreversible."
+            )
+        }
+        .alert(
+            appLanguage == "fr" ? "Confirmer la restauration" : "Confirm Restore",
+            isPresented: $showingRestoreConfirmation
+        ) {
+            Button(appLanguage == "fr" ? "Annuler" : "Cancel", role: .cancel) {}
+            Button(appLanguage == "fr" ? "Restaurer" : "Restore", role: .destructive) {
+                restoreSelectedBackup()
+            }
+        } message: {
+            Text(
+                appLanguage == "fr"
+                    ? "Cette action va restaurer la sauvegarde sélectionnée. Vous devrez redémarrer l'application pour charger les données restaurées."
+                    : "This action will restore the selected backup. You must restart the application to load the restored data."
+            )
+        }
+        .alert(
+            appLanguage == "fr" ? "Restauration programmée" : "Restore Scheduled",
+            isPresented: $showingRestoreRequiresRestart
+        ) {
+            Button(
+                appLanguage == "fr" ? "Redémarrer maintenant" : "Restart Now", role: .destructive
+            ) {
+                NSApplication.shared.terminate(nil)
+            }
+            Button(appLanguage == "fr" ? "Plus tard" : "Later", role: .cancel) {}
+        } message: {
+            Text(
+                appLanguage == "fr"
+                    ? "La restauration a été programmée pour le prochain démarrage de l'application. Veuillez redémarrer l'application pour restaurer la sauvegarde."
+                    : "The restore has been scheduled for the next app startup. Please restart the application to restore the backup."
+            )
+        }
+        .alert(
+            appLanguage == "fr" ? "Confirmer la suppression" : "Confirm Delete Backup",
+            isPresented: $showingDeleteBackupConfirmation
+        ) {
+            Button(appLanguage == "fr" ? "Annuler" : "Cancel", role: .cancel) {}
+            Button(appLanguage == "fr" ? "Supprimer" : "Delete", role: .destructive) {
+                deleteSelectedBackup()
+            }
+        } message: {
+            Text(
+                appLanguage == "fr"
+                    ? "Cette action supprimera définitivement cette sauvegarde. Cette action est irréversible."
+                    : "This action will permanently delete this backup. This action is irreversible."
+            )
+        }
+    }
+
+    // MARK: - Actions
+
+    private func exportProfiles() {
+        guard
+            let zipURL = DataService.exportProfiles(
+                profiles, coverLetters: coverLetters, applications: applications,
+                cvDocuments: cvDocuments
+            )
+        else {
+            errorMessage =
+                appLanguage == "fr"
+                ? "Erreur lors de l'exportation des données." : "Error exporting data."
+            showingError = true
+            return
+        }
+
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [.zip]
+        savePanel.nameFieldStringValue =
+            "ResumeATS_Backup_\(Date().formatted(.iso8601.dateSeparator(.dash)))"
+
+        savePanel.begin { response in
+            if response == .OK, let url = savePanel.url {
+                do {
+                    if FileManager.default.fileExists(atPath: url.path) {
+                        try FileManager.default.removeItem(at: url)
+                    }
+                    try FileManager.default.copyItem(at: zipURL, to: url)
+                    try FileManager.default.removeItem(at: zipURL)
+                    showingExportSuccess = true
+                } catch {
+                    errorMessage =
+                        appLanguage == "fr"
+                        ? "Erreur lors de la sauvegarde du fichier: \(error.localizedDescription)"
+                        : "Error saving file: \(error.localizedDescription)"
+                    showingError = true
+                }
+            }
+        }
+    }
+
+    private func importProfiles() {
+        let openPanel = NSOpenPanel()
+        openPanel.allowedContentTypes = [.zip]
+        openPanel.canChooseDirectories = false
+        openPanel.allowsMultipleSelection = false
+
+        openPanel.begin { response in
+            if response == .OK, let url = openPanel.url {
+                do {
+                    try DataService.importProfiles(from: url, context: modelContext)
+                    showingImportSuccess = true
+                } catch {
+                    errorMessage =
+                        appLanguage == "fr"
+                        ? "Erreur lors de l'importation: \(error.localizedDescription)"
+                        : "Error importing: \(error.localizedDescription)"
+                    showingError = true
+                }
+            }
+        }
+    }
+
+    private func clearAllData() {
+        do {
+            try DataService.clearAllData(context: modelContext)
+            showingImportSuccess = true
+        } catch {
+            errorMessage =
+                appLanguage == "fr"
+                ? "Erreur lors de la suppression des données: \(error.localizedDescription)"
+                : "Error deleting data: \(error.localizedDescription)"
+            showingError = true
+        }
+    }
+
+    private func loadAvailableBackups() {
+        availableBackups = DatabaseBackupService.shared.listBackups()
+    }
+
+    private func restoreSelectedBackup() {
+        guard let backup = selectedBackup else { return }
+
+        pendingRestoreBackupPath = backup.path
+        DispatchQueue.main.async {
+            showingRestoreRequiresRestart = true
+        }
+    }
+
+    private func deleteSelectedBackup() {
+        guard let backup = backupToDelete else { return }
+
+        do {
+            let fileManager = FileManager.default
+            try fileManager.removeItem(at: backup)
+
+            let walPath = URL(fileURLWithPath: backup.path + "-wal")
+            let shmPath = URL(fileURLWithPath: backup.path + "-shm")
+
+            if fileManager.fileExists(atPath: walPath.path) {
+                try fileManager.removeItem(at: walPath)
+            }
+
+            if fileManager.fileExists(atPath: shmPath.path) {
+                try fileManager.removeItem(at: shmPath)
+            }
+
+            if selectedBackup == backup {
+                selectedBackup = nil
+            }
+
+            loadAvailableBackups()
+
+            let alert = NSAlert()
+            alert.messageText = appLanguage == "fr" ? "Supprimée" : "Deleted"
+            alert.informativeText =
+                appLanguage == "fr"
+                ? "La sauvegarde a été supprimée avec succès."
+                : "The backup has been deleted successfully."
+            alert.runModal()
+        } catch {
+            errorMessage =
+                appLanguage == "fr"
+                ? "Erreur lors de la suppression: \(error.localizedDescription)"
+                : "Error deleting backup: \(error.localizedDescription)"
+            showingError = true
+        }
+    }
+}
+
+// MARK: - Setting Card Component
+struct SettingCard<Content: View>: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let subtitle: String
+    let content: Content
+
+    init(
+        icon: String,
+        iconColor: Color,
+        title: String,
+        subtitle: String,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.icon = icon
+        self.iconColor = iconColor
+        self.title = title
+        self.subtitle = subtitle
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 18))
+                    .foregroundColor(iconColor)
+                    .frame(width: 28, height: 28)
+                    .background(iconColor.opacity(0.1))
+                    .cornerRadius(6)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                content
+            }
+        }
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Backup Item View
+struct BackupItemView: View {
+    let backup: URL
+    let isSelected: Bool
+    let onSelect: () -> Void
+    let onDelete: () -> Void
+    let appLanguage: String
+
+    @State private var backupDate: Date?
+    @State private var backupSize: Int = 0
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(isSelected ? .green : .gray)
+                    .font(.system(size: 18))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(backup.deletingPathExtension().lastPathComponent)
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+
+                    HStack(spacing: 12) {
+                        if let backupDate = backupDate {
+                            Label(
+                                formatDate(backupDate),
+                                systemImage: "calendar"
+                            )
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        }
+
+                        if backupSize > 0 {
+                            Label(
+                                formatBytes(backupSize),
+                                systemImage: "doc"
+                            )
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
+                Spacer()
+
+                Menu {
+                    Button(role: .destructive, action: onDelete) {
+                        Label(appLanguage == "fr" ? "Supprimer" : "Delete", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .foregroundColor(.secondary)
+                }
+
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+                    .opacity(isSelected ? 1 : 0.5)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onSelect)
+            .padding(.vertical, 12)
+            .padding(.horizontal)
+            .background(isSelected ? Color.accentColor.opacity(0.1) : Color.clear)
+        }
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.3))
+        .cornerRadius(8)
+        .onAppear {
+            loadBackupInfo()
+        }
+    }
+
+    private func loadBackupInfo() {
+        do {
+            let attributes = try FileManager.default.attributesOfItem(atPath: backup.path)
+            backupSize = attributes[.size] as? Int ?? 0
+            backupDate = attributes[.creationDate] as? Date
+        } catch {
+            print("Error loading backup info: \(error)")
+        }
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+
+    private func formatBytes(_ bytes: Int) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB, .useGB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: Int64(bytes))
+    }
+}
+
+struct SettingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        SettingsView(selectedSection: .constant(nil))
+    }
+}

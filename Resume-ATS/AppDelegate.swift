@@ -113,7 +113,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // NOUVEAU: Fonction commune de sauvegarde critique
     private func performCriticalSave(reason: String) {
         guard let container = AppDelegate.sharedModelContainer else {
-            print("⚠️  Pas de ModelContainer disponible")
+            print("ℹ️  ModelContainer pas encore disponible (normal pendant l'initialisation)")
             return
         }
 

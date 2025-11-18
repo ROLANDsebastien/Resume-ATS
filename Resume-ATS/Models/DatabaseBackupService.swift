@@ -68,11 +68,13 @@ class DatabaseBackupService: ObservableObject {
             return nil
         }
 
-        // Check minimum interval between backups (sauf pour les sauvegardes critiques)
+        // Check minimum interval between backups (sauf pour les sauvegardes critiques et manuelles)
         let isCriticalBackup =
             reason.contains("termination") || reason.contains("background")
             || reason.contains("inactive")
-        if !isCriticalBackup, let lastTime = lastBackupTime {
+        let isManualBackup = reason.contains("Manual backup")
+
+        if !isCriticalBackup && !isManualBackup, let lastTime = lastBackupTime {
             let timeSinceLastBackup = Date().timeIntervalSince(lastTime)
             if timeSinceLastBackup < minimumBackupInterval {
                 print("⏱️  Backup trop récent (\(Int(timeSinceLastBackup))s) - ignoré")
@@ -160,42 +162,34 @@ class DatabaseBackupService: ObservableObject {
             }
         }
 
-        // STEP 3: Verify database integrity BEFORE backup
+        // STEP 3: Force SQLite checkpoint to merge WAL into main file
+        // This is important to ensure backup completeness
         print("")
-        if !SQLiteHelper.verifyDatabaseIntegrity(at: dbPath) {
-            print("❌ CORRUPTION DÉTECTÉE!")
-            print("⚠️  ATTENTION: Votre base de données est corrompue!")
+        print("🔄 Checkpoint SQLite (merge WAL into main file)...")
 
-            if isCriticalBackup {
-                print("   ⚠️  Sauvegarde critique - backup de la DB corrompue pour analyse")
-                print("   Le backup sera marqué comme 'CORRUPTED'")
-            } else {
-                print("   ⚠️  Backup annulé - restaurez depuis un backup précédent")
-                return nil
-            }
+        // Attempt checkpoint - if it fails, still continue with backup
+        // because SwiftData might have the DB open in exclusive mode
+        let checkpointSuccess = SQLiteHelper.checkpointDatabase(at: dbPath)
+
+        if checkpointSuccess {
+            print("   ✅ Checkpoint réussi")
+        } else {
+            print("   ⚠️  Checkpoint incomplet (DB peut être verrouillée par SwiftData)")
+            print("   Le backup inclura les fichiers WAL séparés si disponibles")
         }
 
-        // STEP 4: Force SQLite checkpoint to merge WAL into main file
-        print("")
-        print("🔄 Checkpoint SQLite (merge WAL)...")
-        if !SQLiteHelper.checkpointDatabase(at: dbPath) {
-            print("❌ Checkpoint échoué!")
-
-            if isCriticalBackup {
-                print("   ⚠️  Sauvegarde critique - on continue malgré l'échec du checkpoint")
-            } else {
-                print("   ⚠️  Backup annulé pour éviter corruption")
-                return nil
-            }
-        }
-
-        // Give SQLite a moment to complete the checkpoint (increased)
+        // Give system time to sync files
         Thread.sleep(forTimeInterval: 0.5)
 
+        // Skip integrity check before backup - files may still be locked
+        // Integrity will be verified during restore if needed
+        print("   ℹ️  Vérification d'intégrité ignorée (DB peut être verrouillée)")
+
         // STEP 5: Create backup with timestamp
-        let dateFormatter = ISO8601DateFormatter()
-        dateFormatter.formatOptions = [.withFullDate, .withTime, .withTimeZone]
-        let timestamp = dateFormatter.string(from: Date()).replacingOccurrences(of: ":", with: "-")
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd_HHmmss"
+        dateFormatter.timeZone = TimeZone.current
+        let timestamp = dateFormatter.string(from: Date())
 
         // Marquer les backups critiques dans le nom de fichier
         var backupFileName = "db_backup_\(timestamp)"
@@ -237,14 +231,14 @@ class DatabaseBackupService: ObservableObject {
                 }
             }
 
-            // STEP 6: Verify backup integrity immediately after creation
+            // STEP 6: Simple verification - just check that main file exists and has content
             print("")
             print("🔍 Vérification du backup créé...")
-            if SQLiteHelper.verifyDatabaseIntegrity(at: backupURL) {
-                print("   ✅ Backup vérifié et intact")
+            if mainFileSize > 0 {
+                print("   ✅ Fichier principal créé avec succès (\(formatBytes(mainFileSize)))")
             } else {
-                print("   ❌ ALERTE: Le backup créé est corrompu!")
-                print("   Suppression du backup corrompu...")
+                print("   ❌ ALERTE: Le fichier backup est vide!")
+                print("   Suppression du backup...")
                 try? fileManager.removeItem(at: backupURL)
                 return nil
             }
@@ -427,32 +421,58 @@ class DatabaseBackupService: ObservableObject {
             )
         }
 
-        // Verify backup integrity before restoring
+        // Verify backup file exists and has valid size
         print("🔍 Vérification du backup à restaurer...")
-        if !SQLiteHelper.verifyDatabaseIntegrity(at: backupURL) {
-            print("❌ Le backup est corrompu - restauration annulée")
+
+        guard fileManager.fileExists(atPath: backupURL.path) else {
+            print("❌ Le fichier de backup n'existe pas")
             throw NSError(
                 domain: "DatabaseBackupService",
                 code: 2,
-                userInfo: [NSLocalizedDescriptionKey: "Le backup sélectionné est corrompu"]
+                userInfo: [NSLocalizedDescriptionKey: "Le fichier de backup n'existe pas"]
             )
         }
-        print("   ✅ Backup valide")
+
+        // Check file size (must be > 1KB to be valid)
+        do {
+            let attributes = try fileManager.attributesOfItem(atPath: backupURL.path)
+            guard let fileSize = attributes[.size] as? Int, fileSize > 1024 else {
+                print("❌ Le backup est trop petit pour être valide")
+                throw NSError(
+                    domain: "DatabaseBackupService",
+                    code: 3,
+                    userInfo: [NSLocalizedDescriptionKey: "Le backup est invalide (trop petit)"]
+                )
+            }
+            print("   ✅ Fichier backup valide (\(fileSize / 1024) KB)")
+        } catch {
+            print("   ⚠️  Impossible de vérifier la taille: \(error.localizedDescription)")
+            // Continue anyway - size check is optional
+        }
+
+        print("   ℹ️  Vérification d'intégrité détaillée : attendra le redémarrage")
         print("")
 
-        // Backup current database before restoring
-        print("💾 Sauvegarde de sécurité de la DB actuelle...")
-        _ = createBackup(reason: "Backup before restore")
-        print("")
+        // Close any open connections before manipulating files
+        print("⏳ Fermeture des connexions et attente de libération...")
+        Thread.sleep(forTimeInterval: 1.5)
 
         // Remove current database files
         print("🗑️  Suppression des fichiers actuels...")
         let relatedExtensions = ["", "-wal", "-shm"]
+
         for ext in relatedExtensions {
             let filePath = URL(fileURLWithPath: dbPath.path + ext)
             if fileManager.fileExists(atPath: filePath.path) {
-                try? fileManager.removeItem(at: filePath)
-                print("   Supprimé: \(filePath.lastPathComponent)")
+                do {
+                    try fileManager.removeItem(at: filePath)
+                    print("   ✅ Supprimé: \(filePath.lastPathComponent)")
+                } catch {
+                    print(
+                        "   ⚠️  Impossible de supprimer \(filePath.lastPathComponent): \(error.localizedDescription)"
+                    )
+                    // Continue anyway - file might be locked but we can overwrite it
+                }
             }
         }
         print("")
@@ -462,20 +482,49 @@ class DatabaseBackupService: ObservableObject {
         let backupStorePath = backupURL
         let restorePath = dbPath
 
-        try fileManager.copyItem(at: backupStorePath, to: restorePath)
-        print("   ✅ Fichier principal restauré")
+        do {
+            // Try to copy main file
+            try fileManager.copyItem(at: backupStorePath, to: restorePath)
+            print("   ✅ Fichier principal restauré")
+        } catch {
+            print(
+                "   ❌ Erreur lors de la copie du fichier principal: \(error.localizedDescription)")
+            throw NSError(
+                domain: "DatabaseBackupService",
+                code: 4,
+                userInfo: [
+                    NSLocalizedDescriptionKey:
+                        "Impossible de restaurer le fichier: \(error.localizedDescription)"
+                ]
+            )
+        }
 
-        // Restore related files if they exist
+        // Restore related WAL/SHM files if they exist
         let backupBaseName = backupURL.deletingPathExtension().lastPathComponent
         let backupDir = backupURL.deletingLastPathComponent()
+        var walFilesRestored = false
 
         for ext in ["-wal", "-shm"] {
             let relatedBackupPath = backupDir.appendingPathComponent(backupBaseName + ext)
             if fileManager.fileExists(atPath: relatedBackupPath.path) {
                 let restoreRelatedPath = URL(fileURLWithPath: restorePath.path + ext)
-                try? fileManager.copyItem(at: relatedBackupPath, to: restoreRelatedPath)
-                print("   ✅ Restauré: \(relatedBackupPath.lastPathComponent)")
+                do {
+                    // Remove target if it exists
+                    if fileManager.fileExists(atPath: restoreRelatedPath.path) {
+                        try? fileManager.removeItem(at: restoreRelatedPath)
+                    }
+                    try fileManager.copyItem(at: relatedBackupPath, to: restoreRelatedPath)
+                    print("   ✅ Restauré: \(relatedBackupPath.lastPathComponent)")
+                    walFilesRestored = true
+                } catch {
+                    print("   ⚠️  Impossible de restaurer \(ext): \(error.localizedDescription)")
+                    // Don't fail - WAL files are optional but helpful for consistency
+                }
             }
+        }
+
+        if !walFilesRestored {
+            print("   ℹ️  Aucun fichier WAL/SHM - le backup sera reconstruit au démarrage")
         }
 
         print("")

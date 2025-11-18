@@ -89,11 +89,7 @@ struct ContentView: View {
     @AppStorage("appLanguage") private var appLanguage: String = "fr"
     @AppStorage("autoSave") private var autoSave = true
     @Environment(\.modelContext) private var modelContext
-    @State private var autoSaveTimer: Timer?
-    @State private var lastSaveTime: Date?
-    @State private var lastBackupTime: Date?
-    @State private var saveErrorCount = 0
-    private let backupInterval: TimeInterval = 300  // Backup every 5 minutes instead of every save
+    @StateObject private var saveManager = SaveManager.shared
 
     var body: some View {
         NavigationSplitView {
@@ -157,79 +153,24 @@ struct ContentView: View {
         .environment(\.locale, Locale(identifier: appLanguage))
         .onAppear {
             if autoSave {
-                startAutoSave()
-            }
-        }
-        .onDisappear {
-            autoSaveTimer?.invalidate()
-        }
-        .onReceive(
-            Timer.publish(every: 30, on: .main, in: .common).autoconnect(),
-            perform: { _ in
-                if autoSave {
-                    autoSaveData()
+                // Save whenever ContentView appears and has changes
+                if modelContext.hasChanges {
+                    _ = saveManager.saveFromUIContext(
+                        modelContext,
+                        reason: "ContentView appeared"
+                    )
                 }
             }
-        )
-    }
-
-    private func startAutoSave() {
-        autoSaveTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in
-            autoSaveData()
         }
-    }
-
-    private func autoSaveData() {
-        do {
-            // Check if there are changes before saving to avoid unnecessary operations
-            if modelContext.hasChanges {
-                try modelContext.save()
-                lastSaveTime = Date()
-                saveErrorCount = 0
-
-                let timeString = Date().formatted(date: .abbreviated, time: .standard)
-                print("✅ Sauvegarde réussie à \(timeString)")
-
-                // Create a backup only every 5 minutes (not every 30 seconds)
-                // This prevents excessive I/O and potential race conditions
-                let now = Date()
-                let shouldBackup =
-                    lastBackupTime == nil
-                    || now.timeIntervalSince(lastBackupTime!) >= backupInterval
-
-                if shouldBackup {
-                    print("⏱️  Intervalle de backup atteint - création backup...")
-
-                    // Capture modelContext to avoid issues with struct mutation
-                    let context = modelContext
-
-                    // Use utility queue (not background) to ensure backup completes
-                    DispatchQueue.global(qos: .utility).async {
-                        // Pass the ModelContext to ensure it's saved before backup
-                        _ = DatabaseBackupService.shared.createBackup(
-                            reason: "Auto-save periodic backup",
-                            modelContext: context
-                        )
-                    }
-
-                    // Update last backup time immediately
-                    lastBackupTime = now
-                } else {
-                    let timeSinceLastBackup = Int(now.timeIntervalSince(lastBackupTime ?? now))
-                    print("ℹ️  Backup pas nécessaire (dernier: il y a \(timeSinceLastBackup)s)")
+        // Key: Save the UI context when data changes
+        .onChange(of: modelContext.hasChanges) { _, hasChanges in
+            if hasChanges && autoSave {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    _ = saveManager.saveFromUIContext(
+                        modelContext,
+                        reason: "Data changed in UI"
+                    )
                 }
-            }
-        } catch {
-            saveErrorCount += 1
-            print("⚠️  Erreur lors de la sauvegarde (tentative \(saveErrorCount)): \(error)")
-
-            // Si trop d'erreurs consécutives, logger plus de détails
-            if saveErrorCount >= 3 {
-                print("🚨 ATTENTION: Multiples erreurs de sauvegarde détectées!")
-                print(
-                    "   Dernière tentative: \(Date().formatted(date: .abbreviated, time: .standard))"
-                )
-                print("   Erreur: \(error.localizedDescription)")
             }
         }
     }
