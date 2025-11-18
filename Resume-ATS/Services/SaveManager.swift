@@ -30,7 +30,7 @@ class SaveManager: ObservableObject {
 
     // Configuration
     private let autoSaveInterval: TimeInterval = 30  // Save every 30 seconds
-    private let autoBackupInterval: TimeInterval = 3600  // Backup every 1 hour
+    private let autoBackupInterval: TimeInterval = 600  // Backup every 10 minutes
 
     private init() {
         print("💾 SaveManager initialized")
@@ -49,7 +49,7 @@ class SaveManager: ObservableObject {
         print("🔗 SaveManager: Main UI context registered")
     }
 
-    /// Start automatic saving every 30 seconds and automatic backup every hour
+    /// Start automatic saving every 30 seconds and automatic backup every 10 minutes
     func startAutoSave() {
         guard modelContainer != nil else {
             print("❌ SaveManager: Cannot start auto-save without ModelContainer")
@@ -84,7 +84,7 @@ class SaveManager: ObservableObject {
         stopAutoBackup()
     }
 
-    /// Start automatic backup every hour
+    /// Start automatic backup every 10 minutes
     func startAutoBackup() {
         guard modelContainer != nil else {
             print("❌ SaveManager: Cannot start auto-backup without ModelContainer")
@@ -94,7 +94,7 @@ class SaveManager: ObservableObject {
         stopAutoBackup()
 
         print(
-            "⏰ SaveManager: Starting auto-backup (interval: \(Int(autoBackupInterval))s = \(Int(autoBackupInterval / 3600))h)"
+            "⏰ SaveManager: Starting auto-backup (interval: \(Int(autoBackupInterval))s = \(Int(autoBackupInterval / 60)) minutes)"
         )
 
         autoBackupTimer = Timer.scheduledTimer(withTimeInterval: autoBackupInterval, repeats: true)
@@ -119,27 +119,51 @@ class SaveManager: ObservableObject {
 
     /// Perform automatic save - called by timer
     private func performAutoSave() {
-        guard let container = modelContainer else { return }
+        guard let container = modelContainer else {
+            print("⚠️  SaveManager: Auto-save skipped - no ModelContainer")
+            return
+        }
+
+        print("")
+        print("═══════════════════════════════════════════════════════════")
+        print("💾 SaveManager: Auto-save triggered")
+        print("   Time: \(Date().formatted(date: .abbreviated, time: .standard))")
+        print("═══════════════════════════════════════════════════════════")
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            _ = self?.saveToContainer(container, reason: "Auto-save", isBackground: false)
+            let success =
+                self?.saveToContainer(container, reason: "Auto-save", isBackground: false) ?? false
+            if success {
+                print("✅ Auto-save completed")
+            } else {
+                print("❌ Auto-save failed")
+            }
+            print("═══════════════════════════════════════════════════════════")
+            print("")
         }
     }
 
     /// Perform automatic backup - called by timer
     private func performAutoBackup() {
+        print("")
+        print("═══════════════════════════════════════════════════════════")
         print("📦 SaveManager: Starting automatic backup...")
+        print("   Time: \(Date().formatted(date: .abbreviated, time: .standard))")
+        print("═══════════════════════════════════════════════════════════")
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let backupURL = self?.backupCallback?("Automatic hourly backup")
+            let backupURL = self?.backupCallback?("Automatic backup")
 
             DispatchQueue.main.async {
                 if backupURL != nil {
                     self?.lastBackupTime = Date()
                     print("✅ SaveManager: Automatic backup completed successfully")
+                    print("   Backup: \(backupURL?.lastPathComponent ?? "unknown")")
                 } else {
                     print("❌ SaveManager: Automatic backup failed")
                 }
+                print("═══════════════════════════════════════════════════════════")
+                print("")
             }
         }
     }
