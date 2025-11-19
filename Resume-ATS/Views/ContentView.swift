@@ -152,6 +152,9 @@ struct ContentView: View {
         .navigationSplitViewStyle(.automatic)
         .environment(\.locale, Locale(identifier: appLanguage))
         .onAppear {
+            // Explicitly register the main UI context with SaveManager
+            saveManager.registerMainContext(modelContext)
+
             if autoSave {
                 // Save whenever ContentView appears and has changes
                 if modelContext.hasChanges {
