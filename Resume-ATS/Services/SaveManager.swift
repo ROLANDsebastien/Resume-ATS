@@ -30,7 +30,7 @@ class SaveManager: ObservableObject {
 
     // Configuration
     private let autoSaveInterval: TimeInterval = 30  // Save every 30 seconds
-    private let autoBackupInterval: TimeInterval = 600  // Backup every 10 minutes
+    private let autoBackupInterval: TimeInterval = 3600  // Backup every hour
 
     private init() {
         print("💾 SaveManager initialized")
@@ -42,14 +42,14 @@ class SaveManager: ObservableObject {
         print("✅ SaveManager configured with ModelContainer")
     }
 
-    /// Register the main UI's ModelContext (CRITICAL)
-    /// This must be called with @Environment(\.modelContext) to prevent context isolation
+    /// Register the main UI's ModelContext (CRITICAL - MUST BE CALLED)
+    /// This is the ONLY context that should be used for saving
     func registerMainContext(_ context: ModelContext) {
         self.mainModelContext = context
         print("🔗 SaveManager: Main UI context registered")
     }
 
-    /// Start automatic saving every 30 seconds and automatic backup every 10 minutes
+    /// Start automatic saving every 30 seconds
     func startAutoSave() {
         guard modelContainer != nil else {
             print("❌ SaveManager: Cannot start auto-save without ModelContainer")
@@ -73,7 +73,7 @@ class SaveManager: ObservableObject {
         startAutoBackup()
     }
 
-    /// Stop automatic saving and automatic backup
+    /// Stop automatic saving and backup
     func stopAutoSave() {
         if let timer = autoSaveTimer {
             timer.invalidate()
@@ -84,7 +84,7 @@ class SaveManager: ObservableObject {
         stopAutoBackup()
     }
 
-    /// Start automatic backup every 10 minutes
+    /// Start automatic backup every hour
     func startAutoBackup() {
         guard modelContainer != nil else {
             print("❌ SaveManager: Cannot start auto-backup without ModelContainer")
@@ -94,7 +94,7 @@ class SaveManager: ObservableObject {
         stopAutoBackup()
 
         print(
-            "⏰ SaveManager: Starting auto-backup (interval: \(Int(autoBackupInterval))s = \(Int(autoBackupInterval / 60)) minutes)"
+            "⏰ SaveManager: Starting auto-backup (interval: \(Int(autoBackupInterval))s = \(Int(autoBackupInterval / 60))m)"
         )
 
         autoBackupTimer = Timer.scheduledTimer(withTimeInterval: autoBackupInterval, repeats: true)
@@ -118,9 +118,10 @@ class SaveManager: ObservableObject {
     }
 
     /// Perform automatic save - called by timer
+    /// CRITICAL: Uses the registered UI context, NOT a new context
     private func performAutoSave() {
-        guard let container = modelContainer else {
-            print("⚠️  SaveManager: Auto-save skipped - no ModelContainer")
+        guard let context = mainModelContext else {
+            print("⚠️  SaveManager: Auto-save skipped - no UI context registered")
             return
         }
 
@@ -131,8 +132,7 @@ class SaveManager: ObservableObject {
         print("═══════════════════════════════════════════════════════════")
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let success =
-                self?.saveToContainer(container, reason: "Auto-save", isBackground: false) ?? false
+            let success = self?.saveContext(context, reason: "Auto-save") ?? false
             if success {
                 print("✅ Auto-save completed")
             } else {
@@ -152,7 +152,7 @@ class SaveManager: ObservableObject {
         print("═══════════════════════════════════════════════════════════")
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let backupURL = self?.backupCallback?("Automatic backup")
+            let backupURL = self?.backupCallback?("Automatic hourly backup")
 
             DispatchQueue.main.async {
                 if backupURL != nil {
@@ -168,27 +168,39 @@ class SaveManager: ObservableObject {
         }
     }
 
-    /// Force an immediate save with optional backup
+    /// Force an immediate save from UI context with optional backup
+    /// This is the PRIMARY method for saving during app lifecycle events
     @discardableResult
     func forceSave(
         from container: ModelContainer,
         reason: String,
         shouldBackup: Bool = false
     ) -> Bool {
-        saveLock.lock()
-        defer { saveLock.unlock() }
+        // Try to use the registered UI context first
+        if let context = mainModelContext {
+            let success = saveContext(context, reason: reason)
 
-        let success = saveToContainer(container, reason: reason, isBackground: false)
+            if success && shouldBackup {
+                performBackup(reason: reason)
+            }
 
-        if success && shouldBackup {
-            performBackup(reason: reason)
+            return success
+        } else {
+            // Fallback: create a temporary context (less ideal but safer than data loss)
+            print("⚠️  SaveManager: Using fallback context (UI context not registered)")
+            let tempContext = ModelContext(container)
+            let success = saveContext(tempContext, reason: reason)
+
+            if success && shouldBackup {
+                performBackup(reason: reason)
+            }
+
+            return success
         }
-
-        return success
     }
 
-    /// Save data from the main UI context to storage
-    /// This is the PRIMARY save method that uses the UI's ModelContext
+    /// Save data from the UI context
+    /// CRITICAL: This MUST use the UI's ModelContext to prevent data loss
     @discardableResult
     func saveFromUIContext(
         _ context: ModelContext,
@@ -200,6 +212,21 @@ class SaveManager: ObservableObject {
         print("Reason: \(reason)")
         print("╚════════════════════════════════════════════════════════╝")
 
+        // Register this context if not already registered
+        if mainModelContext == nil {
+            mainModelContext = context
+            print("🔗 Auto-registered UI context")
+        }
+
+        return saveContext(context, reason: reason)
+    }
+
+    /// Internal method to save a context
+    /// This is the ONLY method that performs actual saves
+    private func saveContext(
+        _ context: ModelContext,
+        reason: String
+    ) -> Bool {
         saveLock.lock()
         defer { saveLock.unlock() }
 
@@ -215,51 +242,18 @@ class SaveManager: ObservableObject {
         }
 
         if !context.hasChanges {
-            print("ℹ️  No changes to save")
+            print("ℹ️  No changes to save for: \(reason)")
             return true
         }
 
         do {
             try context.save()
-            print("✅ Context saved successfully")
+            print("✅ SaveManager: \(reason) successful")
 
-            // Request SQLite checkpoint via private API
-            requestDatabaseCheckpoint()
-
-            saveError = nil
-            return true
-
-        } catch {
-            let errorMsg = error.localizedDescription
-            print("❌ Save error: \(errorMsg)")
-            saveError = errorMsg
-            return false
-        }
-    }
-
-    /// Internal method to save using a container
-    private func saveToContainer(
-        _ container: ModelContainer,
-        reason: String,
-        isBackground: Bool
-    ) -> Bool {
-        let context = ModelContext(container)
-
-        if !context.hasChanges {
-            return true
-        }
-
-        do {
-            try context.save()
-
-            if !isBackground {
-                print("✅ SaveManager: \(reason) successful")
-            }
-
+            // Request SQLite checkpoint
             requestDatabaseCheckpoint()
 
             DispatchQueue.main.async {
-                self.lastSaveTime = Date()
                 self.saveError = nil
             }
 
@@ -267,7 +261,7 @@ class SaveManager: ObservableObject {
 
         } catch {
             let errorMsg = error.localizedDescription
-            print("❌ SaveManager save error: \(errorMsg)")
+            print("❌ SaveManager save error (\(reason)): \(errorMsg)")
 
             DispatchQueue.main.async {
                 self.saveError = errorMsg
@@ -282,9 +276,8 @@ class SaveManager: ObservableObject {
     private func requestDatabaseCheckpoint() {
         if let dbPath = getDatabasePath() {
             DispatchQueue.global(qos: .utility).async {
-                // Access the database file to force SQLite to checkpoint
+                // Access the database file to force SQLite checkpoint
                 _ = try? FileManager.default.attributesOfItem(atPath: dbPath.path)
-                print("✅ Database checkpoint completed")
             }
         }
     }
@@ -336,7 +329,7 @@ class SaveManager: ObservableObject {
         guard let lastSave = lastSaveTime else {
             return true
         }
-        return Date().timeIntervalSince(lastSave) > 600
+        return Date().timeIntervalSince(lastSave) > 300  // 5 minutes
     }
 
     deinit {
