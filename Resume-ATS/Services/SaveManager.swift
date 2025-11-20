@@ -276,8 +276,9 @@ class SaveManager: ObservableObject {
     private func requestDatabaseCheckpoint() {
         if let dbPath = getDatabasePath() {
             DispatchQueue.global(qos: .utility).async {
-                // Access the database file to force SQLite checkpoint
-                _ = try? FileManager.default.attributesOfItem(atPath: dbPath.path)
+                // Use SQLiteHelper to perform a proper WAL checkpoint
+                // This merges the WAL file into the main database file
+                _ = SQLiteHelper.checkpointDatabase(at: dbPath)
             }
         }
     }

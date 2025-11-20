@@ -152,29 +152,11 @@ struct ContentView: View {
         .navigationSplitViewStyle(.automatic)
         .environment(\.locale, Locale(identifier: appLanguage))
         .onAppear {
-            // Explicitly register the main UI context with SaveManager
+            // CRITICAL: Register the main UI context with SaveManager
+            // This ensures that auto-save and force-save operations use the correct context
+            // containing the user's changes
             saveManager.registerMainContext(modelContext)
-
-            if autoSave {
-                // Save whenever ContentView appears and has changes
-                if modelContext.hasChanges {
-                    _ = saveManager.saveFromUIContext(
-                        modelContext,
-                        reason: "ContentView appeared"
-                    )
-                }
-            }
-        }
-        // Key: Save the UI context when data changes
-        .onChange(of: modelContext.hasChanges) { _, hasChanges in
-            if hasChanges && autoSave {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    _ = saveManager.saveFromUIContext(
-                        modelContext,
-                        reason: "Data changed in UI"
-                    )
-                }
-            }
+            print("✅ ContentView: Main context registered with SaveManager")
         }
     }
 }
