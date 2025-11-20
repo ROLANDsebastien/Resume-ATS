@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  Resume-ATS
-//
-//  Created by ROLAND Sébastien on 21/09/2025.
-//
-
 import Combine
 import SwiftData
 import SwiftUI
@@ -26,7 +19,6 @@ struct TemplatesView: View {
                         .fontWeight(.bold)
                         .padding(.top)
 
-                    // Profile selector
                     VStack(alignment: .leading) {
                         Text(language == "fr" ? "Sélectionner un profil:" : "Select a profile:")
                             .font(.headline)
@@ -152,9 +144,6 @@ struct ContentView: View {
         .navigationSplitViewStyle(.automatic)
         .environment(\.locale, Locale(identifier: appLanguage))
         .onAppear {
-            // CRITICAL: Register the main UI context with SaveManager
-            // This ensures that auto-save and force-save operations use the correct context
-            // containing the user's changes
             saveManager.registerMainContext(modelContext)
             print("✅ ContentView: Main context registered with SaveManager")
         }

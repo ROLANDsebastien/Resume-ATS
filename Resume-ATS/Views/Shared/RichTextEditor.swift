@@ -2,7 +2,6 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Rich Text Editor
 struct RichTextEditor: NSViewRepresentable {
     @Binding var attributedString: NSAttributedString
     @Binding var selectedRange: NSRange

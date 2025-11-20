@@ -1,10 +1,3 @@
-//
-//  Resume_ATSApp.swift
-//  Resume-ATS
-//
-//  Created by ROLAND Sébastien on 21/09/2025.
-//
-
 import Combine
 import SwiftData
 import SwiftUI
@@ -21,7 +14,6 @@ struct Resume_ATSApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("pendingRestoreBackupPath") private var pendingRestoreBackupPath: String = ""
 
-    // Centralized save manager (singleton)
     @StateObject private var saveManager = SaveManager.shared
 
     var body: some Scene {
@@ -33,10 +25,8 @@ struct Resume_ATSApp: App {
                     )
                     .modelContainer(container)
                     .onAppear {
-                        // Configure and start the save manager
                         saveManager.configure(with: container)
 
-                        // Setup backup callback
                         saveManager.backupCallback = { reason in
                             return DatabaseBackupService.shared.createBackup(reason: reason)
                         }
@@ -80,7 +70,6 @@ struct Resume_ATSApp: App {
         }
     }
 
-    // Handle app lifecycle changes
     private func handleScenePhaseChange(oldPhase: ScenePhase, newPhase: ScenePhase) {
         guard let container = sharedModelContainer else { return }
 
@@ -91,10 +80,8 @@ struct Resume_ATSApp: App {
             print("📱 APPLICATION MOVED TO BACKGROUND")
             print("═══════════════════════════════════════════════════════════")
 
-            // Stop auto-save timer
             saveManager.stopAutoSave()
 
-            // Force a synchronous save before backup
             _ = saveManager.forceSave(
                 from: container,
                 reason: "App moving to background",
@@ -103,7 +90,6 @@ struct Resume_ATSApp: App {
 
         case .inactive:
             print("📱 Application inactive (transition)")
-            // Save on transition
             _ = saveManager.forceSave(
                 from: container,
                 reason: "App becoming inactive"
@@ -115,13 +101,10 @@ struct Resume_ATSApp: App {
             print("📱 APPLICATION ACTIVATED")
             print("═══════════════════════════════════════════════════════════")
 
-            // Restart auto-save
             saveManager.startAutoSave()
 
-            // Verify database integrity
             verifyDatabaseIntegrity()
 
-            // Verify data is still present
             verifyDataPresence(container: container)
 
         @unknown default:
@@ -129,7 +112,6 @@ struct Resume_ATSApp: App {
         }
     }
 
-    // Verify data presence after activation
     private func verifyDataPresence(container: ModelContainer) {
         print("🔍 Verifying data presence...")
 
@@ -171,11 +153,10 @@ struct Resume_ATSApp: App {
         print("🚀 APPLICATION STARTUP")
         print("============================================================")
 
-        // Check if there's a pending restore before initializing ModelContainer
         if !pendingRestoreBackupPath.isEmpty {
             print("🔄 Pending restore detected: \(pendingRestoreBackupPath)")
             performPreStartupRestore(backupPath: pendingRestoreBackupPath)
-            pendingRestoreBackupPath = ""  // Clear the flag
+            pendingRestoreBackupPath = ""
         }
 
         do {
@@ -238,14 +219,12 @@ struct Resume_ATSApp: App {
             if FileManager.default.fileExists(atPath: dbPath.path) {
                 print("   ✅ Database file exists")
 
-                // Check if file is readable
                 if FileManager.default.isReadableFile(atPath: dbPath.path) {
                     print("   ✅ Database file is readable")
                 } else {
                     print("   ❌ Database file is NOT readable")
                 }
 
-                // Check file size
                 if let attributes = try? FileManager.default.attributesOfItem(atPath: dbPath.path),
                     let fileSize = attributes[.size] as? Int
                 {

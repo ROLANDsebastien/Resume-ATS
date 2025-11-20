@@ -1,10 +1,3 @@
-//
-//  StatistiquesView.swift
-//  Resume-ATS
-//
-//  Created by ROLAND Sébastien on 27/09/2025.
-//
-
 import AppKit
 import Charts
 import SwiftData
@@ -39,7 +32,7 @@ struct StatistiquesView: View {
         let calendar = Calendar.current
 
         var allMonths: [Date] = []
-        let numberOfMonths = 12  // Display 1 year of data
+        let numberOfMonths = 12
 
         for i in 0..<numberOfMonths {
             if let date = calendar.date(

@@ -1,14 +1,6 @@
 import SwiftData
 import SwiftUI
 
-//
-//  ATSResumeView.swift
-//  Resume-ATS
-//
-//  Created by ROLAND Sébastien on 27/09/2025.
-//
-
-// MARK: - Attributed Text View for PDF
 struct AttributedTextView: NSViewRepresentable {
     let attributedString: NSAttributedString
     let fontSize: CGFloat
@@ -26,7 +18,6 @@ struct AttributedTextView: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSTextView, context: Context) {
         let mutableString = NSMutableAttributedString(attributedString: attributedString)
-        // Ensure all text is black and has proper font size
         mutableString.addAttribute(
             .foregroundColor, value: NSColor.black,
             range: NSRange(location: 0, length: mutableString.length))

@@ -1,10 +1,3 @@
-//
-//  CVsView.swift
-//  Resume-ATS
-//
-//  Created by ROLAND Sébastien on 27/09/2025.
-//
-
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers

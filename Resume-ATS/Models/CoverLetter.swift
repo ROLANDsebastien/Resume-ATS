@@ -1,10 +1,3 @@
-//
-//  CoverLetter.swift
-//  Resume-ATS
-//
-//  Created by ROLAND Sébastien on 27/09/2025.
-//
-
 import AppKit
 import Foundation
 import SwiftData
@@ -13,7 +6,6 @@ extension NSAttributedString {
     static func fromMarkdown(_ markdown: String) -> NSAttributedString {
         let attributedString = NSMutableAttributedString(string: "")
 
-        // Simple regex to find **bold** text
         let pattern = "\\*\\*(.*?)\\*\\*"
         let regex = try? NSRegularExpression(pattern: pattern, options: [])
 
@@ -21,14 +13,12 @@ extension NSAttributedString {
 
         regex?.enumerateMatches(in: markdown, options: [], range: NSRange(location: 0, length: markdown.count)) { match, _, _ in
             if let match = match {
-                // Add text before the match
                 let beforeRange = lastRange.lowerBound..<markdown.index(markdown.startIndex, offsetBy: match.range.location)
                 if !beforeRange.isEmpty {
                     let beforeText = String(markdown[beforeRange])
                     attributedString.append(NSAttributedString(string: beforeText))
                 }
 
-                // Add the bold text
                 let boldRange = markdown.index(markdown.startIndex, offsetBy: match.range.location + 2)..<markdown.index(markdown.startIndex, offsetBy: match.range.location + match.range.length - 2)
                 let boldText = String(markdown[boldRange])
                 let boldAttr = NSAttributedString(string: boldText, attributes: [.font: NSFont.boldSystemFont(ofSize: NSFont.systemFontSize)])
@@ -38,7 +28,6 @@ extension NSAttributedString {
             }
         }
 
-        // Add remaining text
         if lastRange.lowerBound < markdown.endIndex {
             let remainingText = String(markdown[lastRange])
             attributedString.append(NSAttributedString(string: remainingText))

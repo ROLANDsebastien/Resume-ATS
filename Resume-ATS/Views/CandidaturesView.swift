@@ -1,10 +1,3 @@
-//
-//  CandidaturesView.swift
-//  Resume-ATS
-//
-//  Created by ROLAND Sébastien on 27/09/2025.
-//
-
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
@@ -41,7 +34,6 @@ struct CandidaturesView: View {
                     .fontWeight(.bold)
                     .padding(.top)
 
-                // Status filter
                 HStack {
                     Spacer()
                     Text(language == "fr" ? "Filtrer par statut:" : "Filter by status:")

@@ -3,15 +3,12 @@ import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
-    // Keep reference to ModelContainer for saving on termination
     static var sharedModelContainer: ModelContainer?
 
-    // Track last save time to avoid excessive saves
     private var lastSaveTime: Date = Date()
-    private let minimumSaveInterval: TimeInterval = 30  // 30 seconds between saves
+    private let minimumSaveInterval: TimeInterval = 30
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Restaurer la position et la taille de la fenêtre au démarrage
         guard let window = NSApplication.shared.windows.first else { return }
 
         let windowX = UserDefaults.standard.double(forKey: "windowX")
@@ -22,7 +19,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         print("🪟 AppDelegate - Restauration au démarrage:")
         print("   X: \(windowX), Y: \(windowY), Width: \(windowWidth), Height: \(windowHeight)")
 
-        // Vérifier que les valeurs sont valides (restaurées d'une session précédente)
         if windowWidth > 300 && windowHeight > 200 {
             let frame = NSRect(x: windowX, y: windowY, width: windowWidth, height: windowHeight)
             print("   ✅ Restauration position + taille: \(frame)")
@@ -31,7 +27,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             print("   ℹ️  Pas de sauvegarde valide, utilisation des valeurs par défaut")
         }
 
-        // Définir comme délégué pour observer les changements
         window.delegate = self
     }
 
@@ -43,7 +38,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         print("   Origin: (\(frame.origin.x), \(frame.origin.y))")
         print("   Size: \(frame.size.width) x \(frame.size.height)")
 
-        // Ignorer les frames invalides (très petits)
         if frame.size.width > 300 && frame.size.height > 200 {
             UserDefaults.standard.set(frame.origin.x, forKey: "windowX")
             UserDefaults.standard.set(frame.origin.y, forKey: "windowY")

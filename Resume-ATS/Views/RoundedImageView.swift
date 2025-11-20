@@ -1,10 +1,3 @@
-//
-//  RoundedImageView.swift
-//  Resume-ATS
-//
-//  Created by Assistant on 2023-10-01.
-//
-
 import SwiftUI
 
 struct RoundedImageView: NSViewRepresentable {
@@ -39,15 +32,14 @@ class RoundedImageNSView: NSView {
             return
         }
 
-        // Save the current graphics state
         context.saveGState()
 
-        // Create a rounded rectangle path for clipping
         let roundedPath = CGPath(
             roundedRect: dirtyRect, cornerWidth: cornerRadius, cornerHeight: cornerRadius,
             transform: nil)
 
-        // Add the path to the context and clip to it
+        context.addPath(roundedPath)
+        context.clip()
         context.addPath(roundedPath)
         context.clip()
 

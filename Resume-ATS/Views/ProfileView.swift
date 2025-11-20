@@ -3,7 +3,6 @@ import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
 
-// MARK: - Profile View
 struct ProfileView: View {
     @Binding var selectedSection: String?
     @Environment(\.modelContext) private var modelContext

@@ -28,8 +28,6 @@ struct SettingsView: View {
     @State private var backupToDelete: URL?
     @AppStorage("pendingRestoreBackupPath") private var pendingRestoreBackupPath: String = ""
 
-    // MARK: - Helper Properties
-
     private var cardBackgroundColor: Color {
         systemColorScheme == .light
             ? Color(red: 0.95, green: 0.95, blue: 0.97)

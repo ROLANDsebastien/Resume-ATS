@@ -1,21 +1,8 @@
-//
-//  SQLiteHelper.swift
-//  Resume-ATS
-//
-//  Created to provide safe SQLite operations and prevent data corruption
-//
-
 import Foundation
 import SQLite3
 
-/// Utility class to handle low-level SQLite operations
-/// Ensures data integrity through proper checkpointing and validation
 class SQLiteHelper {
 
-    /// Forces SQLite to merge WAL (Write-Ahead Log) into the main database file
-    /// This is CRITICAL before making backups to ensure file consistency
-    /// - Parameter dbPath: Path to the .store database file
-    /// - Returns: True if checkpoint succeeded, false otherwise
     static func checkpointDatabase(at dbPath: URL) -> Bool {
         let dbPathString = dbPath.path
         var db: OpaquePointer?
@@ -23,7 +10,6 @@ class SQLiteHelper {
         print("🔄 SQLite Checkpoint - Début")
         print("   Fichier: \(dbPath.lastPathComponent)")
 
-        // Open database connection
         guard sqlite3_open(dbPathString, &db) == SQLITE_OK else {
             print("❌ Impossible d'ouvrir la base pour checkpoint")
             if let db = db {
@@ -38,7 +24,6 @@ class SQLiteHelper {
             sqlite3_close(db)
         }
 
-        // Get WAL file size before checkpoint
         let walPath = URL(fileURLWithPath: dbPathString + "-wal")
         var walSizeBefore: Int64 = 0
         if FileManager.default.fileExists(atPath: walPath.path) {

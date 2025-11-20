@@ -22,7 +22,6 @@ struct PhotoCropView: View {
                         .clipped()
                 }
 
-                // Crop frame
                 RoundedRectangle(cornerRadius: 10)
                     .stroke(Color.white, lineWidth: 2)
                     .frame(width: cropSize, height: cropSize)

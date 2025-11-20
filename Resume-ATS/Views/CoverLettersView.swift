@@ -1,10 +1,3 @@
-//
-//  CoverLettersView.swift
-//  Resume-ATS
-//
-//  Created by ROLAND Sébastien on 27/09/2025.
-//
-
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
@@ -122,7 +115,7 @@ struct CoverLettersView: View {
                                 }
                             }
                             .listStyle(.plain)
-                            .frame(height: min(CGFloat(coverLetters.count) * 80, 400))  // Adjust height as needed
+                            .frame(height: min(CGFloat(coverLetters.count) * 80, 400))
                         }
                     } else {
                         Text(
@@ -161,7 +154,6 @@ struct CoverLettersView: View {
                                     documentAttributes: nil
                                 )
                             } else {
-                                // Plain text
                                 let text = String(data: data, encoding: .utf8) ?? ""
                                 attributedString = NSAttributedString(string: text)
                             }
@@ -174,7 +166,6 @@ struct CoverLettersView: View {
                             )
                             modelContext.insert(newCoverLetter)
                         } catch {
-                            // Handle error, perhaps show alert
                             print("Error importing file: \(error)")
                         }
                     }
@@ -408,13 +399,11 @@ struct AIGenerationPageView: View {
                         generatingText =
                             language == "fr" ? "Génération en cours..." : "Generating..."
 
-                        // Run both letter generation and info extraction in parallel
                         let group = DispatchGroup()
                         var letterResult: String?
                         var extractedCompany = ""
                         var extractedPosition = ""
 
-                        // Generate cover letter
                         group.enter()
                         AIService.generateCoverLetter(
                             jobDescription: jobDescription, profile: selectedProfile,
@@ -424,7 +413,6 @@ struct AIGenerationPageView: View {
                             group.leave()
                         }
 
-                        // Extract company and position in parallel
                         group.enter()
                         AIService.extractCompanyAndPosition(from: jobDescription) {
                             companyName, positionTitle in
@@ -433,7 +421,6 @@ struct AIGenerationPageView: View {
                             group.leave()
                         }
 
-                        // When both are done, update UI
                         group.notify(queue: .main) {
                             if let result = letterResult {
                                 generatedText = result

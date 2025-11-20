@@ -1,16 +1,7 @@
-//
-//  SaveManager.swift
-//  Resume-ATS
-//
-//  Centralized save management to prevent data loss from context isolation
-//
-
 import Combine
 import Foundation
 import SwiftData
 
-/// Centralized manager for all data persistence operations
-/// Ensures data is properly saved and backed up using a single, reliable system
 class SaveManager: ObservableObject {
     static let shared = SaveManager()
 
@@ -25,31 +16,25 @@ class SaveManager: ObservableObject {
     private let saveLock = NSLock()
     private weak var mainModelContext: ModelContext?
 
-    // Callback for backup operations (to avoid circular dependencies)
     var backupCallback: ((String) -> URL?)? = nil
 
-    // Configuration
-    private let autoSaveInterval: TimeInterval = 30  // Save every 30 seconds
-    private let autoBackupInterval: TimeInterval = 3600  // Backup every hour
+    private let autoSaveInterval: TimeInterval = 30
+    private let autoBackupInterval: TimeInterval = 3600
 
     private init() {
         print("💾 SaveManager initialized")
     }
 
-    /// Configure SaveManager with the ModelContainer
     func configure(with container: ModelContainer) {
         self.modelContainer = container
         print("✅ SaveManager configured with ModelContainer")
     }
 
-    /// Register the main UI's ModelContext (CRITICAL - MUST BE CALLED)
-    /// This is the ONLY context that should be used for saving
     func registerMainContext(_ context: ModelContext) {
         self.mainModelContext = context
         print("🔗 SaveManager: Main UI context registered")
     }
 
-    /// Start automatic saving every 30 seconds
     func startAutoSave() {
         guard modelContainer != nil else {
             print("❌ SaveManager: Cannot start auto-save without ModelContainer")
@@ -69,11 +54,9 @@ class SaveManager: ObservableObject {
             RunLoop.current.add(timer, forMode: .common)
         }
 
-        // Also start auto-backup
         startAutoBackup()
     }
 
-    /// Stop automatic saving and backup
     func stopAutoSave() {
         if let timer = autoSaveTimer {
             timer.invalidate()
@@ -84,7 +67,6 @@ class SaveManager: ObservableObject {
         stopAutoBackup()
     }
 
-    /// Start automatic backup every hour
     func startAutoBackup() {
         guard modelContainer != nil else {
             print("❌ SaveManager: Cannot start auto-backup without ModelContainer")
@@ -108,7 +90,6 @@ class SaveManager: ObservableObject {
         }
     }
 
-    /// Stop automatic backup
     func stopAutoBackup() {
         if let timer = autoBackupTimer {
             timer.invalidate()
@@ -117,8 +98,6 @@ class SaveManager: ObservableObject {
         }
     }
 
-    /// Perform automatic save - called by timer
-    /// CRITICAL: Uses the registered UI context, NOT a new context
     private func performAutoSave() {
         guard let context = mainModelContext else {
             print("⚠️  SaveManager: Auto-save skipped - no UI context registered")
@@ -143,7 +122,6 @@ class SaveManager: ObservableObject {
         }
     }
 
-    /// Perform automatic backup - called by timer
     private func performAutoBackup() {
         print("")
         print("═══════════════════════════════════════════════════════════")
@@ -168,15 +146,12 @@ class SaveManager: ObservableObject {
         }
     }
 
-    /// Force an immediate save from UI context with optional backup
-    /// This is the PRIMARY method for saving during app lifecycle events
     @discardableResult
     func forceSave(
         from container: ModelContainer,
         reason: String,
         shouldBackup: Bool = false
     ) -> Bool {
-        // Try to use the registered UI context first
         if let context = mainModelContext {
             let success = saveContext(context, reason: reason)
 
@@ -186,7 +161,6 @@ class SaveManager: ObservableObject {
 
             return success
         } else {
-            // Fallback: create a temporary context (less ideal but safer than data loss)
             print("⚠️  SaveManager: Using fallback context (UI context not registered)")
             let tempContext = ModelContext(container)
             let success = saveContext(tempContext, reason: reason)
@@ -199,8 +173,6 @@ class SaveManager: ObservableObject {
         }
     }
 
-    /// Save data from the UI context
-    /// CRITICAL: This MUST use the UI's ModelContext to prevent data loss
     @discardableResult
     func saveFromUIContext(
         _ context: ModelContext,
@@ -212,7 +184,6 @@ class SaveManager: ObservableObject {
         print("Reason: \(reason)")
         print("╚════════════════════════════════════════════════════════╝")
 
-        // Register this context if not already registered
         if mainModelContext == nil {
             mainModelContext = context
             print("🔗 Auto-registered UI context")
@@ -250,7 +221,6 @@ class SaveManager: ObservableObject {
             try context.save()
             print("✅ SaveManager: \(reason) successful")
 
-            // Request SQLite checkpoint
             requestDatabaseCheckpoint()
 
             DispatchQueue.main.async {
@@ -271,19 +241,14 @@ class SaveManager: ObservableObject {
         }
     }
 
-    /// Request SQLite database checkpoint
-    /// This ensures data is written to disk immediately
     private func requestDatabaseCheckpoint() {
         if let dbPath = getDatabasePath() {
             DispatchQueue.global(qos: .utility).async {
-                // Use SQLiteHelper to perform a proper WAL checkpoint
-                // This merges the WAL file into the main database file
                 _ = SQLiteHelper.checkpointDatabase(at: dbPath)
             }
         }
     }
 
-    /// Perform database backup using the registered callback
     private func performBackup(reason: String) {
         print("📦 Starting backup: \(reason)")
 
@@ -301,7 +266,6 @@ class SaveManager: ObservableObject {
         }
     }
 
-    /// Get database file path
     private func getDatabasePath() -> URL? {
         guard
             let appSupport = FileManager.default.urls(
@@ -325,12 +289,11 @@ class SaveManager: ObservableObject {
         return nil
     }
 
-    /// Check if data is at risk (haven't saved recently)
     func isDataAtRisk() -> Bool {
         guard let lastSave = lastSaveTime else {
             return true
         }
-        return Date().timeIntervalSince(lastSave) > 300  // 5 minutes
+        return Date().timeIntervalSince(lastSave) > 300
     }
 
     deinit {

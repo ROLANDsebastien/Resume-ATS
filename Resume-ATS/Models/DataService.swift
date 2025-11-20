@@ -1,10 +1,3 @@
-//
-//  DataService.swift
-//  Resume-ATS
-//
-//  Created by opencode on 2025-09-27.
-//
-
 import AppKit
 import Foundation
 import SwiftData
@@ -29,7 +22,6 @@ class DataService {
         let isVisible: Bool
     }
 
-    // Serializable structs
     struct SerializableProfile: Codable {
         let name: String
         let language: String?

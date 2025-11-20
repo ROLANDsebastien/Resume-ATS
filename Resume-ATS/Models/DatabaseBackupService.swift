@@ -1,16 +1,7 @@
-//
-//  DatabaseBackupService.swift
-//  Resume-ATS
-//
-//  Created to provide automated backup functionality with data corruption prevention
-//
-
 import Combine
 import Foundation
 import SwiftData
 
-/// Service to provide automated database backup functionality with robust error handling
-/// Prevents data loss through proper SQLite WAL checkpointing and concurrency control
 class DatabaseBackupService: ObservableObject {
     static let shared = DatabaseBackupService()
 
@@ -18,16 +9,14 @@ class DatabaseBackupService: ObservableObject {
 
     private let fileManager = FileManager.default
     private let backupDirectoryName = "ResumeATS_Backups"
-    private let maxBackups = 10  // Keep maximum 10 backups for safety
+    private let maxBackups = 10
 
-    // Concurrency control to prevent simultaneous backups
     private let backupQueue = DispatchQueue(label: "com.resumeats.backup", qos: .utility)
     private var isBackupInProgress = false
     private let backupLock = NSLock()
 
-    // Track last backup time to prevent too frequent backups
     private var lastBackupTime: Date?
-    private let minimumBackupInterval: TimeInterval = 60  // Minimum 1 minute between backups
+    private let minimumBackupInterval: TimeInterval = 60
 
     private var backupDirectory: URL? {
         guard
@@ -42,7 +31,6 @@ class DatabaseBackupService: ObservableObject {
     }
 
     private init() {
-        // Ensure backup directory exists
         if let backupDir = backupDirectory {
             try? fileManager.createDirectory(at: backupDir, withIntermediateDirectories: true)
         }

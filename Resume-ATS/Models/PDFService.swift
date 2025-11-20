@@ -54,7 +54,6 @@ class PDFService {
         print("Educations: \(profile.educations.count)")
         print("Skills: \(profile.skills.count)")
 
-        // Save to temporary file
         let sanitizedName = profile.name.replacingOccurrences(
             of: "[^a-zA-Z0-9_\\- ]", with: "_", options: .regularExpression)
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
@@ -62,19 +61,15 @@ class PDFService {
 
         let resumeView = ATSResumeView(profile: profile, language: profile.language, isForPDF: true)
 
-        // Create NSHostingView from SwiftUI view
         let hostingView = NSHostingView(rootView: resumeView)
-        hostingView.frame = CGRect(x: 0, y: 0, width: 595, height: 842)  // A4 size
+        hostingView.frame = CGRect(x: 0, y: 0, width: 595, height: 842)
 
-        // Generate PDF data directly from the hosting view
         let pdfData = hostingView.dataWithPDF(inside: hostingView.bounds)
 
         print("PDF data size: \(pdfData.count)")
 
-        // Create PDF document
         let pdfDocument = PDFDocument(data: pdfData)
 
-        // Save to temporary file
         pdfDocument?.write(to: tempURL)
 
         print("PDF generated successfully")
@@ -88,16 +83,14 @@ class PDFService {
         print("Cover letter content length: \(coverLetter.content.count)")
         print("Cover letter string: \(coverLetter.contentString)")
 
-        // Save to temporary file
         let sanitizedTitle = coverLetter.title.replacingOccurrences(
             of: "[^a-zA-Z0-9_\\- ]", with: "_", options: .regularExpression)
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
             "Cover_Letter_\(sanitizedTitle).pdf")
 
-        // Create NSTextView for rendering the rich text
         let pageWidth: CGFloat = 595
         let pageHeight: CGFloat = 842
-        let margin: CGFloat = 72  // 1 inch margin
+        let margin: CGFloat = 72
 
         let textView = NSTextView(frame: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight))
         let attributedString = coverLetter.normalizedContentAttributedString

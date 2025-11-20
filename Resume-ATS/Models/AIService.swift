@@ -1,9 +1,3 @@
-//
-//  AIService.swift
-//  Resume-ATS
-//
-//  Created by opencode on //
-
 import Foundation
 import SwiftData
 
