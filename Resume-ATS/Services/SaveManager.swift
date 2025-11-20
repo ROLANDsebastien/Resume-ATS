@@ -280,7 +280,7 @@ class SaveManager: ObservableObject {
         let dbPath =
             appSupport
             .appendingPathComponent(bundleID)
-            .appendingPathComponent("default.store")
+            .appendingPathComponent("ResumeATS.store")
 
         if FileManager.default.fileExists(atPath: dbPath.path) {
             return dbPath

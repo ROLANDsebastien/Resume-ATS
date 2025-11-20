@@ -176,13 +176,13 @@ class AutoSaveService: ObservableObject {
 
         let bundleID = "com.sebastienroland.Resume-ATS"
         let dbPath = appSupport.appendingPathComponent(bundleID)
-            .appendingPathComponent("default.store")
+            .appendingPathComponent("ResumeATS.store")
 
         if FileManager.default.fileExists(atPath: dbPath.path) {
             return dbPath
         }
 
-        let fallbackPath = appSupport.appendingPathComponent("default.store")
+        let fallbackPath = appSupport.appendingPathComponent("ResumeATS.store")
         if FileManager.default.fileExists(atPath: fallbackPath.path) {
             return fallbackPath
         }

@@ -160,18 +160,24 @@ struct Resume_ATSApp: App {
         }
 
         do {
+            let schema = Schema([
+                Profile.self,
+                Application.self,
+                CoverLetter.self,
+                CVDocument.self
+            ])
+
             let config = ModelConfiguration(
+                "ResumeATS",
+                schema: schema,
                 isStoredInMemoryOnly: false,
                 allowsSave: true,
                 cloudKitDatabase: .none
             )
 
             sharedModelContainer = try ModelContainer(
-                for: Profile.self,
-                Application.self,
-                CoverLetter.self,
-                CVDocument.self,
-                configurations: config
+                for: schema,
+                configurations: [config]
             )
 
             print("✅ ModelContainer initialized successfully")
@@ -255,7 +261,7 @@ struct Resume_ATSApp: App {
 
         let bundleID = "com.sebastienroland.Resume-ATS"
         let dbPath = appSupport.appendingPathComponent(bundleID)
-            .appendingPathComponent("default.store")
+            .appendingPathComponent("ResumeATS.store")
 
         return dbPath
     }
