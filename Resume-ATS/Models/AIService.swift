@@ -26,7 +26,7 @@ class AIService {
         DispatchQueue.global(qos: .userInitiated).async {
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/gemini")
-            process.arguments = [prompt]
+            process.arguments = ["-m", "flash", prompt]
 
             let outputPipe = Pipe()
             let errorPipe = Pipe()
@@ -82,7 +82,7 @@ class AIService {
         DispatchQueue.global(qos: .userInitiated).async {
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/gemini")
-            process.arguments = [prompt]
+            process.arguments = ["-m", "flash", prompt]
 
             let outputPipe = Pipe()
             let errorPipe = Pipe()
