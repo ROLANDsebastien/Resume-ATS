@@ -2,6 +2,9 @@ import Foundation
 import SwiftData
 
 class AIService {
+    
+    // MARK: - Existing Methods
+    
     static func generateCoverLetter(
         jobDescription: String, profile: Profile?, additionalInstructions: String,
         completion: @escaping (String?) -> Void
@@ -121,6 +124,135 @@ class AIService {
                     completion("", "")
                 }
             }
+        }
+    }
+    
+    // MARK: - Job Matching with AI
+    
+    static func matchJobWithProfile(
+        jobResult: JobResult,
+        profile: Profile?,
+        completion: @escaping (_ aiScore: Int?, _ matchReason: String?, _ missingRequirements: [String]) -> Void
+    ) {
+        let prompt = """
+            Analyze this job posting against the candidate's profile and provide a match assessment.
+            
+            JOB POSTING:
+            Title: \(jobResult.title)
+            Company: \(jobResult.company)
+            Location: \(jobResult.location)
+            \(jobResult.salary != nil ? "Salary: \(jobResult.salary!)" : "")
+            Source: \(jobResult.source)
+            
+            CANDIDATE PROFILE:
+            Name: \(profile?.firstName ?? "") \(profile?.lastName ?? "")
+            Summary: \(profile?.summaryString ?? "No summary available")
+            Skills: \(profile?.skills.flatMap { $0.skillsArray }.joined(separator: ", ") ?? "No skills listed")
+            Experience: \(profile?.experiences.map { "\($0.position ?? "") at \($0.company)" }.joined(separator: "; ") ?? "No experience listed")
+            
+            TASK:
+            1. Score the match from 0-100 (100 = perfect match)
+            2. Explain why this is a good match (2-3 sentences max)
+            3. List missing key requirements (max 5 items, be specific)
+            
+            RESPONSE FORMAT (JSON only):
+            {
+                "score": 85,
+                "reason": "Strong match due to iOS experience and Swift skills",
+                "missing": ["React Native experience", "5+ years experience"]
+            }
+            """
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/gemini")
+            process.arguments = ["-m", "flash", prompt]
+            
+            let outputPipe = Pipe()
+            let errorPipe = Pipe()
+            process.standardOutput = outputPipe
+            process.standardError = errorPipe
+            
+            do {
+                try process.run()
+                process.waitUntilExit()
+                
+                let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+                let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+                let output = String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                let errorOutput = String(data: errorData, encoding: .utf8)
+                
+                DispatchQueue.main.async {
+                    if process.terminationStatus == 0, let output = output, !output.isEmpty {
+                        // Parse JSON response
+                        if let data = output.data(using: .utf8) {
+                            do {
+                                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                                    let score = json["score"] as? Int
+                                    let reason = json["reason"] as? String
+                                    let missing = json["missing"] as? [String] ?? []
+                                    completion(score, reason, missing)
+                                    return
+                                }
+                            } catch {
+                                print("Failed to parse AI response JSON: \(error)")
+                            }
+                        }
+                    }
+                    
+                    print("Gemini CLI error: \(errorOutput ?? "Unknown error")")
+                    completion(nil, nil, [])
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    print("Error running Gemini CLI: \(error)")
+                    completion(nil, nil, [])
+                }
+            }
+        }
+    }
+    
+    // MARK: - Batch Job Processing
+    
+    static func processBatchJobs(
+        jobResults: [JobResult],
+        profile: Profile?,
+        completion: @escaping ([Job]) -> Void
+    ) {
+        var processedJobs: [Job] = []
+        let dispatchGroup = DispatchGroup()
+        
+        for jobResult in jobResults {
+            dispatchGroup.enter()
+            
+            matchJobWithProfile(jobResult: jobResult, profile: profile) { aiScore, matchReason, missingRequirements in
+                let job = Job(
+                    title: jobResult.title,
+                    company: jobResult.company,
+                    location: jobResult.location,
+                    salary: jobResult.salary,
+                    url: jobResult.url,
+                    source: jobResult.source,
+                    aiScore: aiScore,
+                    matchReason: matchReason,
+                    missingRequirements: missingRequirements
+                )
+                
+                processedJobs.append(job)
+                dispatchGroup.leave()
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            // Sort by AI score (highest first)
+            processedJobs.sort { job1, job2 in
+                guard let score1 = job1.aiScore, let score2 = job2.aiScore else {
+                    return false
+                }
+                return score1 > score2
+            }
+            
+            completion(processedJobs)
         }
     }
 }

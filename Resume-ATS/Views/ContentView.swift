@@ -92,6 +92,11 @@ struct ContentView: View {
                 NavigationLink(value: "Profile") {
                     Label(appLanguage == "fr" ? "Profil" : "Profile", systemImage: "person")
                 }
+                NavigationLink(value: "JobSearch") {
+                    Label(
+                        appLanguage == "fr" ? "Recherche d'emploi" : "Job Search",
+                        systemImage: "magnifyingglass")
+                }
                 NavigationLink(value: "Candidatures") {
                     Label(
                         appLanguage == "fr" ? "Candidatures" : "Applications",
@@ -125,6 +130,8 @@ struct ContentView: View {
                 DashboardView(selectedSection: $selectedSection, language: appLanguage)
             case "Profile":
                 ProfileView(selectedSection: $selectedSection)
+            case "JobSearch":
+                JobSearchView()
             case "Candidatures":
                 CandidaturesView(selectedSection: $selectedSection, language: appLanguage)
             case "Lettres":

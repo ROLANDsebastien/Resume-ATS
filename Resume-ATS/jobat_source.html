@@ -1,0 +1,1655 @@
+
+
+
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+
+<script src="/bundles/cookies?v=8xD5jnmcZ27pp5LYPgoZWquNbG7gzMUkdT8w7xy4yl41"></script>
+        <script type="text/javascript">
+        window.didomiConfig = { languages: { enabled: ['fr'],  default: 'fr' } };window.gdprAppliesGlobally=true;(function(){function a(e){if(!window.frames[e]){if(document.body&&document.body.firstChild){var t=document.body;var n=document.createElement("iframe");n.style.display="none";n.name=e;n.title=e;t.insertBefore(n,t.firstChild)}
+        else{setTimeout(function(){a(e)},5)}}}function e(n,r,o,c,s){function e(e,t,n,a){if(typeof n!=="function"){return}if(!window[r]){window[r]=[]}var i=false;if(s){i=s(e,t,n)}if(!i){window[r].push({command:e,parameter:t,callback:n,version:a})}}e.stub=true;function t(a){if(!window[n]||window[n].stub!==true){return}if(!a.data){return}
+        var i=typeof a.data==="string";var e;try{e=i?JSON.parse(a.data):a.data}catch(t){return}if(e[o]){var r=e[o];window[n](r.command,r.parameter,function(e,t){var n={};n[c]={returnValue:e,success:t,callId:r.callId};a.source.postMessage(i?JSON.stringify(n):n,"*")},r.version)}}
+        if(typeof window[n]!=="function"){window[n]=e;if(window.addEventListener){window.addEventListener("message",t,false)}else{window.attachEvent("onmessage",t)}}}e("__tcfapi","__tcfapiBuffer","__tcfapiCall","__tcfapiReturn");a("__tcfapiLocator");(function(e){
+        var t=document.createElement("script");t.id="spcloader";t.type="text/javascript";t.async=true;t.src="https://sdk.privacy-center.org/"+e+"/loader.js?target="+document.location.hostname;t.charset="utf-8";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(t,n)})("11ef8ac9-6270-4d5e-8b99-8d6a5bd60059")})();</script>
+        <script type="text/javascript">
+        var _didJobLogReference = "7695574f-b7e1-48d2-a2c4-5f4113d22c8b";
+        var _didNoticeShown = false;
+        var _didSaveConsents = false;
+        var _didConsents = "";
+        function triggerConsentEvent() {
+          var event = new Event("jobat-consent-success", { "bubbles": false, "cancelable": true });
+          document.body.dispatchEvent(event);
+        }
+
+        function setNoticeShown() {
+            _didNoticeShown = true;
+            if (typeof SaveJobLogNoticeShown == "function") { SaveJobLogNoticeShown(); }
+        }
+
+        function setConsentSession() {
+            try {
+                var cookieValue = null;
+                var didomiEnabledPurposes = Didomi.getUserConsentStatusForAll().purposes.enabled;
+                if (typeof kaching_load == "function"
+                    && didomiEnabledPurposes.includes("cookies")
+                    && didomiEnabledPurposes.includes("measure_content_performance")
+                    && didomiEnabledPurposes.includes("market_research")
+                    && didomiEnabledPurposes.includes("improve_products")) {
+                    kaching_load(didomiEnabledPurposes.includes("select_personalized_ads") && didomiEnabledPurposes.includes("select_personalized_content"));
+                }
+                var didomiConsents = didomiEnabledPurposes.sort().join();
+                if (didomiConsents) { cookieValue = didomiConsents; }
+
+                else if (Didomi.getUserConsentStatusForAll().purposes.disabled.length > 0) { cookieValue = "none"; }
+                if (cookieValue != readCookie("consent_session")) { saveCookie("consent_session", cookieValue); $.get("/api/jobat/Consent/Update"); triggerConsentEvent(); }
+                if (cookieValue) {
+                    _didConsents = cookieValue;
+                    _didSaveConsents = true;
+                    if (typeof SaveJobLogConsents == "function") { SaveJobLogConsents(); }
+                }
+            }
+            catch (err) {
+                appInsights.trackException("Didomi error: " + err);
+                console.log("Didomi error: " + err);
+            }
+        }
+        window.didomiOnReady = window.didomiOnReady || [];
+        window.didomiOnReady.push(setConsentSession);
+        window.didomiEventListeners = window.didomiEventListeners || [];
+        window.didomiEventListeners.push({
+            event: 'consent.changed',
+            listener: setConsentSession
+        });
+        window.didomiEventListeners.push({
+            event: 'notice.shown',
+            listener: setNoticeShown
+        });
+        </script>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <meta name="google-signin-client_id" content="166952574327-esgaeuu05apvk546m6a89rinnvjaud8t.apps.googleusercontent.com">
+    <!-- Google Tag Manager -->
+
+    <script>
+        (function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+
+                    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+
+        })(window, document, 'script', 'dataLayer', 'GTM-5GM2L36');
+    </script>
+
+    <!-- End Google Tag Manager -->
+    <!--Bootstrap 5 variable-->
+    <script>
+        var isBootstrap5 = true;
+    </script>
+
+    <!--Set json path for carousel presets-->
+    <script>
+        window.carouselPresetsJsonPath = "/js/custom/carousel-responsive-presets.json";
+    </script>
+
+    <link rel="preconnect" href="https://cxense.com">
+    <link href="/fonts/icomoon.ttf?l0fi2m" rel="preload" as="font" type="font/ttf" crossorigin>
+    <link href="/fonts/Roboto/roboto-400.woff2" rel="preload" as="font" type="font/woff2" crossorigin>
+    <link href="/fonts/Roboto/roboto-700.woff2" rel="preload" as="font" type="font/woff2" crossorigin>
+    <link href="/fonts/Poppins/poppins-500.woff2" rel="preload" as="font" type="font/woff2" crossorigin>
+    <link href="/fonts/Poppins/poppins-700.woff2" rel="preload" as="font" type="font/woff2" crossorigin>
+    <link href='/bundles/responsive-b5/css?v=mC4S6XdwRvJQXBQk_r7cXxVjRri9SeAzHYHEqaxf4A81' rel='preload' as='style'>
+
+    <link rel='preload' href='/bundles/cookies?v=8xD5jnmcZ27pp5LYPgoZWquNbG7gzMUkdT8w7xy4yl41' as='script'><link rel='preload' href='/bundles/jquery?v=9ktsOtIo0upvJP7-7FiXuOoOJe58RLFJ__wIRPL2vGo1' as='script'><link rel='preload' href='/bundles/tagging?v=4x6auxKP0O4TEGGumHxggiISEeyZxJCrGm4Uo3ZrDk81' as='script'><link rel='preload' href='/bundles/responsive?v=sMfNZUdJJyvdOb6cc330i5Ipni2_UXFvkcNEiHhJnaw1' as='script'><link rel='preload' href='/bundles/externalrecommendercache?v=T9ipoJBTQuNuSRn9TGdqUJkucTig5anWIb7KZQZBe8k1' as='script'><link rel='preload' href='/bundles/jquery-validate?v=G3QFzuUa97IjnmiD6QChr-7RhrS6aaJuIsvGmLBwWHU1' as='script'><link rel='preload' href='/bundles/forms?v=5QEGb-OBxlQAdkXpuzhncf1LT8Q9TM85x2NNaXMrnIg1' as='script'><link rel='preload' href='/bundles/scripts?v=QDrvenyMZw8vTWE6hFXQrezSW8dpamzC0pAXDJne5Sc1' as='script'><link rel='preload' href='/bundles/jquery-validate-unobtrusive?v=aUqCraY-Z7Gvkk867nQVMBE2DRCAAhtoA36vQcoqXm41' as='script'><link rel='preload' href='/bundles/popper?v=RYSukBq1wXEsNzSEEUs9dXL5cupzMwxlR1Yg9ga0h5w1' as='script'><link rel='preload' href='/bundles/autocomplete?v=tFz2REAY9y2Czuzg1Zmui2G4mtZMkpMfdNW9mvH6PNA1' as='script'><link rel='preload' href='/bundles/jobsearch?v=dydFfXpKufaXfA1HSi008w8E0bbjwhStV7Bu_Sp4DkY1' as='script'><link rel='preload' href='/bundles/bootstrap?v=M4Nk6kIOwMFflsEKET0iPL9i5YBqbzMzvUOrd8gyCnw1' as='script'><link rel='preload' href='/bundles/selectize?v=yHfQOYmA-VaAdzZ_ZMTx3v5VoaLa__o7oUOKco1Y01k1' as='script'><link rel='preload' href='/bundles/jquery-unobtrusive-ajax?v=l1amtEk4zxKz7n7Oe2IwKL8kE8IRGDrXZj-BPetLWQs1' as='script'><link rel='preload' href='/bundles/jquery-validate-custom?v=7v41jhG6dkuLhVvaotTwvXrw_1K8my-qn-1tkZCGUfU1' as='script'><link rel='preload' href='/bundles/bootstrap-datepicker?v=f9bIPGtHF04OIqRdXweJKpcm6bnbS_vTccS76ZLywV41' as='script'><link rel='preload' href='/bundles/jsjoblogging?v=aYmaMrlXtyAWmb6Ww11XpSsAj3KRkR3i3h-UYw9VKIg1' as='script'><link rel='preload' href='/bundles/owl-carousel?v=bUTI2JXsz_hJtSDtBMfyxkSRJmjM0VzyS83Qc6woNyU1' as='script'><link rel='preload' href='/bundles/htmltemplates?v=TNafNubzt0hDTV-BEFovUO9LscL9F_OeZtltP1BSFFk1' as='script'><link rel='preload' href='/bundles/jobdetail?v=vdjQb7m7VHSXDW82c_EsUbJkI7xi_HsRKoSueLsm9Ww1' as='script'>
+<title>Nouvelles offres d’emploi - resultats | Jobat.be</title><link rel='canonical' href='https://www.jobat.be/fr/emplois/results/developer/resultats'  /><meta name="referrer" content="always" /><meta name="description" content="Jobs" /><meta name="robots" content="noindex" /><meta name="cXenseParse:job-search-term-what" content="developer" /><meta name="verify-v1" content="bf2ARuLQO1S1gxcD3fTgmb90zt38vup3OG0m1WY4N6c=" />    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    
+<script type="text/javascript">var adSlots = [];</script>
+    
+    <link href="/bundles/responsive-b5/css?v=mC4S6XdwRvJQXBQk_r7cXxVjRri9SeAzHYHEqaxf4A81" rel="stylesheet"/>
+
+    <script src='/bundles/cookies?v=8xD5jnmcZ27pp5LYPgoZWquNbG7gzMUkdT8w7xy4yl41' defer></script>
+<script src='/bundles/jquery?v=9ktsOtIo0upvJP7-7FiXuOoOJe58RLFJ__wIRPL2vGo1' ></script>
+<script src='/bundles/tagging?v=4x6auxKP0O4TEGGumHxggiISEeyZxJCrGm4Uo3ZrDk81' defer></script>
+<script src='/bundles/responsive?v=sMfNZUdJJyvdOb6cc330i5Ipni2_UXFvkcNEiHhJnaw1' defer></script>
+<script src='/bundles/externalrecommendercache?v=T9ipoJBTQuNuSRn9TGdqUJkucTig5anWIb7KZQZBe8k1' defer></script>
+<script src='/bundles/jquery-validate?v=G3QFzuUa97IjnmiD6QChr-7RhrS6aaJuIsvGmLBwWHU1' defer></script>
+<script src='/bundles/forms?v=5QEGb-OBxlQAdkXpuzhncf1LT8Q9TM85x2NNaXMrnIg1' defer></script>
+<script src='/bundles/scripts?v=QDrvenyMZw8vTWE6hFXQrezSW8dpamzC0pAXDJne5Sc1' defer></script>
+<script src='/bundles/jquery-validate-unobtrusive?v=aUqCraY-Z7Gvkk867nQVMBE2DRCAAhtoA36vQcoqXm41' defer></script>
+<script src='/bundles/popper?v=RYSukBq1wXEsNzSEEUs9dXL5cupzMwxlR1Yg9ga0h5w1' defer></script>
+<script src='/bundles/autocomplete?v=tFz2REAY9y2Czuzg1Zmui2G4mtZMkpMfdNW9mvH6PNA1' defer></script>
+<script src='/bundles/jobsearch?v=dydFfXpKufaXfA1HSi008w8E0bbjwhStV7Bu_Sp4DkY1' defer></script>
+<script src='/bundles/bootstrap?v=M4Nk6kIOwMFflsEKET0iPL9i5YBqbzMzvUOrd8gyCnw1' defer></script>
+<script src='/bundles/selectize?v=yHfQOYmA-VaAdzZ_ZMTx3v5VoaLa__o7oUOKco1Y01k1' defer></script>
+<script src='/bundles/jquery-unobtrusive-ajax?v=l1amtEk4zxKz7n7Oe2IwKL8kE8IRGDrXZj-BPetLWQs1' defer></script>
+<script src='/bundles/jquery-validate-custom?v=7v41jhG6dkuLhVvaotTwvXrw_1K8my-qn-1tkZCGUfU1' defer></script>
+<script src='/bundles/bootstrap-datepicker?v=f9bIPGtHF04OIqRdXweJKpcm6bnbS_vTccS76ZLywV41' defer></script>
+<script src='/bundles/jsjoblogging?v=aYmaMrlXtyAWmb6Ww11XpSsAj3KRkR3i3h-UYw9VKIg1' defer></script>
+<script src='/bundles/owl-carousel?v=bUTI2JXsz_hJtSDtBMfyxkSRJmjM0VzyS83Qc6woNyU1' defer></script>
+<script src='/bundles/htmltemplates?v=TNafNubzt0hDTV-BEFovUO9LscL9F_OeZtltP1BSFFk1' defer></script>
+<script src='/bundles/jobdetail?v=vdjQb7m7VHSXDW82c_EsUbJkI7xi_HsRKoSueLsm9Ww1' defer></script>
+
+    <link rel="image_src" href="https://www.jobat.be/images/logo_jobat.gif" />
+    
+    
+    
+    <script type="text/javascript">
+        !function (v, y, T) { var S = v.location, k = "script", D = "instrumentationKey", C = "ingestionendpoint", I = "disableExceptionTracking", E = "ai.device.", b = "toLowerCase", w = (D[b](), "crossOrigin"), N = "POST", e = "appInsightsSDK", t = T.name || "appInsights", n = ((T.name || v[e]) && (v[e] = t), v[t] || function (l) { var u = !1, d = !1, g = { initialize: !0, queue: [], sv: "6", version: 2, config: l }; function m(e, t) { var n = {}, a = "Browser"; return n[E + "id"] = a[b](), n[E + "type"] = a, n["ai.operation.name"] = S && S.pathname || "_unknown_", n["ai.internal.sdkVersion"] = "javascript:snippet_" + (g.sv || g.version), { time: (a = new Date).getUTCFullYear() + "-" + i(1 + a.getUTCMonth()) + "-" + i(a.getUTCDate()) + "T" + i(a.getUTCHours()) + ":" + i(a.getUTCMinutes()) + ":" + i(a.getUTCSeconds()) + "." + (a.getUTCMilliseconds() / 1e3).toFixed(3).slice(2, 5) + "Z", iKey: e, name: "Microsoft.ApplicationInsights." + e.replace(/-/g, "") + "." + t, sampleRate: 100, tags: n, data: { baseData: { ver: 2 } } }; function i(e) { e = "" + e; return 1 === e.length ? "0" + e : e } } var e, n, f = l.url || T.src; function a(e) { var t, n, a, i, o, s, r, c, p; u = !0, g.queue = [], d || (d = !0, i = f, r = (c = function () { var e, t = {}, n = l.connectionString; if (n) for (var a = n.split(";"), i = 0; i < a.length; i++) { var o = a[i].split("="); 2 === o.length && (t[o[0][b]()] = o[1]) } return t[C] || (t[C] = "https://" + ((e = (n = t.endpointsuffix) ? t.location : null) ? e + "." : "") + "dc." + (n || "services.visualstudio.com")), t }()).instrumentationkey || l[D] || "", c = (c = c[C]) ? c + "/v2/track" : l.endpointUrl, (p = []).push((t = "SDK LOAD Failure: Failed to load Application Insights SDK script (See stack for details)", n = i, o = c, (s = (a = m(r, "Exception")).data).baseType = "ExceptionData", s.baseData.exceptions = [{ typeName: "SDKLoadFailed", message: t.replace(/\./g, "-"), hasFullStack: !1, stack: t + "\nSnippet failed to load [" + n + "] -- Telemetry is disabled\nHelp Link: https://go.microsoft.com/fwlink/?linkid=2128109\nHost: " + (S && S.pathname || "_unknown_") + "\nEndpoint: " + o, parsedStack: [] }], a)), p.push((s = i, t = c, (o = (n = m(r, "Message")).data).baseType = "MessageData", (a = o.baseData).message = 'AI (Internal): 99 message:"' + ("SDK LOAD Failure: Failed to load Application Insights SDK script (See stack for details) (" + s + ")").replace(/\"/g, "") + '"', a.properties = { endpoint: t }, n)), i = p, r = c, JSON && ((o = v.fetch) && !T.useXhr ? o(r, { method: N, body: JSON.stringify(i), mode: "cors" }) : XMLHttpRequest && ((s = new XMLHttpRequest).open(N, r), s.setRequestHeader("Content-type", "application/json"), s.send(JSON.stringify(i))))) } function i(e, t) { d || setTimeout(function () { !t && g.core || a() }, 500) } f && ((n = y.createElement(k)).src = f, !(o = T[w]) && "" !== o || "undefined" == n[w] || (n[w] = o), n.onload = i, n.onerror = a, n.onreadystatechange = function (e, t) { "loaded" !== n.readyState && "complete" !== n.readyState || i(0, t) }, e = n, T.ld < 0 ? y.getElementsByTagName("head")[0].appendChild(e) : setTimeout(function () { y.getElementsByTagName(k)[0].parentNode.appendChild(e) }, T.ld || 0)); try { g.cookie = y.cookie } catch (h) { } function t(e) { for (; e.length;)!function (t) { g[t] = function () { var e = arguments; u || g.queue.push(function () { g[t].apply(g, e) }) } }(e.pop()) } var s, r, o = "track", c = "TrackPage", p = "TrackEvent", o = (t([o + "Event", o + "PageView", o + "Exception", o + "Trace", o + "DependencyData", o + "Metric", o + "PageViewPerformance", "start" + c, "stop" + c, "start" + p, "stop" + p, "addTelemetryInitializer", "setAuthenticatedUserContext", "clearAuthenticatedUserContext", "flush"]), g.SeverityLevel = { Verbose: 0, Information: 1, Warning: 2, Error: 3, Critical: 4 }, (l.extensionConfig || {}).ApplicationInsightsAnalytics || {}); return !0 !== l[I] && !0 !== o[I] && (t(["_" + (s = "onerror")]), r = v[s], v[s] = function (e, t, n, a, i) { var o = r && r(e, t, n, a, i); return !0 !== o && g["_" + s]({ message: e, url: t, lineNumber: n, columnNumber: a, error: i, evt: v.event }), o }, l.autoExceptionInstrumented = !0), g }(T.cfg)); function a() { T.onInit && T.onInit(n) } (v[t] = n).queue && 0 === n.queue.length ? (n.queue.push(a), n.trackPageView({})) : a() }(window, document, {
+            src: "https://js.monitor.azure.com/scripts/b/ai.2.min.js",
+            // name: "appInsights",
+            // ld: 0,
+            // useXhr: 1,
+            crossOrigin: "anonymous",
+            // onInit: null,
+            cfg: { // Application Insights Configuration
+                connectionString: "InstrumentationKey=d1e013fb-c2cc-4109-bec1-b881edcf1f5a;IngestionEndpoint=https://westeurope-3.in.applicationinsights.azure.com/;LiveEndpoint=https://westeurope.livediagnostics.monitor.azure.com/"
+            }
+        });
+    </script>
+
+    
+
+
+
+    
+    
+
+</head>
+<body data-resources-version="2025-10-28T15:49:24" class="">
+    <!-- Google Tag Manager (noscript) -->
+
+    <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5GM2L36 "
+                height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    </noscript>
+
+    <!-- End Google Tag Manager (noscript) -->
+
+                <script id="cxense_info">
+                    var u_cid = "";
+                    var u_uid = "";                   
+                </script>
+                <script id='googleAnalyticsData'>
+                    window.dataLayer = window.dataLayer || []; dataLayer.push({
+  "event": "page_information",
+  "pageType": "search_detail",
+  "pageSection": "jobs",
+  "searchTermWhat": "developer",
+  "searchTermWhere": "",
+  "levelQuestionPanel": null,
+  "searchListItem": ""
+});
+
+                    
+
+                    
+
+                    window.dataLayer = window.dataLayer || []; dataLayer.push({
+  "event": "user_information",
+  "userLoggedIn": "no",
+  "userLoggedInType": "",
+  "userCV": "",
+  "userCVCompletion": "",
+  "siteABTest": "null",
+  "userHashed_email": "",
+  "userHashed_email_new": "",
+  "userSiteType": "d"
+});
+                </script>
+                <script>
+                    
+
+                    
+                </script>
+    
+    <script src="https://static.jobat.be/libs/popper.js/1.11.0/umd/popper.min.js" defer></script>
+    
+
+
+
+
+<div id="sitenav" class="responsive">
+    <nav class="Navigation-lg" data-uitest-id="top-navigation" aria-label="Navigation principale">
+        <div class="Navigation-container">
+            <div class="Wrap">
+                <div class="Navigation-main">
+                    <a href="/fr" data-tealium-menuid="Home">
+                        <img src="/-/media/jobat/jobat-be/images/logo.svg?h=120&amp;iar=0&amp;w=244&amp;hash=D0F63CEDE1922FB7265559CB0F3DFF67" class="mainLogo" alt="Jobat" width="244" height="120" />
+                    </a>
+                    <ul class="Navigation-list" role="menubar">
+                            <li id="jobs-link" class="Navigation-item active" data-tealium-menuid="Jobs" data-item="jobs" aria-controls="submenu-jobs" role="none">
+                                <a href="/fr" title="Jobs" class="Navigation-link" aria-current="page" aria-expanded="true" role="menuitem">Jobs</a>
+                            </li>
+                            <li id="carri&#232;re-link" class="Navigation-item " data-tealium-menuid="Carrrière" data-item="carri&#232;re" aria-controls="submenu-carri&#232;re" role="none">
+                                <a href="https://www.jobat.be/fr/carriere" title="Carri&#232;re" class="Navigation-link"  aria-expanded="false" role="menuitem">Carri&#232;re</a>
+                            </li>
+                            <li id="community-link" class="Navigation-item " data-tealium-menuid="Community" data-item="community" aria-controls="submenu-community" role="none">
+                                <a href="https://www.jobat.be/fr/connect" title="Community" class="Navigation-link"  aria-expanded="false" role="menuitem">Community</a>
+                            </li>
+                            <li id="formations-link" class="Navigation-item "  data-item="formations" aria-controls="submenu-formations" role="none">
+                                <a href="https://www.jobat.be/fr/formations" title="Formations" class="Navigation-link"  aria-expanded="false" role="menuitem">Formations</a>
+                            </li>
+                    </ul>
+                </div>
+                <div class="Navigation-secondary">
+                    <nav aria-label="Navigation secondaire">
+                        <ul class="Navigation-list">
+                            <li class="Navigation-item">
+                                <a href="/fr/employeurs" class="Navigation-link" data-tealium-menuid="Voor werkgevers">
+                                    Pour employeurs
+                                </a>
+                            </li>
+                            <li class="Navigation-item SwitchLanguage">
+                                <div class="dropdown dropdown-primary">
+                            <button class="dropdown-toggle Navigation-link" id="dropdownLangButton" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-controls="langMenu" role="button">
+                                FR
+                            </button>
+
+                            <ul id="langMenu" class="dropdown-menu" aria-labelledby="dropdownLangButton" role="menu">
+                               <li role='none'><a href='https://www.jobat.be/nl' class='dropdown-item title='NL' data-tealium-menuid='TaalNL' role='menuitem'>Néerlandais (NL)</a></li><li role='none'><a href='https://www.jobat.be/fr' class='dropdown-item title='FR' data-tealium-menuid='TaalFR' role='menuitem'>Français (FR)</a></li><li role='none'><a href='https://www.jobat.be/en' class='dropdown-item title='EN' data-tealium-menuid='TaalEN' role='menuitem'>Anglais (EN)</a></li>
+                            </ul>
+                        </div>
+                            </li>
+
+                            <li class="Navigation-item" role="none">
+                                    <a href="/fr/secure/login" class="Navigation-link login" data-uitest-id="header-nav-login" data-tealium-menuid="Aanmelden">
+                                        <span class="is-primary m-r-2 user-icon">
+                                            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" viewBox="0 0 28 28" xml:space="preserve"><style>.userSt1{fill:#fff}.userSt2{fill:#0093ce}</style><g transform="translate(0 28)"><g transform="translate(28 -14)"><path d="M0 0c0 7.7-6.3 14-14 14S-28 7.7-28 0s6.3-14 14-14S0-7.7 0 0" fill="#0292be"/></g><g transform="translate(23.87 -15.2)"><path class="userSt1" d="M2.3 1.1c0 6.7-5.4 12.1-12.1 12.1-6.8.1-12.2-5.3-12.2-12.1C-22-5.6-16.6-11-9.9-11-3.1-11 2.3-5.6 2.3 1.1"/></g><g  transform="translate(19.516 -17.554)"><path class="userSt2" d="M0 0c0 3-2.5 5.5-5.5 5.5S-11 3-11 0s2.5-5.5 5.5-5.5S0-3 0 0"/></g><g transform="translate(17.516 -17.554)"><path class="userSt1" d="M0 0c0 1.9-1.6 3.5-3.5 3.5S-7 1.9-7 0s1.6-3.5 3.5-3.5S0-1.9 0 0"/></g><g transform="translate(24.133 -4.352)"><path class="userSt2" d="M0 0c-1.7-4.1-5.7-6.7-10.1-6.7-4.4 0-8.4 2.7-10.1 6.7.5.5 1 1 1.6 1.4 1.2-3.7 4.7-6.1 8.5-6.1 3.9 0 7.3 2.5 8.5 6.1C-1 1-.5.5 0 0"/></g></g></svg>
+                                        </span>
+                                        Se connecter
+                                    </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        <div class="Navigation-under-container">
+                <div id="submenu-jobs" class="Navigation-under menu-active" data-submenu="jobs" aria-hidden="false" aria-labelledby="jobs-link">
+                    <div class="Wrap">
+                        <ul class="Navigation-under-list" role="menu">
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr" data-tealium-menuid="Jobs zoeken" role="menuitem">Rechercher un job</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="/fr/myjobat/jobspourvous" data-tealium-menuid="Jobs voor jou" role="menuitem">Jobs pour vous</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="/fr/jobs/results?favorites=1" data-tealium-menuid="Bewaarde jobs" role="menuitem">Jobs sauvegard&#233;s</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr/alerteemploi" data-tealium-menuid="Jobalert" role="menuitem">Votre alerte emploi</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr/app" data-tealium-menuid="App" role="menuitem">Application Jobat</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="/fr/barometre-des-salaires" data-tealium-menuid="Salariskompas" role="menuitem">Barom&#232;tre des salaires</a>
+                                    </li>
+                        </ul>
+                    </div>
+                </div>
+                <div id="submenu-carri&#232;re" class="Navigation-under " data-submenu="carri&#232;re" aria-hidden="true" aria-labelledby="carri&#232;re-link">
+                    <div class="Wrap">
+                        <ul class="Navigation-under-list" role="menu">
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr/art/etudiants-jeunes-professionnels" data-tealium-menuid="Student" role="menuitem">Etudiants &amp; Jeunes professionels</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr/art/postuler" data-tealium-menuid="Solliciteren" role="menuitem">Postuler</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr/art/parcours-professionel" data-tealium-menuid="Loopbaan" role="menuitem">Parcours professionnel</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr/art/remuneration" data-tealium-menuid="Loon" role="menuitem">R&#233;mun&#233;ration</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr/art/absences-et-conges" data-tealium-menuid="Verlof" role="menuitem">Absences &amp; Cong&#233;s</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr/art/demission-licenciement" data-tealium-menuid="Ontslag" role="menuitem">D&#233;mission &amp; Licenciement</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr/art/pension" data-tealium-menuid="Pensioen" role="menuitem">Pension</a>
+                                    </li>
+                        </ul>
+                    </div>
+                </div>
+                <div id="submenu-community" class="Navigation-under " data-submenu="community" aria-hidden="true" aria-labelledby="community-link">
+                    <div class="Wrap">
+                        <ul class="Navigation-under-list" role="menu">
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr/emplois/entreprises"  role="menuitem">Avis</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr/forum"  role="menuitem">Forum</a>
+                                    </li>
+                                    <li class="item" role="none">
+                                        <a href="https://www.jobat.be/fr/jobfair/overview"  role="menuitem">Salons de l&#39;emploi</a>
+                                    </li>
+                        </ul>
+                    </div>
+                </div>
+                <div id="submenu-formations" class="Navigation-under " data-submenu="formations" aria-hidden="true" aria-labelledby="formations-link">
+                    <div class="Wrap">
+                        <ul class="Navigation-under-list" role="menu">
+                        </ul>
+                    </div>
+                </div>
+        </div>
+    </nav>
+    <nav class="Navigation-sm" data-uitest-id="mobile-navigation">
+        <div class="Navigation-overlay js-navigation-overlay"></div>
+
+        <div class="Navigation-container">
+            <div class="Navigation-Wrap">
+                <div class="menu-mobile">
+                    <button class="js-toggle-menu menu-icon" title="Ouvrir le menu" aria-controls="Navigation-content-landing" aria-expanded="false">
+                        <div class="is-menu">
+                            <!-- ICON SVG -->
+                        <!--?xml version="1.0" encoding="utf-8"?-->
+                        <!-- Generator: Adobe Illustrator 23.0.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+                        <svg version="1.1" id="Calque_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 28 28" style="enable-background:new 0 0 28 28;" xml:space="preserve">
+<style type="text/css">
+    .menu0 {
+        fill: #0292BE;
+    }
+
+    .menu1 {
+        fill: #FFFFFF;
+    }
+</style>
+                        <g id="Group_8290" transform="translate(-241 -8)">
+                        <g id="Group_8289" transform="translate(-55 -1)">
+                        <path id="Rectangle_2681" class="menu0" d="M297.5,14h25c0.8,0,1.5,0.7,1.5,1.5l0,0c0,0.8-0.7,1.5-1.5,1.5h-25
+			c-0.8,0-1.5-0.7-1.5-1.5l0,0C296,14.7,296.7,14,297.5,14z"></path>
+                        <path id="Rectangle_2682" class="menu0" d="M297.5,22h25c0.8,0,1.5,0.7,1.5,1.5l0,0c0,0.8-0.7,1.5-1.5,1.5h-25
+			c-0.8,0-1.5-0.7-1.5-1.5l0,0C296,22.7,296.7,22,297.5,22z"></path>
+                        <path id="Rectangle_2683" class="menu0" d="M297.5,30h25c0.8,0,1.5,0.7,1.5,1.5l0,0c0,0.8-0.7,1.5-1.5,1.5h-25
+			c-0.8,0-1.5-0.7-1.5-1.5l0,0C296,30.7,296.7,30,297.5,30z"></path>
+	</g>
+                        <rect id="Rectangle_3167" x="241" y="8" class="menu1" width="28" height="5"></rect>
+                        <rect id="Rectangle_3168" x="241" y="32" class="menu1" width="28" height="4"></rect>
+</g>
+</svg>
+                        </div>
+                    </button>
+                    <a href="/fr" data-tealium-menuid="Home">
+                        <img src="/-/media/jobat/jobat-be/images/logo.svg?h=120&amp;iar=0&amp;w=244&amp;hash=D0F63CEDE1922FB7265559CB0F3DFF67" class="mainLogo" alt="" width="244" height="120" />
+                    </a>
+                </div>
+                <div class="flex">
+                    <a href="#" id="openAppButton" class="Btn-sm Btn-stroke Btn-app m-r-4" title="Open app" data-tealium-id="button-app">Ouvrir app</a>
+                        <a href="/fr/secure/login" data-tealium-menuid="Aanmelden">
+                            <span class="is-primary user-icon-logout">
+                                <!-- ICON SVG -->
+                            <!--?xml version="1.0" encoding="utf-8"?-->
+                            <!-- Generator: Adobe Illustrator 23.0.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+                            <svg version="1.1" id="Laag_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 50 50" style="enable-background:new 0 0 50 50;" xml:space="preserve">
+                            <g>
+                            <path class="icon-path" d="M25.1,0C32,0,38.2,2.8,42.7,7.4l0.1,0.1C47.3,12,50,18.2,50,25c0,6.9-2.8,13.1-7.4,17.6l-0.1,0.1
+		C38,47.2,31.8,50,25,50c-6.9,0-13.1-2.8-17.6-7.4l0,0C2.9,38.1,0,31.9,0,25S2.8,11.9,7.4,7.4l0,0l0,0l0,0C12,2.8,18.2,0,25.1,0
+		L25.1,0z M40,10.1c-3.8-3.8-9.2-6.2-14.9-6.2c-5.9,0-11.2,2.4-14.9,6.2l0,0C6.4,13.8,4,19.1,4,25s2.4,11.2,6.2,14.9l0,0l0,0
+		c3.8,3.8,9.1,6.2,14.9,6.2s11.1-2.3,14.8-6.1l0.1-0.1c3.8-3.8,6.2-9.2,6.2-14.9C46.3,19.2,43.9,13.9,40,10.1L40,10.1z"></path>
+                            <g>
+                            <g>
+                            <g>
+                            <g>
+                            <path class="icon-path" d="M25.6,12c-3.5,0-6.4,2.8-6.4,6.2s2.9,6.2,6.4,6.2s6.4-2.8,6.4-6.2S29.1,12,25.6,12 M25.6,27.4
+						c-5.3,0-9.5-4.2-9.5-9.3s4.3-9.3,9.5-9.3s9.5,4.2,9.5,9.3S30.9,27.4,25.6,27.4"></path>
+				</g>
+			</g>
+                            <g>
+                            <g>
+                            <path class="icon-path" d="M36.2,38.4c-2.1-3.7-6.2-6.1-10.6-6.1s-8.4,2.3-10.6,6.1L12.3,37c2.7-4.7,7.8-7.7,13.2-7.7
+						s10.6,2.9,13.2,7.7L36.2,38.4z"></path>
+				</g>
+			</g>
+		</g>
+	</g>
+</g>
+</svg>
+                            </span>
+                        </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="Navigation-content-landing" data-overlay="main-overlay">
+            <div class="head">
+                <button aria-label="Fermer le menu" class="icon icon-close-3 js-toggle-menu close"></button>
+                <img src="/-/media/jobat/jobat-be/images/logo.svg?h=120&amp;iar=0&amp;w=244&amp;hash=D0F63CEDE1922FB7265559CB0F3DFF67" class="mainLogo" alt="Jobat" width="244" height="120" />
+            </div>
+
+            <ul class="Navigation-list" role="menubar">
+                    <li class="Navigation-item" role="none">
+                            <div class="Navigation-link js-subnav-overlay" data-trigger-overlay="jobs-overlay" aria-haspopup="true" aria-expanded="true" aria-controls="overlay-jobs">
+                                Jobs
+                                <i class="icon icon-arrow-right"></i>
+                            </div>
+                    </li>
+                    <li class="Navigation-item" role="none">
+                            <div class="Navigation-link js-subnav-overlay" data-trigger-overlay="carrière-overlay" aria-haspopup="true" aria-expanded="false" aria-controls="overlay-carri&#232;re">
+                                Carri&#232;re
+                                <i class="icon icon-arrow-right"></i>
+                            </div>
+                    </li>
+                    <li class="Navigation-item" role="none">
+                            <div class="Navigation-link js-subnav-overlay" data-trigger-overlay="community-overlay" aria-haspopup="true" aria-expanded="false" aria-controls="overlay-community">
+                                Community
+                                <i class="icon icon-arrow-right"></i>
+                            </div>
+                    </li>
+                    <li class="Navigation-item" role="none">
+                            <a href="https://www.jobat.be/fr/formations"  class="Navigation-link" aria-expanded="false" role="menuitem">
+                                Formations
+                            </a>
+                    </li>
+
+                <li class="Navigation-item">
+                        <a href="/fr/secure/login" class="Navigation-link user line" data-tealium-menuid="Aanmelden">
+                            <span class="is-dark user-icon">
+                                <!-- ICON SVG -->
+                            <!--?xml version="1.0" encoding="utf-8"?-->
+                            <!-- Generator: Adobe Illustrator 23.0.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+                            <svg version="1.1" id="Laag_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 50 50" style="enable-background:new 0 0 50 50;" xml:space="preserve">
+                            <g>
+                            <path class="icon-path" d="M25.1,0C32,0,38.2,2.8,42.7,7.4l0.1,0.1C47.3,12,50,18.2,50,25c0,6.9-2.8,13.1-7.4,17.6l-0.1,0.1
+		C38,47.2,31.8,50,25,50c-6.9,0-13.1-2.8-17.6-7.4l0,0C2.9,38.1,0,31.9,0,25S2.8,11.9,7.4,7.4l0,0l0,0l0,0C12,2.8,18.2,0,25.1,0
+		L25.1,0z M40,10.1c-3.8-3.8-9.2-6.2-14.9-6.2c-5.9,0-11.2,2.4-14.9,6.2l0,0C6.4,13.8,4,19.1,4,25s2.4,11.2,6.2,14.9l0,0l0,0
+		c3.8,3.8,9.1,6.2,14.9,6.2s11.1-2.3,14.8-6.1l0.1-0.1c3.8-3.8,6.2-9.2,6.2-14.9C46.3,19.2,43.9,13.9,40,10.1L40,10.1z"></path>
+                            <g>
+                            <g>
+                            <g>
+                            <g>
+                            <path class="icon-path" d="M25.6,12c-3.5,0-6.4,2.8-6.4,6.2s2.9,6.2,6.4,6.2s6.4-2.8,6.4-6.2S29.1,12,25.6,12 M25.6,27.4
+						c-5.3,0-9.5-4.2-9.5-9.3s4.3-9.3,9.5-9.3s9.5,4.2,9.5,9.3S30.9,27.4,25.6,27.4"></path>
+				</g>
+			</g>
+                            <g>
+                            <g>
+                            <path class="icon-path" d="M36.2,38.4c-2.1-3.7-6.2-6.1-10.6-6.1s-8.4,2.3-10.6,6.1L12.3,37c2.7-4.7,7.8-7.7,13.2-7.7
+						s10.6,2.9,13.2,7.7L36.2,38.4z"></path>
+				</g>
+			</g>
+		</g>
+	</g>
+</g>
+</svg>
+                            </span>
+                            <div class="MyProfil-name">
+                                Se connecter
+                            </div>
+                        </a>
+                </li>
+                <li class="Navigation-item">
+                    <a href="/fr/employeurs" class="Navigation-link line" data-tealium-menuid="Voor werkgevers">
+                        Pour employeurs
+                    </a>
+                </li>
+            </ul>
+
+            <div class='lang-link' role='menu'>
+                        <a href='https://www.jobat.be/nl' class=''  title='NL' role='menuitem'>NL</a><a href='https://www.jobat.be/fr' onclick='return false;' class='active'  title='FR' role='menuitem'>FR</a><a href='https://www.jobat.be/en' class=''  title='EN' role='menuitem'>EN</a>
+                    </div>
+
+            <div class="app-box">
+                    <a href="https://play.google.com/store/apps/details?id=be.jobat.mobile">
+                        <img src="/images/google-play.png" alt="Google Play">
+                    </a>
+                    <a href="https://apps.apple.com/be/app/jobat/id1629598091">
+                        <img src="/images/apple-store.png" alt="Apple Store">
+                    </a>
+            </div>
+        </div>
+
+            <div class="Navigation-overlay-landing" data-overlay="jobs-overlay" id="overlay-jobs" aria-hidden="true">
+                <div class="head">
+                    <i class="icon icon-arrow-left js-subnav-overlay" data-trigger-overlay="main-overlay"></i>
+                    <div class="jbt-subtitleMd">Jobs</div>
+                    <button aria-label="Fermer le menu" class="icon icon-close-3 js-navigation-overlay close"></button>
+                </div>
+
+                <ul class="Navigation-list" role="menu">
+                    <li class="Navigation-item" role="none">
+                        <a href="/fr" data-tealium-menuid="Jobs" class="Navigation-link line" role="menuitem">Jobs</a>
+                    </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr" data-tealium-menuid="Jobs zoeken" class="Navigation-link" role="menuitem">Rechercher un job</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="/fr/myjobat/jobspourvous" data-tealium-menuid="Jobs voor jou" class="Navigation-link" role="menuitem">Jobs pour vous</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="/fr/jobs/results?favorites=1" data-tealium-menuid="Bewaarde jobs" class="Navigation-link" role="menuitem">Jobs sauvegard&#233;s</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr/alerteemploi" data-tealium-menuid="Jobalert" class="Navigation-link" role="menuitem">Votre alerte emploi</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr/app" data-tealium-menuid="App" class="Navigation-link" role="menuitem">Application Jobat</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="/fr/barometre-des-salaires" data-tealium-menuid="Salariskompas" class="Navigation-link" role="menuitem">Barom&#232;tre des salaires</a>
+                            </li>
+                </ul>
+            </div>
+            <div class="Navigation-overlay-landing" data-overlay="carri&#232;re-overlay" id="overlay-carri&#232;re" aria-hidden="true">
+                <div class="head">
+                    <i class="icon icon-arrow-left js-subnav-overlay" data-trigger-overlay="main-overlay"></i>
+                    <div class="jbt-subtitleMd">Carri&#232;re</div>
+                    <button aria-label="Fermer le menu" class="icon icon-close-3 js-navigation-overlay close"></button>
+                </div>
+
+                <ul class="Navigation-list" role="menu">
+                    <li class="Navigation-item" role="none">
+                        <a href="https://www.jobat.be/fr/carriere" data-tealium-menuid="Carrrière" class="Navigation-link line" role="menuitem">Carri&#232;re</a>
+                    </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr/art/etudiants-jeunes-professionnels" data-tealium-menuid="Student" class="Navigation-link" role="menuitem">Etudiants &amp; Jeunes professionels</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr/art/postuler" data-tealium-menuid="Solliciteren" class="Navigation-link" role="menuitem">Postuler</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr/art/parcours-professionel" data-tealium-menuid="Loopbaan" class="Navigation-link" role="menuitem">Parcours professionnel</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr/art/remuneration" data-tealium-menuid="Loon" class="Navigation-link" role="menuitem">R&#233;mun&#233;ration</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr/art/absences-et-conges" data-tealium-menuid="Verlof" class="Navigation-link" role="menuitem">Absences &amp; Cong&#233;s</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr/art/demission-licenciement" data-tealium-menuid="Ontslag" class="Navigation-link" role="menuitem">D&#233;mission &amp; Licenciement</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr/art/pension" data-tealium-menuid="Pensioen" class="Navigation-link" role="menuitem">Pension</a>
+                            </li>
+                </ul>
+            </div>
+            <div class="Navigation-overlay-landing" data-overlay="community-overlay" id="overlay-community" aria-hidden="true">
+                <div class="head">
+                    <i class="icon icon-arrow-left js-subnav-overlay" data-trigger-overlay="main-overlay"></i>
+                    <div class="jbt-subtitleMd">Community</div>
+                    <button aria-label="Fermer le menu" class="icon icon-close-3 js-navigation-overlay close"></button>
+                </div>
+
+                <ul class="Navigation-list" role="menu">
+                    <li class="Navigation-item" role="none">
+                        <a href="https://www.jobat.be/fr/connect" data-tealium-menuid="Community" class="Navigation-link line" role="menuitem">Community</a>
+                    </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr/emplois/entreprises"  class="Navigation-link" role="menuitem">Avis</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr/forum"  class="Navigation-link" role="menuitem">Forum</a>
+                            </li>
+                            <li class="Navigation-item" role="none">
+                                <a href="https://www.jobat.be/fr/jobfair/overview"  class="Navigation-link" role="menuitem">Salons de l&#39;emploi</a>
+                            </li>
+                </ul>
+            </div>
+            <div class="Navigation-overlay-landing" data-overlay="formations-overlay" id="overlay-formations" aria-hidden="true">
+                <div class="head">
+                    <i class="icon icon-arrow-left js-subnav-overlay" data-trigger-overlay="main-overlay"></i>
+                    <div class="jbt-subtitleMd">Formations</div>
+                    <button aria-label="Fermer le menu" class="icon icon-close-3 js-navigation-overlay close"></button>
+                </div>
+
+                <ul class="Navigation-list" role="menu">
+                    <li class="Navigation-item" role="none">
+                        <a href="https://www.jobat.be/fr/formations"  class="Navigation-link line" role="menuitem">Formations</a>
+                    </li>
+                </ul>
+            </div>
+
+    </nav>
+</div>
+
+
+
+<div class="jobResultsDetails-header">
+    <div class="MainContent">
+        <div class="Wrap">
+            <div class="jobResultsDetails-search-header">
+                <div class="FormElement Form-searchJobs">
+                    <div class="field-container toggle-search">
+                        <span class="label-static">
+                            <div class="is-searchPanel is-red icon">
+                                <!-- ICON SVG -->
+                                                <?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 26.0.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     viewBox="0 0 16 20" style="enable-background:new 0 0 16 20;" xml:space="preserve">
+<style type="text/css">
+	.icon-path0{fill:#FFFFFF;}
+    .icon-path{fill:#E53345;}
+</style>
+    <g>
+	<g>
+		<path class="icon-path0" d="M0,0h16v20H0V0z"/>
+        <path class="icon-path" d="M5.5,4.9C5.2,5,5,5.1,4.7,5.3C4.5,5.4,4.2,5.6,4,5.8C3.8,6,3.6,6.3,3.5,6.5C3.3,6.8,3.2,7,3.1,7.3
+			C3,7.5,3.1,7.7,3.3,7.8c0.2,0.1,0.4,0,0.5-0.2C3.9,7.4,4,7.2,4.2,7c0.1-0.2,0.3-0.4,0.5-0.6C4.8,6.2,5,6.1,5.2,5.9
+			c0.2-0.1,0.4-0.3,0.7-0.4C6.1,5.5,6.2,5.2,6.1,5c0,0,0,0,0,0C5.9,4.9,5.7,4.8,5.5,4.9z M15.6,16.5l-2.8-2.8
+			c0.5-0.5,0.9-1.2,1.1-1.8c0.4-0.9,0.5-1.8,0.5-2.7c0-0.9-0.2-1.8-0.5-2.7v0c-0.4-0.8-0.9-1.6-1.5-2.3l0,0
+			c-0.7-0.7-1.4-1.2-2.3-1.6C9.2,2.2,8.2,2,7.3,2c-1.9,0-3.7,0.7-5,2.1C1.6,4.7,1.1,5.5,0.7,6.4C0.4,7.2,0.2,8.2,0.2,9.1
+			c0,0.9,0.2,1.8,0.5,2.7l0,0c0.4,0.9,0.9,1.7,1.6,2.3c0.7,0.7,1.5,1.2,2.3,1.6c0.9,0.4,1.8,0.5,2.7,0.5c0.9,0,1.9-0.2,2.7-0.5
+			c0.7-0.3,1.3-0.7,1.8-1.1l2.8,2.8c0.3,0.2,0.7,0.2,0.9,0C15.9,17.1,15.8,16.7,15.6,16.5z M11.4,13.2c-0.5,0.6-1.2,1-1.9,1.3
+			c-0.7,0.3-1.5,0.4-2.2,0.4c-0.8,0-1.5-0.2-2.2-0.5c-0.7-0.3-1.4-0.7-1.9-1.3c-0.5-0.5-1-1.2-1.3-1.9l0,0C1.6,10.6,1.4,9.8,1.4,9
+			c0-0.8,0.1-1.5,0.4-2.2c0.9-2.2,3-3.6,5.4-3.6c0.8,0,1.5,0.1,2.2,0.4c0.7,0.3,1.4,0.7,1.9,1.3l0,0c0.5,0.5,1,1.2,1.2,1.9l0,0
+			c0.3,0.7,0.4,1.5,0.4,2.2c0,0.8-0.1,1.5-0.4,2.2C12.4,12,12,12.7,11.4,13.2L11.4,13.2z M11.5,8.7c-0.2,0-0.4,0.2-0.4,0.4
+			c0,0.5-0.1,1-0.3,1.5v0c-0.2,0.5-0.5,0.9-0.8,1.2c-0.4,0.4-0.8,0.6-1.2,0.8c-0.5,0.2-1,0.3-1.5,0.3c-0.2,0-0.4,0.2-0.4,0.4
+			c0,0.2,0.2,0.4,0.4,0.4c0.6,0,1.2-0.1,1.7-0.4c0.6-0.2,1.1-0.6,1.5-1c0.4-0.4,0.8-0.9,1-1.5v0c0.2-0.6,0.4-1.1,0.4-1.7
+			C11.9,8.9,11.7,8.7,11.5,8.7L11.5,8.7z"/>
+	</g>
+</g>
+</svg>
+                            </div>
+                            Quoi, O&#249;
+                        </span>
+                        <div class="input-container">
+                            <input type="text" placeholder="" class="input-to-clear ui-autocomplete-input" id="searchJobCity" autocomplete="off">
+                            <span class="js-clear-input clear-input icon icon-close-3" style="display: none;"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="jobResultsDetails-search">
+                <div class="MainContent">
+                    <div class="Wrap">
+<form action="/api/jobat/JobSearch/Box" data-jobsearch="form" method="post"><input name="__RequestVerificationToken" type="hidden" value="DPi8H6fAGrRfn8LPkNPnamEKb6ws_QQ3i1zoMNcXKVakap2GinNOyj1FN9AmjRhEkN0TC9gF-lByP_sOiqr5AHKatqo1" /><input id="JobSearchFilter" name="JobSearchFilter" type="hidden" value="az1kZXZlbG9wZXImY29tcGFueW5hbWU9cmVzdWx0YXRz" />                            <div class="header-mobile">
+                                <button type="button" class="toggle-search icon-back" aria-label="Fermer">
+                                    <span class="jbt-icon-arrow-left" aria-hidden="true"></span>
+                                </button>
+                            </div>
+                            <div class="FormElement Form-searchJobs">
+                                <div class="fields">
+                                    <div class="label-mobile">Quoi ?</div>
+                                    <div class="field-container">
+                                        <span class="label-static">
+                                            <div class="is-searchPanel is-red icon">
+                                                <!-- ICON SVG -->
+                                                <?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 26.0.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     viewBox="0 0 16 20" style="enable-background:new 0 0 16 20;" xml:space="preserve">
+<style type="text/css">
+	.icon-path0{fill:#FFFFFF;}
+    .icon-path{fill:#E53345;}
+</style>
+    <g>
+	<g>
+		<path class="icon-path0" d="M0,0h16v20H0V0z"/>
+        <path class="icon-path" d="M5.5,4.9C5.2,5,5,5.1,4.7,5.3C4.5,5.4,4.2,5.6,4,5.8C3.8,6,3.6,6.3,3.5,6.5C3.3,6.8,3.2,7,3.1,7.3
+			C3,7.5,3.1,7.7,3.3,7.8c0.2,0.1,0.4,0,0.5-0.2C3.9,7.4,4,7.2,4.2,7c0.1-0.2,0.3-0.4,0.5-0.6C4.8,6.2,5,6.1,5.2,5.9
+			c0.2-0.1,0.4-0.3,0.7-0.4C6.1,5.5,6.2,5.2,6.1,5c0,0,0,0,0,0C5.9,4.9,5.7,4.8,5.5,4.9z M15.6,16.5l-2.8-2.8
+			c0.5-0.5,0.9-1.2,1.1-1.8c0.4-0.9,0.5-1.8,0.5-2.7c0-0.9-0.2-1.8-0.5-2.7v0c-0.4-0.8-0.9-1.6-1.5-2.3l0,0
+			c-0.7-0.7-1.4-1.2-2.3-1.6C9.2,2.2,8.2,2,7.3,2c-1.9,0-3.7,0.7-5,2.1C1.6,4.7,1.1,5.5,0.7,6.4C0.4,7.2,0.2,8.2,0.2,9.1
+			c0,0.9,0.2,1.8,0.5,2.7l0,0c0.4,0.9,0.9,1.7,1.6,2.3c0.7,0.7,1.5,1.2,2.3,1.6c0.9,0.4,1.8,0.5,2.7,0.5c0.9,0,1.9-0.2,2.7-0.5
+			c0.7-0.3,1.3-0.7,1.8-1.1l2.8,2.8c0.3,0.2,0.7,0.2,0.9,0C15.9,17.1,15.8,16.7,15.6,16.5z M11.4,13.2c-0.5,0.6-1.2,1-1.9,1.3
+			c-0.7,0.3-1.5,0.4-2.2,0.4c-0.8,0-1.5-0.2-2.2-0.5c-0.7-0.3-1.4-0.7-1.9-1.3c-0.5-0.5-1-1.2-1.3-1.9l0,0C1.6,10.6,1.4,9.8,1.4,9
+			c0-0.8,0.1-1.5,0.4-2.2c0.9-2.2,3-3.6,5.4-3.6c0.8,0,1.5,0.1,2.2,0.4c0.7,0.3,1.4,0.7,1.9,1.3l0,0c0.5,0.5,1,1.2,1.2,1.9l0,0
+			c0.3,0.7,0.4,1.5,0.4,2.2c0,0.8-0.1,1.5-0.4,2.2C12.4,12,12,12.7,11.4,13.2L11.4,13.2z M11.5,8.7c-0.2,0-0.4,0.2-0.4,0.4
+			c0,0.5-0.1,1-0.3,1.5v0c-0.2,0.5-0.5,0.9-0.8,1.2c-0.4,0.4-0.8,0.6-1.2,0.8c-0.5,0.2-1,0.3-1.5,0.3c-0.2,0-0.4,0.2-0.4,0.4
+			c0,0.2,0.2,0.4,0.4,0.4c0.6,0,1.2-0.1,1.7-0.4c0.6-0.2,1.1-0.6,1.5-1c0.4-0.4,0.8-0.9,1-1.5v0c0.2-0.6,0.4-1.1,0.4-1.7
+			C11.9,8.9,11.7,8.7,11.5,8.7L11.5,8.7z"/>
+	</g>
+</g>
+</svg>
+                                            </div>
+                                            <span class="label">Quoi ?</span>
+                                        </span>
+                                        <div class="input-container">
+                                            <input autocomplete="off" class="input-to-clear ui-autocomplete-input jobs_search" data-autocomplete="/api/jobat/JobSearch/AutoCompleteJobTitle" data-autocomplete-clicked="/api/jobat/JobSearch/AutoCompleteJobTitleClicked" data-jobsearch="keyword" data-tealium-id="jobs-search-what" id="searchJob" maxlength="80" name="Keyword" placeholder="Fonction, mots-clés ou nom d&#39;entreprise" type="text" value="developer" />
+                                            <span class="js-clear-input clear-input icon jbt-icon-close" style="display: none;"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="fields">
+                                    <div class="label-mobile">Où ?</div>
+                                    <div class="field-container">
+                                        <span class="label-static">
+                                            <div class="is-searchPanel is-red icon">
+                                                <!-- ICON SVG -->
+                                        <?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 26.0.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     viewBox="0 0 16 20" style="enable-background:new 0 0 16 20;" xml:space="preserve">
+<style type="text/css">
+	.icon-path0{fill:#FFFFFF;}
+    .icon-path{fill:#E53345;}
+</style>
+    <g>
+	<path class="icon-path0" d="M0,0h16v20H0V0z"/>
+        <g>
+		<path class="icon-path" d="M8,3.8c-2.4,0-4.3,1.9-4.3,4.3s1.9,4.3,4.3,4.3s4.3-1.9,4.3-4.3l0,0C12.3,5.7,10.4,3.8,8,3.8z M8,11.6
+			c-1.9,0-3.5-1.6-3.5-3.5C4.5,6.2,6,4.6,8,4.6c1.9,0,3.5,1.6,3.5,3.5l0,0C11.5,10.1,9.9,11.6,8,11.6C8,11.6,8,11.6,8,11.6z"/>
+	</g>
+        <path class="icon-path" d="M8,0.2C4,0.2,0.7,3.5,0.6,7.6c0,1.6,0.6,3.2,1.5,4.5l5.3,7.5c0.1,0.2,0.3,0.3,0.5,0.3c0.2,0,0.4-0.1,0.5-0.3
+		l5.3-7.5c0.9-1.3,1.5-2.9,1.5-4.5C15.4,3.5,12.1,0.2,8,0.2C8,0.2,8,0.2,8,0.2z M8,18.1l-4.8-6.8c-0.8-1.1-1.2-2.4-1.3-3.8
+		c0-3.4,2.7-6.2,6-6.2s6.2,2.7,6.2,6c0,0.1,0,0.1,0,0.2c0,1.4-0.5,2.7-1.3,3.8L8,18.1z"/>
+</g>
+</svg>
+                                            </div>
+                                            <span class="label">Où ?</span>
+                                        </span>
+                                        <div class="input-container">
+                                            <input autocomplete="off" class="input-to-clear ui-autocomplete-input" data-autocomplete="/api/jobat/JobSearch/AutoCompleteRegions" data-jobsearch="location" data-tealium-id="jobs-search-where" id="searchCity" maxlength="80" name="Location" placeholder="Commune ou province" style="" type="text" value="" />
+                                            <span class="js-clear-input clear-input icon jbt-icon-close" style="display: none;"></span>
+                                            <input class="input-to-clear" data-jobsearch="locationid" id="LocationID" name="LocationID" type="hidden" value="" />
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <div class="cta">
+                                    <a class="Btn-lg cta-btn" data-tealium-id="jobs-search-button" data-uitest-id="jobs-search-submit" data-jobsearch="submit">Rechercher</a>
+                                </div>
+                            </div>
+</form>                    </div>
+                </div>
+            </div>
+            
+
+
+<div class="jobResultsDetails-filtersContainer">
+    <div class="filtersNav">
+        <div class="arrow-left arrow">
+            <span class="is-button-light icon">
+                <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     viewBox="0 0 8 14" style="enable-background:new 0 0 8 14;" xml:space="preserve">
+    <g>
+	<g>
+		<path class="icon-path" d="M0,7l7-7l1,1L2,7l6,6l-1,1L0,7z"/>
+	</g>
+</g>
+</svg>
+            </span>
+        </div>
+        <div class="arrow-right arrow">
+            <span class="is-button-light icon">
+                <svg version="1.1" id="Calque_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     viewBox="0 0 8 14" style="enable-background:new 0 0 8 14;" xml:space="preserve">
+    <g id="prefix__Drop_down" transform="rotate(-90 7.002 7.002)">
+	<g id="prefix__Group_6030">
+		<path id="prefix__Union_21" class="icon-path" d="M7,8L0,1l1-1l6,6l6-6l1,1L7,8z"/>
+	</g>
+</g>
+</svg>
+            </span>
+        </div>
+    </div>
+    <div class="jobResultsDetails-filters">
+            </div>
+</div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+            <div class="MainContent">
+                <div class="Wrap">
+                        <div class="jobResultsDetails">
+                            
+
+
+<div class="jobContainer-header">
+
+    <h1 class="jbt-contentBoldReg">
+        Offres d&#39;emploi developer :
+    &nbsp;
+    <span class="jbt-content">
+        <span class="jobsCount" >0</span>
+            <span class="jobsSuffix">jobs</span>
+    </span>
+    </h1>
+
+<div class="  switchBox jobExpress-toggle" id="jobExpressToggle">
+    <p class="jbt-content">Jobs par e-mail :</p>
+
+    <div class="flex-vcenter switchContainer">
+        <span class="jbt-content m-r-2 label">D&#233;sactiv&#233;</span>
+<div class="shake-container">        <div class="switch-light shake">
+            <input type="checkbox" id="on2" class="on2-bl-bu" >
+            <label id="lblOn2" for="on2" onclick="toggleJobAlert(!$('#on2').prop('checked'),false);" data-tealium-id="results-toggle-top-activate"></label>
+        </div>
+            <div class="popup container-collapse active" style="display: block; z-index: 100">
+                <div class="wrapper-collapse">
+                    <div class="header-title">
+                        Jobat cherche pour vous
+                        <span class="icon icon-close-3 js-collapse" onclick="closeCalloutPopup()"></span>
+                    </div>
+
+                    <div class="content">
+                        <div class="is-popup icon">
+                            <svg version="1.1" id="Calque_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                         viewBox="0 0 60 46.8" style="enable-background:new 0 0 60 46.8;" xml:space="preserve">
+                    <g id="prefix__Group_9747" transform="translate(-1235 -1437)">
+                    <path id="prefix__Rectangle_3840" class="icon-path-1" d="M1238,1439h55v43h-55V1439z" />
+
+
+
+                    <path id="prefix__icon-email" class="icon-path" d="M1237.4,1437h55.2c1.3,0,2.4,1.1,2.4,2.4v42c0,1.3-1.1,2.4-2.4,2.4h-55.2
+		c-1.3,0-2.4-1.1-2.4-2.4v-42C1235,1438.1,1236.1,1437,1237.4,1437z M1290.3,1443.6L1266,1468c-0.5,0.5-1.4,0.5-1.9,0l-24.4-24.4
+		v35.5h50.6V1443.6z M1288.4,1441.6h-46.8l23.4,23.4L1288.4,1441.6z" />
+
+
+
+</g>
+</svg>
+                        </div>
+                        <p>
+                            Enregistrez cette demande de recherche et recevez les offres d&#39;emploi les plus adapt&#233;es dans votre bo&#238;te mail.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>        <span class="jbt-content m-l-2 label">Activ&#233;</span>
+    </div>
+
+    <div class="parameter on">
+        <a href="#" onclick="$('#JobAgentAdvancedSettingsModal').modal('show'); return false;" data-tealium-id="toggle-results-settings-open">
+            <div class="is-settings">
+                <svg version="1.1" id="icon_settings" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px"
+     y="0px" viewBox="0 0 28 28" style="enable-background:new 0 0 28 28;" xml:space="preserve">
+    <g id="Group_44977" transform="translate(8.725 8.646)">
+	<path id="Path_1816" class="icon-path" d="M5.4,0C4,0,2.6,0.6,1.6,1.6C0.6,2.6,0,4,0,5.4c0,1.4,0.6,2.8,1.6,3.8c1,1,2.4,1.6,3.8,1.6
+		c1.4,0,2.8-0.6,3.8-1.6c1-1,1.6-2.4,1.6-3.8C10.8,2.4,8.4,0,5.4,0z M8.2,8.2C7.4,9,6.4,9.4,5.4,9.4c-1,0-2-0.4-2.8-1.1
+		C1.9,7.5,1.5,6.5,1.5,5.5c0-1,0.4-2,1.1-2.8C3.4,2,4.4,1.6,5.4,1.6c1,0,2,0.4,2.8,1.1c0.7,0.7,1.1,1.7,1.1,2.8
+		C9.3,6.5,8.9,7.5,8.2,8.2z"/>
+</g>
+    <path id="Path_1817" class="icon-path" d="M27.4,10.6c-0.4-0.4-0.9-0.6-1.5-0.6h-1.7c0-0.1,0-0.1-0.1-0.2l1.5-1.5c0.2-0.3,0.4-0.8,0.4-1.2
+	c0-0.6-0.2-1.1-0.6-1.5l-2.9-2.9l-0.1-0.1c-0.8-0.7-2.1-0.7-2.9,0.1L18.2,4l-0.2-0.1V2.1c0-0.6-0.2-1.1-0.6-1.5
+	C17.1,0.2,16.5,0,16,0h-4c-1.2,0-2.1,1-2.1,2.1v1.7L9.8,4L8.6,2.8L8.5,2.7c-0.8-0.8-2.1-0.8-2.9,0L2.7,5.5c-0.8,0.8-0.9,2-0.2,2.9
+	v0.1l0.1,0.1L4,9.8c0,0.1,0,0.1-0.1,0.2H2.1c-0.6,0-1.1,0.2-1.5,0.6C0.2,10.9,0,11.5,0,12v4c0,1.2,1,2.1,2.1,2.1h1.7
+	c0,0.1,0,0.2,0.1,0.2l-1.2,1.2l-0.1,0.1c-0.8,0.8-0.8,2.1,0,3c0,0,0,0,0,0l2.9,2.8c0.8,0.8,2.1,0.8,2.9,0.1c0,0,0,0,0.1-0.1L9.8,24
+	c0.1,0,0.1,0,0.2,0.1v1.7c0,1.2,1,2.1,2.1,2.1h4c1.2,0,2.1-1,2.1-2.1v-1.7c0.1,0,0.1,0,0.2-0.1l1.3,1.3c0.8,0.8,2.1,0.8,2.9,0
+	l2.9-2.9c0.8-0.8,0.8-2.1,0-3c0,0,0,0,0,0L24,18.2l0.1-0.2H26c0.5,0,1-0.3,1.3-0.6c0.4-0.4,0.6-0.9,0.6-1.5v-4
+	C28,11.4,27.7,10.9,27.4,10.6z M22.4,16.7c-0.2,0.4-0.3,0.8-0.6,1.3c-0.2,0.4-0.1,1,0.2,1.3l1.1,1.1h-0.1l0.7,0.7l-2.9,2.7l-1.7-1.7
+	c-0.3-0.3-0.8-0.4-1.2-0.2c-0.4,0.2-0.8,0.4-1.3,0.6c-0.3,0.1-0.6,0.3-0.6,0.6H16V26h-4v-2.5c0-0.5-0.3-0.9-0.7-1
+	c-0.4-0.2-0.9-0.3-1.3-0.6c-0.1-0.1-0.3-0.1-0.5-0.1c-0.3,0-0.5,0.1-0.7,0.3L7,23.8l-2.7-2.7L4,20.6l0.3,0.2l1.7-1.7
+	c0.3-0.3,0.4-0.8,0.2-1.2c-0.3-0.4-0.5-0.9-0.6-1.3c-0.2-0.4-0.5-0.7-1-0.7H2.1v-4h2.5c0.5,0,0.9-0.3,1-0.8c0.2-0.4,0.3-0.9,0.6-1.3
+	C6.3,9.5,6.3,9,5.9,8.7L4.2,7l2.9-2.9l1.7,1.8C9,6.3,9.5,6.3,9.9,6.1c0.5-0.2,1-0.4,1.3-0.6c0.4-0.2,0.7-0.6,0.7-1V2.1h4v2.5
+	c0,0.5,0.3,0.9,0.8,1c0.4,0.1,0.9,0.3,1.3,0.6c0.4,0.2,1,0.1,1.3-0.2l1.7-1.7h0.1L23.8,7l-1.7,1.7c-0.3,0.3-0.4,0.9-0.2,1.3
+	c0.2,0.4,0.4,0.9,0.6,1.3c0.1,0.3,0.3,0.5,0.6,0.6V12h2.9v4h-2.5C22.9,16,22.6,16.3,22.4,16.7L22.4,16.7z"/>
+</svg>
+            </div>
+        </a>
+    </div>
+</div>
+<form action="/api/jobat/JobAgent/ToggleButton" data-ajax="true" data-ajax-method="POST" data-ajax-success="updateToggleButtonOnSuccess" id="ToggleButtonForm" method="post" style="display:none;"><input name="__RequestVerificationToken" type="hidden" value="lZQsXeAouOAF2LHaoKdzkIGbuaDS-NG6moqqfJj8gLyNarBFm8AAx8DvFi-Ybt4KGeNJDVq6ZR_QUqHUlHCDUreofOg1" /><input data-val="true" data-val-number="The field UserSearchId must be a number." data-val-required="The UserSearchId field is required." id="UserSearchId" name="UserSearchId" type="hidden" value="0" /><input data-val="true" data-val-required="The SearchFilter field is required." id="SearchFilter" name="SearchFilter" type="hidden" value="az1kZXZlbG9wZXImY29tcGFueW5hbWU9cmVzdWx0YXRz" /><input data-val="true" data-val-required="The Active field is required." id="Active" name="Active" type="hidden" value="False" />    <input type="submit" class="Btn-lg Btn-reject" id="UpdateToggleJobAgentBtn" name="UpdateToggleJobAgentBtn" value="UpdateToggleJobAgentBtn"/>
+</form>
+
+
+
+</div>
+                            <div class="jobContainer">
+                                <div class="jobResults-content">
+                                    
+
+
+<script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/fr_FR/appleid.auth.js"></script>
+
+<div id="jobresults" data-uitest-id="jobresults-joblist" data-filter="az1kZXZlbG9wZXImY29tcGFueW5hbWU9cmVzdWx0YXRz" data-total="0" data-pagesize="50">
+    
+    
+</div>
+<div class="block">
+    
+
+</div>
+
+  <div class="tooltip-container saved-jobs-popup">
+    <h2 class="tooltip-title">
+      <i class="icon icon-favorite is-favorite"></i>Le job a &#233;t&#233; sauvegard&#233;
+    </h2>
+    <div class="tooltip-content">
+<p>Vous pouvez retrouver vos jobs sauvegardés sur la page d'accueil ou dans <a href="/fr/myjobat" rel="nofollow">Mon Jobat</a>.</p>      <div class="CustomCheckbox m-t-4 m-b-4">
+        <input id="cbHideSavedJobsPopup" type="checkbox" checked="checked">
+        <label for="cbHideSavedJobsPopup">Ne plus afficher ce message</label>
+      </div>
+    </div>
+
+    <button id="btnHideSavedJobsPopup" class="Btn Btn-skip Btn-auto close">Fermer</button>
+  </div>
+
+
+
+
+
+
+                                </div>
+                                <div class="jobDetails-content">
+                                    <div class="content empty">
+    <span class="m-b-2 is-colorBox-lg">
+        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 80 80" style="enable-background:new 0 0 80 80;" xml:space="preserve">
+<style type="text/css">
+.icon-noJobSelected0{fill:none;}
+.icon-noJobSelected1{fill:#D7D7D7;}
+</style>
+<g>
+<path class="icon-noJobSelected0" d="M0,0h80v80H0V0z"></path>
+</g>
+<g>
+<path class="icon-noJobSelected1" d="M53.3,10H16.7C13,10,10,13,10,16.7v46.7c0,3.7,3,6.7,6.7,6.7h46.7c3.7,0,6.7-3,6.7-6.7V26.7L53.3,10z
+M63.3,63.3H16.7V16.7H50V30h13.3V63.3z M23.3,56.7h33.3V50H23.3V56.7z M40,23.3H23.3V30H40V23.3z M23.3,43.3h33.3v-6.7H23.3V43.3z
+"></path>
+</g>
+</svg>
+    </span>
+    <div class="jbt-contentLgMedium m-b-2">Aucun job s&#233;lectionn&#233; pour le moment</div>
+    <span class="jbt-status">S&#233;lectionnez un job sur la gauche pour le visualiser</span>
+</div>
+
+                                </div>
+                            </div>
+                        </div>
+<div class="relatedContent">
+    <p>
+Vous êtes à la recherche d'un emploi : developer ?    </p>
+    <p>
+Alors vous avez atterri au bon endroit, <a href="/fr">Jobat.be</a> propose 0 emplois dans la catégorie "developer".    </p>
+    <p>
+        </p>
+    </div>
+<style>
+    .relatedContent.links-list {
+        display:block;
+    }
+    .relatedContent p{
+        margin-top: 1.5rem;
+    }
+    .relatedContent a{
+        color: #0292be;
+    }
+</style>    <div class="m-t-12 m-b-20 links-list relatedContent">
+                    </div>
+                </div>
+            </div>
+
+<div id="footerwrapper">
+    <footer>
+        <section class="FooterSearch">
+    <div class="Wrap">
+        <div class="row">
+                    <div class="col-lg-2 col-sm-4 col-xs-12 FooterTop-content">
+                        <h2 class="FooterTop-title">Entreprises les plus populaires</h2>
+                        <ul class="FooterTop-list">
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/entreprises/carrefour-belgium/516">Carrefour</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/entreprises/colruyt-group/1496">Colruyt</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/entreprises/crelan/7040">Crelan</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/entreprises/dpg-media/28171">DPG Media</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/entreprises/engie/3741">Engie</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/entreprises/equans/1075">Equans</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/entreprises/infrabel/26922">Infrabel</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="https://www.jobat.be/fr/emplois/entreprises/ku-leuven/1016">KU Leuven</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/entreprises/manpower/3294">Manpower</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="https://www.jobat.be/fr/emplois/entreprises/mediahuis/4813">Mediahuis</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/entreprises/smals/4260">Smals</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/entreprises/nmbs/26921">SNCB</a>
+                                </li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-2 col-sm-4 col-xs-12 FooterTop-content">
+                        <h2 class="FooterTop-title">Types de contrat les plus populaires</h2>
+                        <ul class="FooterTop-list">
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/administration">Job Administratif</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/temps-partiel">Temps Partiel</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/enseignement-formation">Emploi Enseignement</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/mi-temps">Emploi Mi-Temps</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/flexijob">Flexijob</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/horeca">Horeca</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/etudiant">Job &#201;tudiants</a>
+                                </li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-2 col-sm-4 col-xs-12 FooterTop-content">
+                        <h2 class="FooterTop-title">Villes les plus populaires</h2>
+                        <ul class="FooterTop-list">
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/arlon">Arlon</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/bruxelles">Bruxelles</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/dinant">Dinant</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/huy">Huy</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/liege">Li&#232;ge</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/namur">Namur</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/neufchateau">Neufch&#226;teau</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/nivelles">Nivelles</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/verviers">Verviers</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/wavre">Wavre</a>
+                                </li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-2 col-sm-4 col-xs-12 FooterTop-content">
+                        <h2 class="FooterTop-title">Postes les plus populaires</h2>
+                        <ul class="FooterTop-list">
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/employe-administratif">Employ&#233; administratif</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/chauffeur-c">Chauffeur C</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/cariste">Cariste</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/laborantin">Laborantin</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/magasinier">Magasinier</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/psychologue">Psychologe</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/nettoyage">Nettoyage</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/vente">Vente</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/web-developer-junior">Web Developer (Junior)</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="/fr/emplois/titres/educateur">Educateur</a>
+                                </li>
+                        </ul>
+                    </div>
+            <div class="col-lg-2 col-sm-4 col-xs-12 FooterTop-content">
+                <h2 class="FooterTop-title">Volg ons op</h2>
+
+                <div class="SocialLinks SocialLinks-faq">
+                            <div class="SocialLinks-item facebook">
+                                <a href="https://www.facebook.com/jobat.be?ref=nf">
+                                    <img src="/-/media/jobat/jobat-be/social-media-icons/facebook.svg" alt="Facebook" />
+                                </a>
+                            </div>
+                            <div class="SocialLinks-item instagram">
+                                <a href="https://www.instagram.com/jobat_be/">
+                                    <img src="/-/media/jobat/jobat-be/social-media-icons/instagram.svg" alt="Instagram" />
+                                </a>
+                            </div>
+                            <div class="SocialLinks-item linkedin">
+                                <a href="https://www.linkedin.com/company/jobat">
+                                    <img src="/-/media/jobat/jobat-be/social-media-icons/linkedin.svg" alt="LinkedIn" />
+                                </a>
+                            </div>
+                            <div class="SocialLinks-item tiktok">
+                                <a href="https://www.tiktok.com/@jobat_goforhappy">
+                                    <img src="/-/media/jobat/jobat-be/social-media-icons/tiktok.svg" alt="TikTok" />
+                                </a>
+                            </div>
+                            <div class="SocialLinks-item youtube">
+                                <a href="https://www.youtube.com/@jobat">
+                                    <img src="/-/media/jobat/jobat-be/social-media-icons/icon-youtube.svg" alt="YouTube" />
+                                </a>
+                            </div>
+                </div>
+                <div class="block-spacing">
+                    <div class="jbt-subtitleLight m-b-2">Download de app</div>
+
+                    <div class="app-tag">
+                            <a href="https://play.google.com/store/apps/details?id=be.jobat.mobile">
+                                <img src="/images/google-play.png" alt="Google Play" />
+                            </a>
+                            <a href="https://apps.apple.com/be/app/jobat/id1629598091">
+                                <img src="/images/apple-store.png" alt="Apple Store" />
+                            </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+</section>
+        
+<section class="FooterTop">
+    <div class="Wrap">
+        <div class="row">
+                <div class="col-lg-2 col-sm-4 col-xs-12 FooterTop-content">
+                    <h2 class="FooterTop-title">Jobs</h2>
+                    <ul class="FooterTop-list">
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/">Trouver un job</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/emplois/entreprises">Jobs par entreprise</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/emplois/categories">Emplois par cat&#233;gorie</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/emplois/titres">Emplois par titre</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/emplois/emplois-par-commune">Emplois par commune</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/s-abonner-a-nos-newsletters">S’abonner &#224; nos newsletters</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/cv-update-upload">T&#233;l&#233;chargez votre CV</a>
+                            </li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-sm-4 col-xs-12 FooterTop-content">
+                    <h2 class="FooterTop-title">Info carri&#232;re</h2>
+                    <ul class="FooterTop-list">
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/art/etudiants-jeunes-professionnels">&#201;tudiant &amp; Jeunes professionels</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/art/postuler">Postuler</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/art/parcours-professionel">Parcours professionel</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/art/remuneration">R&#233;mun&#233;ration</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/art/absences-et-conges">Absences &amp; Cong&#233;s</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/art/demission-licenciement">D&#233;mission &amp; Licenciement</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/art/pension">Pension</a>
+                            </li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-sm-4 col-xs-12 FooterTop-content">
+                    <h2 class="FooterTop-title">Calculer</h2>
+                    <ul class="FooterTop-list">
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/barometre-des-salaires">Barom&#232;tre des salaires</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="/fr/art/quel-est-le-montant-de-votre-pecule-de-vacances">P&#233;cule de vacances</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="/fr/art/calculez-votre-prime-de-fin-d-annee">Prime de fin d&#39;ann&#233;e</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="/fr/art/calculez-votre-delai-de-preavis">D&#233;lai de pr&#233;avis</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="/fr/art/calculez-le-montant-de-vos-allocations-de-chomage">Allocation de ch&#244;mage</a>
+                            </li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-sm-4 col-xs-12 FooterTop-content">
+                    <h2 class="FooterTop-title">Jobat</h2>
+                    <ul class="FooterTop-list">
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/employeurs">Publier une annonce</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/contactez-nous">Contact</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.facebook.com/jobat.be?ref=nf">Jobat sur Facebook</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.instagram.com/jobat_be/">Jobat sur Instagram</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.linkedin.com/company/jobat">Jobat sur LinkedIn</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.tiktok.com/@jobat_goforhappy">Jobat sur TikTok</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.youtube.com/@jobat">Jobat sur YouTube</a>
+                            </li>
+                            <li class="FooterTop-listItem">
+                                <a href="https://www.jobat.be/fr/qui-est-qui">Qui est qui?</a>
+                            </li>
+                    </ul>
+                </div>
+                            <div class="col-lg-2 col-sm-4 col-xs-12 Footer-privacy FooterTop-content">
+                    <h2 class="FooterTop-title">Conditions</h2>
+                    <ul class="FooterTop-list">
+                                <li class="FooterTop-listItem">
+                                    <a href="https://www.jobat.be/fr/conditions-dutilisation" target="_blank">Conditions d&#39;utiliisation</a>
+                                    &nbsp;
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="https://www.jobat.be/fr/droits-du-candidat" target="_blank">Droits du candidat</a>
+                                    &nbsp;
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="https://www.mediahuis.be/fr/politique-de-cookies/" target="_blank">Politique de cookies</a>
+                                    &nbsp;
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="https://www.jobat.be/fr/privacy-policy" target="_blank">Politique vie priv&#233;e</a>
+                                    &nbsp;
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="javascript:Didomi.preferences.show();">Pr&#233;f&#233;rences cookies</a>
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="https://www.mediahuis.be/fr/conditions-de-vente/" target="_blank">Conditions de vente</a>
+                                    &nbsp;
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="https://www.jobat.be/fr/loi-sur-les-services-numeriques" target="_blank">Loi sur les services num&#233;riques: information</a>
+                                    &nbsp;
+                                </li>
+                                <li class="FooterTop-listItem">
+                                    <a href="https://policies.google.com/" target="_blank">This site is protected by reCATPCHA and the Google Private Policy and Terms of Service apply</a>
+                                    &nbsp;
+                                </li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-sm-4 col-xs-12 Footer-jbt-logo">
+<a href="https://www.jobat.be/fr/" target="_blank" rel="noopener noreferrer" ><img src="/-/media/jobat/jobat-be/images/jobat_logo_baseline_2019_rgb_neg2.png?la=fr&amp;h=365&amp;w=688&amp;hash=E1DD6B49B2ACC86B64C30B7CB9AA6844" title="Jobat" alt="" /></a>&nbsp;                </div>
+        </div>
+    </div>
+</section>
+        <section class="FooterBottom">
+    <div class="Wrap">
+        <ul class="FooterBottom-links">
+                <li>
+                    <a href="https://www.nieuwsblad.be/" target="_blank">Het Nieuwsblad</a>
+                </li>
+                <li>
+                    <a href="https://www.hln.be" target="_blank">Het Laatste Nieuws</a>
+                </li>
+                <li>
+                    <a href="https://www.standaard.be/" target="_blank">De Standaard</a>
+                </li>
+                <li>
+                    <a href="https://www.demorgen.be" target="_blank">De Morgen</a>
+                </li>
+                <li>
+                    <a href="https://www.gva.be/" target="_blank">Gazet van Antwerpen</a>
+                </li>
+                <li>
+                    <a href="https://www.hbvl.be/" target="_blank">Het Belang van Limburg</a>
+                </li>
+                <li>
+                    <a href="https://www.dhnet.be/" target="_blank">La Derni&#232;re Heure</a>
+                </li>
+                <li>
+                    <a href="https://www.lalibre.be/" target="_blank">La Libre</a>
+                </li>
+                <li>
+                    <a href="https://www.lavenir.net/" target="_blank">L&#39;Avenir</a>
+                </li>
+        </ul>
+    </div>
+</section>
+        
+<section class="FooterLogo">
+    <div class="Wrap">
+        <div class="FooterLogo-container">
+<a href="https://www.employeurpionnier.be/" target="_blank" rel="noopener noreferrer" ><img src="/-/media/jobat/jobat-be/images/employeurpionnier-zw.png?la=fr&amp;h=57&amp;w=100&amp;hash=8F4FD9E6EB213B9EB45580BD3EC1A639" height="57" title="Employeur Pionnier" alt="" width="100" /></a><a href="https://www.doffice.be/" target="_blank" rel="noopener noreferrer" ><img src="/-/media/jobat/jobat-be/images/doffice_160x80.png?la=fr&amp;h=80&amp;w=160&amp;hash=F6E87A437A7181E951972AC5D69DD8AA" height="80" title="doffice." alt="" width="160" /></a><a href="https://www.mediahuis.be/fr/" target="_blank" rel="noopener noreferrer" ><img src="/-/media/jobat/jobat-be/images/mh_desktop.png?la=fr&amp;h=64&amp;w=175&amp;hash=0BCA58D892155AF3423D89F94204BCC8" height="64" title="Mediahuis" alt="" width="175" /></a><a href="https://www.dpgmedia.be/fr" target="_blank" rel="noopener noreferrer" ><img src="/-/media/jobat/jobat-be/images/dpg_desktop.png?la=fr&amp;h=64&amp;w=91&amp;hash=006E8B35BEC4AE25550851C871E67534" height="64" title="DPG Média" alt="" width="91" /></a><a href="https://www.jobat.be/fr/top-employer" target="_blank" rel="noopener noreferrer" ><img src="/-/media/jobat/jobat-be/images/te_desktop.png?la=fr&amp;h=64&amp;w=64&amp;hash=C0E5E643FEF31A4A64C30DD70480BF72" height="64" title="Top Employer" alt="" width="64" /></a><a href="https://www.greatplacetowork.be/en/best-workplaces/best-workplaces-en-belgique" target="_blank" rel="noopener noreferrer" ><img src="/-/media/jobat/jobat-be/images/gptw_desktop.png?la=fr&amp;h=64&amp;w=64&amp;hash=1EC0DC6808DDA873D9E0F66DF1A153C9" height="64" title="Great Places to Work" alt="" width="64" /></a><a href="https://hrgala.be/nl/" target="_blank" rel="noopener noreferrer" ><img src="/-/media/jobat/jobat-be/images/hrgala_desktop.png?la=fr&amp;h=64&amp;w=83&amp;hash=6458C441D0E67D219A7C963AE1F0C96F" height="64" title="HR Gala" alt="" width="83" /></a>        </div>
+    </div>
+</section>
+    </footer>
+</div>
+
+    <section id="jobatAppSheet" class="jobat-app-sheet" role="dialog" aria-modal="true">
+    <div class="jobat-app-container" aria-labelledby="jobatApp">
+        <div class="jobat-app-header">
+            <h2 class="jobat-app-title" id="jobatApp">Les meilleures offres d'emploi dans l'app!</h2>
+        </div>
+        <div class="jobat-app-content">
+            <a href="/fr/app"
+               class="jobat-app-option js-jobat-app-open-store"
+               rel="nofollow noopener noreferrer" data-tealium-id="popup-app-app">
+                <div class="jobat-app-info">
+                    <img src="/images/jobat-app-tile.svg"
+                         alt="Jobat | App Jobat"
+                         class="jobat-app-icon"
+                         width="64"
+                         height="64">
+                    <span class="jobat-app-name">App Jobat</span>
+                </div>
+                <span class="Btn Btn-primary">Ouvrir</span>
+            </a>
+            <button type="button" class="jobat-app-option js-jobat-app-close" data-tealium-id="popup-app-site">
+                <div class="jobat-app-info">
+                    <span title="Browser" class="jobat-app-icon browser"></span>
+                    <span class="jobat-app-name">Navigateur</span>
+                </div>
+                <span class="Btn Btn-stroke">Continuer</span>
+            </button>
+        </div>
+        
+    </div>
+</section>
+
+
+    <div id="popUps">
+        <div id="divLoginPopup"></div>
+    </div>
+    <script type="text/javascript" defer="defer">
+
+        var loginPopupLoading = false;
+
+        function initFavoritesScript() {
+            $("[data-favorite-command]").click(function () {
+                if (loginPopupLoading) { return;}
+                loginPopupLoading = true;
+                $("#divLoginPopup").load("/api/jobat/Security/LoginPopup?type=favorites&returnUrl=%2ffr%2femplois%2fresultats", function () { loginPopupLoading = false; });
+            });
+        }
+
+    $(function () {
+        initFavoritesScript();
+    });
+</script>
+    <script type="text/javascript">
+      function doLogOut() {
+        removeExternalRecommenderCache();
+
+        $.ajax({
+            type: "POST",
+            url: "/api/jobat/Security/Logout",
+            async: false,
+            data:  { __RequestVerificationToken:"KeNH506MdWgMh0R66LqNbMD1Xcw4sD-Yn4EVT4FNafoGq23aE8f0hEt0UQO1ylcbRPBE-xJTTmrRwxEb9ibGVnXYKDc1" },
+            dataType: "json",
+            success: function (result) {
+                if (result.redirectUrl !== undefined) {
+                    window.location.replace(result.redirectUrl);
+                } else {
+                    // No redirect found, do something else
+                }
+            }
+
+        });
+        }
+
+        $(function () {
+            $("#openAppButton").click(function (e) {
+                e.preventDefault();
+                openAppStore('/fr/app', 'https://play.google.com/store/apps/details?id=be.jobat.mobile', 'https://apps.apple.com/be/app/jobat/id1629598091');
+            });
+        })
+    </script>
+        <script type="text/javascript">
+        var ogLoginTrigger = null;
+        var loginPopupLoading = false;
+        var clearData = false;
+        var loggedIn = false;
+        var isSalaryCompassShowcase = false;
+
+        function getNewUrl() {
+            var url = document.location.href;
+            if (url.indexOf("?") > 0) {
+                url = url + "&toggle=1";
+            } else {
+                url = url + "?toggle=1";
+            }
+            return encodeURI(url);
+        }
+        function toggleJobAlert(active, isPanel, el) {
+            if (!loggedIn && !loginPopupLoading) {
+                if (isPanel) {
+                    $(el).prev().prop("checked", "disabled");
+                }
+                else {
+                    $('#on2').prop("checked", "disabled");
+                }
+
+                loginPopupLoading = true;
+                if ($("#divLoginPopup").length <= 0) {
+                    $("body").append("<div id='divLoginPopup'></div>");
+                }
+
+                $("#divLoginPopup").load("/api/jobat/Security/LoginPopup?type=togglejobalert&jobsearchfilter=az1kZXZlbG9wZXImY29tcGFueW5hbWU9cmVzdWx0YXRz&returnUrl=" + getNewUrl(), function () { loginPopupLoading = false; });
+            } else {
+                $('#ToggleButtonForm #Active').val(active);
+                $('#ToggleButtonForm').first().submit();
+            }
+
+            if (active) {
+                $('.toggleLabel').each(function (i) {
+                    $(this).attr("data-tealium-id", "results-toggle-left-deactivate");
+                });
+                $('#lblOn2').attr("data-tealium-id", "results-toggle-top-deactivate");
+                $('.divJobAgentBanner').hide();
+            } else {
+                $('.toggleLabel').each(function (i) {
+                    $(this).attr("data-tealium-id", "results-toggle-left-activate");
+                });
+                $('#lblOn2').attr("data-tealium-id", "results-toggle-top-activate");
+            }
+
+            if (isSalaryCompassShowcase) {
+                $(".jobs_byEmail-toggle2 .switch-02 input").attr('checked', active);
+                $("#jobExpressToggleBlock").toggleClass("active", active);
+            }
+        }
+        function toggleJobAlertNoClick(active) {
+            var loggedIn = false;
+            if (loggedIn) {
+                $('#Active').val(active);
+            }
+
+            $('#lblOn2').attr("data-tealium-id", active ? "results-toggle-top-deactivate" : "results-toggle-top-activate");
+        }
+
+        $("body").on("jobat-logged-in-jobalerttoggle", function (event, isregistration) {
+            loggedIn = true;
+            localStorage.setItem("JobAgent_ToggleButton", "true");
+            if (isregistration) {
+                var url = window.location.href;
+                var hasQs = url.indexOf("?") > 0;
+                var prefixQs = hasQs ? "&" : "?";
+                window.location.href = url + prefixQs + "toggle=1";
+            }
+            else{
+
+                window.location = getNewUrl();
+            }
+        });
+        function closeCalloutPopup()
+        {
+            saveCookie('HideJobAlertToggleCalloutPopup', '1',30 * 24 * 60 * 60 * 1000);
+        }
+        $(function () {
+            $(document).on("click", "#LoginModal #registerLink", function () {
+                if ($("#LoginModal #Action").val() == "togglejobalert") {
+                    localStorage.removeItem("JobAgent_ToggleButton");
+                }
+            });
+
+            if (localStorage.getItem("JobAgent_ToggleButton") == "true") {
+                localStorage.removeItem("JobAgent_ToggleButton");
+                toggleJobAlert(true);
+            }
+        });
+
+        function changeFrequency(frequency)
+        {
+            $('.frequency' + frequency).each(function (i) {
+                var id = $(this).attr('id');
+                $("#" + id).prop("checked", true);
+            });
+            $('#ToggleButtonForm #Frequency').val(frequency);
+
+            $('#UpdateToggleBlockJobAgentBtn').click();
+        }
+
+        function updateToggleButtonOnSuccess(data) {
+            if (data.model) {
+                $('#ToggleButtonForm #UserSearchId').val(data.model.UserSearchId);
+                $('#ToggleButtonForm #Active').val(data.model.Active);
+                $('#ToggleButtonForm #SearchFilter').val(data.model.SearchFilter);
+            }
+        }
+
+        </script>
+    <script type="text/javascript" defer="defer">
+        $(document).ready(function () {
+            $(".feedback-button").click(function () {
+                saveCookie("FeedbackBoxHidden", "1", 30 * 24 * 60 * 60 * 1000);
+                $("#feedbackBox").load('/api/jobat/JobSearch/FeedbackBoxSuccess');
+            });
+            $("#closeFeedback").click(function () {
+                saveCookie("FeedbackBoxHidden", "1", 30 * 24 * 60 * 60 * 1000);
+            });
+            var feedbackBoxCookie = readCookie("FeedbackBoxHidden");
+
+            if (feedbackBoxCookie || false) {return}
+
+            $("#feedbackBox").show();
+
+            if (typeof initJobResults === "function") {
+                initJobResults();
+            }
+        });
+
+        function closeFeedbackBox() {
+            $('#feedbackBox').hide();
+        }
+    </script>
+    <script type="text/javascript">
+      $(function () {
+        $("[data-log-click]").click(function () { $.post("/api/jobat/JobLog/LogListClick?jobId=" + $(this).data("log-click")); });
+      });
+    </script>
+    <script type="text/javascript">
+        $(".jobContainer").addClass("noJobSelected");
+        $("body").removeClass("noScroll");
+    </script>
+    <script>
+        $(document).ready(function () {
+
+            $('.js-jobat-app-open-store').first().on('click', function (e) {
+                e.preventDefault();
+                openAppStore("/fr/app", 'https://play.google.com/store/apps/details?id=be.jobat.mobile', 'https://apps.apple.com/be/app/jobat/id1629598091');
+            });
+            //
+            // Open on load when there is no cookie
+            const cookieName = 'AppBanner';
+
+            // Check if cookie exists on load
+            if (!readCookie(cookieName)) { // Show bottom sheet if cookie does NOT exist
+                $('body').addClass('jobatAppOpen');
+                $('#jobatAppSheet').addClass('isOpen');
+            }
+            // When user clicks on jobat-app-option, set cookie for 30 days and close the sheet
+            $('.jobat-app-option').on('click', function () {
+                saveCookie(cookieName, 'true', 30 * 24 * 60 * 60 * 1000);
+                $('body').removeClass('jobatAppOpen');
+                $('#jobatAppSheet').removeClass('isOpen');
+                $('.js-jobat-app').removeClass('active');
+            });
+        });
+    </script>
+<script type="text/javascript">
+    var kachingInitDone = false;
+    var kachingPersonalAds = false;
+    function kaching_load(personalAds) {
+        if (!kachingInitDone) {
+            kachingInitDone = true;
+            kachingPersonalAds = personalAds;
+            var script = document.createElement("script");
+            script.type = "text/javascript";
+            script.src = "https://shared.mediahuis.be/ka-ching/jobat/ka-ching.umd.js?v=2025112517";
+            script.onload = kaching_init;
+            document.head.appendChild(script);
+        }
+    }
+
+    function kaching_init() {
+        const kaching = new KaChing();
+        if (adSlots.length > 0) {
+            adSlots.forEach(function (adSlot) {
+                kaching.defineSlot(adSlot.format, adSlot.slot);
+            });
+
+            kaching.init({
+                "adunit": "jobat/fr/jobs",
+                "platform": "desktop",                                    "page": {
+"paid": false,                                                            "type": "search_detail"                },
+                "personalAds": kachingPersonalAds,
+                "targeting": {
+"page_type": "search_detail"                                                                                                }
+            });
+        }
+    }
+</script>
+
+    
+
+    <script src="https://static.jobat.be/libs/bootstrap/bootstrap-5.0.2-bundle.min.js" defer></script>
+
+</body>
+</html>

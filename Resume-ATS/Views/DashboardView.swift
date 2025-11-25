@@ -22,6 +22,14 @@ struct DashboardView: View {
                      }
 
                      DashboardTile(
+                         title: language == "fr" ? "Recherche d'emploi" : "Job Search",
+                         subtitle: language == "fr" ? "Trouver des offres d'emploi" : "Find job offers",
+                         systemImage: "magnifyingglass"
+                     ) {
+                         selectedSection = "JobSearch"
+                     }
+
+                     DashboardTile(
                          title: language == "fr" ? "Candidatures" : "Applications",
                          subtitle: language == "fr" ? "Suivre vos candidatures" : "Track your applications",
                          systemImage: "briefcase"

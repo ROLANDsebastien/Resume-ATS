@@ -1,0 +1,240 @@
+import Foundation
+
+class ActirisScraper: JobScraperProtocol {
+    let sourceName = "Actiris"
+    let baseURL = "https://www.actiris.brussels"
+    
+    private let session: URLSession
+    
+    init() {
+        let config = URLSessionConfiguration.default
+        config.httpAdditionalHeaders = [
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "fr-BE,fr;q=0.8,en-US;q=0.5,en;q=0.3"
+        ]
+        config.timeoutIntervalForRequest = 30
+        self.session = URLSession(configuration: config)
+    }
+    
+    func search(keywords: String, location: String?) async throws -> [JobResult] {
+        let searchURL = buildSearchURL(keywords: keywords, location: location)
+        
+        do {
+            let (data, _) = try await session.data(from: searchURL)
+            guard let html = String(data: data, encoding: .utf8) else {
+                throw ScrapingError.parsingError("Impossible de décoder le HTML")
+            }
+            
+            return try parseJobResults(html)
+        } catch {
+            if error is ScrapingError {
+                throw error
+            }
+            throw ScrapingError.networkError(error)
+        }
+    }
+    
+    func isAvailable() async -> Bool {
+        do {
+            let (_, response) = try await session.data(from: URL(string: baseURL)!)
+            return (response as? HTTPURLResponse)?.statusCode == 200
+        } catch {
+            return false
+        }
+    }
+    
+    private func buildSearchURL(keywords: String, location: String?) -> URL {
+        // Actiris utilise une recherche via API ou formulaire
+        var components = URLComponents(string: "\(baseURL)/fr/citoyens/offres-d-emploi")!
+        var queryItems: [URLQueryItem] = []
+        
+        queryItems.append(URLQueryItem(name: "keywords", value: keywords))
+        
+        if let location = location, !location.isEmpty {
+            queryItems.append(URLQueryItem(name: "location", value: location))
+        }
+        
+        components.queryItems = queryItems
+        
+        return components.url!
+    }
+    
+    private func parseJobResults(_ html: String) throws -> [JobResult] {
+        var jobs: [JobResult] = []
+        
+        // Actiris utilise souvent des widgets JavaScript
+        // On cherche les données dans des scripts ou des structures HTML
+        jobs.append(contentsOf: try parseFromHTML(html))
+        jobs.append(contentsOf: try parseFromJSONScripts(html))
+        
+        return jobs
+    }
+    
+    private func parseFromHTML(_ html: String) throws -> [JobResult] {
+        // Parsing HTML classique si disponible
+        let pattern = #"<div[^>]*class[^>]*['\"][^'\"]*job[^'\"]*['\"][^>]*>.*?</div>"#
+        let regex = try NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators])
+        let matches = regex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+        
+        var jobs: [JobResult] = []
+        
+        for match in matches {
+            if let range = Range(match.range, in: html) {
+                let jobHTML = String(html[range])
+                if let job = parseJobHTML(jobHTML) {
+                    jobs.append(job)
+                }
+            }
+        }
+        
+        return jobs
+    }
+    
+    private func parseFromJSONScripts(_ html: String) throws -> [JobResult] {
+        var jobs: [JobResult] = []
+        
+        // Chercher les données JSON dans les scripts
+        let jsonPatterns = [
+            #"window\.__INITIAL_STATE__\s*=\s*({.*?});"#,
+            #"window\.jobData\s*=\s*({.*?});"#,
+            #"data-jobs\s*=\s*["']([^"']*)["']"#
+        ]
+        
+        for pattern in jsonPatterns {
+            let regex = try NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators])
+            let matches = regex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            
+            for match in matches {
+                if let range = Range(match.range, in: html) {
+                    let jsonString = String(html[range])
+                    jobs.append(contentsOf: try parseJSONJobs(jsonString))
+                }
+            }
+        }
+        
+        return jobs
+    }
+    
+    private func parseJobHTML(_ html: String) -> JobResult? {
+        // Parsing basique avec regex pour extraire les informations
+        let titlePattern = #"<h[1-6][^>]*>([^<]+)</h[1-6]>"#
+        let companyPattern = #"(?:company|entreprise|firm)[^>]*>([^<]+)"#
+        let locationPattern = #"(?:location|lieu|city|ville)[^>]*>([^<]+)"#
+        let linkPattern = #"<a[^>]*href\s*=\s*["']([^"']+)["']"#
+        
+        let title = extractFirstMatch(html, pattern: titlePattern)
+        let company = extractFirstMatch(html, pattern: companyPattern)
+        let location = extractFirstMatch(html, pattern: locationPattern)
+        let url = extractFirstMatch(html, pattern: linkPattern)
+        
+        guard let title = title, let company = company, let url = url else {
+            return nil
+        }
+        
+        let fullURL = url.hasPrefix("http") ? url : "\(baseURL)\(url)"
+        
+        return JobResult(
+            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+            company: company.trimmingCharacters(in: .whitespacesAndNewlines),
+            location: location?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+            url: fullURL,
+            source: sourceName
+        )
+    }
+    
+    private func parseJSONJobs(_ jsonString: String) throws -> [JobResult] {
+        var jobs: [JobResult] = []
+        
+        // Nettoyer la chaîne JSON
+        let cleanedJSON = cleanJSONString(jsonString)
+        
+        guard let data = cleanedJSON.data(using: .utf8) else {
+            return jobs
+        }
+        
+        do {
+            let json = try JSONSerialization.jsonObject(with: data, options: [])
+            
+            if let dict = json as? [String: Any] {
+                jobs.append(contentsOf: extractJobsFromDict(dict))
+            } else if let array = json as? [[String: Any]] {
+                jobs.append(contentsOf: extractJobsFromArray(array))
+            }
+        } catch {
+            // Ignorer les erreurs de parsing JSON
+        }
+        
+        return jobs
+    }
+    
+    private func extractJobsFromDict(_ dict: [String: Any]) -> [JobResult] {
+        var jobs: [JobResult] = []
+        
+        // Chercher dans les clés communes
+        let possibleKeys = ["jobs", "offers", "results", "data", "items"]
+        
+        for key in possibleKeys {
+            if let value = dict[key] {
+                if let jobArray = value as? [[String: Any]] {
+                    jobs.append(contentsOf: extractJobsFromArray(jobArray))
+                }
+            }
+        }
+        
+        return jobs
+    }
+    
+    private func extractJobsFromArray(_ array: [[String: Any]]) -> [JobResult] {
+        var jobs: [JobResult] = []
+        
+        for jobDict in array {
+            if let job = createJobFromDict(jobDict) {
+                jobs.append(job)
+            }
+        }
+        
+        return jobs
+    }
+    
+    private func createJobFromDict(_ dict: [String: Any]) -> JobResult? {
+        let title = dict["title"] as? String ?? dict["job_title"] as? String ?? ""
+        let company = dict["company"] as? String ?? dict["employer"] as? String ?? ""
+        let location = dict["location"] as? String ?? dict["city"] as? String ?? ""
+        let url = dict["url"] as? String ?? dict["link"] as? String ?? ""
+        
+        guard !title.isEmpty && !company.isEmpty && !url.isEmpty else {
+            return nil
+        }
+        
+        return JobResult(
+            title: title,
+            company: company,
+            location: location,
+            url: url,
+            source: sourceName
+        )
+    }
+    
+    private func cleanJSONString(_ string: String) -> String {
+        var cleaned = string
+        
+        // Enlever les assignations JavaScript
+        cleaned = cleaned.replacingOccurrences(of: #"window\.__INITIAL_STATE__\s*="#, with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: #"window\.jobData\s*="#, with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: #"data-jobs\s*=\s*["']"#, with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: #";$"#, with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: #"$"#, with: "", options: .regularExpression)
+        
+        return cleaned
+    }
+    
+    private func extractFirstMatch(_ text: String, pattern: String) -> String? {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+              let match = regex.firstMatch(in: text, options: [], range: NSRange(text.startIndex..., in: text)),
+              let range = Range(match.range(at: 1), in: text) else {
+            return nil
+        }
+        return String(text[range])
+    }
+}
