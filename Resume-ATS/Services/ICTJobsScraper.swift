@@ -2,7 +2,7 @@ import Foundation
 
 class ICTJobsScraper: JobScraperProtocol {
     let sourceName = "ICTJobs"
-    let baseURL = "https://www.ictjobs.be"
+    let baseURL = "https://www.ictjob.be"
     
     private let session: URLSession
     
@@ -47,8 +47,12 @@ class ICTJobsScraper: JobScraperProtocol {
     }
     
     func isAvailable() async -> Bool {
+        guard let url = URL(string: baseURL) else {
+            return false
+        }
+        
         do {
-            let (_, response) = try await session.data(from: URL(string: baseURL)!)
+            let (_, response) = try await session.data(from: url)
             return (response as? HTTPURLResponse)?.statusCode == 200
         } catch {
             return false
@@ -56,9 +60,11 @@ class ICTJobsScraper: JobScraperProtocol {
     }
     
     private func buildSearchURL(keywords: String, location: String?) -> URL {
-        var components = URLComponents(string: "\(baseURL)/vacatures")!
-        var queryItems: [URLQueryItem] = []
+        guard var components = URLComponents(string: "\(baseURL)/fr/chercher-emplois-it") else {
+            fatalError("Invalid ICTJobs base URL: \(baseURL)")
+        }
         
+        var queryItems: [URLQueryItem] = []
         queryItems.append(URLQueryItem(name: "keywords", value: keywords))
         
         if let location = location, !location.isEmpty {
@@ -67,7 +73,11 @@ class ICTJobsScraper: JobScraperProtocol {
         
         components.queryItems = queryItems
         
-        return components.url!
+        guard let url = components.url else {
+            fatalError("Failed to build ICTJobs search URL")
+        }
+        
+        return url
     }
     
     private func parseJobResults(_ html: String) throws -> [JobResult] {
@@ -87,8 +97,8 @@ class ICTJobsScraper: JobScraperProtocol {
         
         // Patterns pour trouver les données JSON spécifiques à ICTJobs
         let jsonPatterns = [
-            #"window\.__INITIAL_STATE__\s*=\s*({.*?});"#,
-            #"window\.jobData\s*=\s*({.*?});"#,
+            #"window\.__INITIAL_STATE__\s*=\s*(\{[^}]*\});"#,
+            #"window\.jobData\s*=\s*(\{[^}]*\});"#,
             #"window\.vacancies\s*=\s*(\[.*?\]);"#,
             #"<script[^>]*type\s*=\s*["']application/json["'][^>]*>(.*?)</script>"#,
             #"data-vacancies\s*=\s*["']([^"']*)["']"#
@@ -293,11 +303,11 @@ class ICTJobsScraper: JobScraperProtocol {
     private func cleanJSONString(_ string: String) -> String {
         var cleaned = string
         
-        cleaned = cleaned.replacingOccurrences(of: #"window\.__INITIAL_STATE__\s*="#, with: "", options: .regularExpression)
-        cleaned = cleaned.replacingOccurrences(of: #"window\.jobData\s*="#, with: "", options: .regularExpression)
-        cleaned = cleaned.replacingOccurrences(of: #"window\.vacancies\s*="#, with: "", options: .regularExpression)
-        cleaned = cleaned.replacingOccurrences(of: #";$"#, with: "", options: .regularExpression)
-        cleaned = cleaned.replacingOccurrences(of: #"$"#, with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: "window.__INITIAL_STATE__", with: "", options: .caseInsensitive)
+        cleaned = cleaned.replacingOccurrences(of: "window.jobData", with: "", options: .caseInsensitive)
+        cleaned = cleaned.replacingOccurrences(of: "window.vacancies", with: "", options: .caseInsensitive)
+        cleaned = cleaned.replacingOccurrences(of: ";", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "$", with: "")
         
         return cleaned
     }

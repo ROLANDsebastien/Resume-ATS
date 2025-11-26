@@ -2,7 +2,7 @@ import Foundation
 
 class EditxScraper: JobScraperProtocol {
     let sourceName = "Editx"
-    let baseURL = "https://www.editxjobs.be"
+    let baseURL = "https://editx.eu"
     
     private let session: URLSession
     
@@ -36,8 +36,12 @@ class EditxScraper: JobScraperProtocol {
     }
     
     func isAvailable() async -> Bool {
+        guard let url = URL(string: baseURL) else {
+            return false
+        }
+        
         do {
-            let (_, response) = try await session.data(from: URL(string: baseURL)!)
+            let (_, response) = try await session.data(from: url)
             return (response as? HTTPURLResponse)?.statusCode == 200
         } catch {
             return false
@@ -45,10 +49,12 @@ class EditxScraper: JobScraperProtocol {
     }
     
     private func buildSearchURL(keywords: String, location: String?) -> URL {
-        var components = URLComponents(string: "\(baseURL)/search")!
-        var queryItems: [URLQueryItem] = []
+        guard var components = URLComponents(string: "\(baseURL)/en/it-jobs/search") else {
+            fatalError("Invalid Editx base URL: \(baseURL)")
+        }
         
-        queryItems.append(URLQueryItem(name: "q", value: keywords))
+        var queryItems: [URLQueryItem] = []
+        queryItems.append(URLQueryItem(name: "keywords", value: keywords))
         
         if let location = location, !location.isEmpty {
             queryItems.append(URLQueryItem(name: "location", value: location))
@@ -56,7 +62,11 @@ class EditxScraper: JobScraperProtocol {
         
         components.queryItems = queryItems
         
-        return components.url!
+        guard let url = components.url else {
+            fatalError("Failed to build Editx search URL")
+        }
+        
+        return url
     }
     
     private func parseJobResults(_ html: String) throws -> [JobResult] {
@@ -72,8 +82,8 @@ class EditxScraper: JobScraperProtocol {
         var jobs: [JobResult] = []
         
         let jsonPatterns = [
-            #"window\.__INITIAL_STATE__\s*=\s*({.*?});"#,
-            #"window\.jobData\s*=\s*({.*?});"#,
+            #"window\.__INITIAL_STATE__\s*=\s*(\{[^}]*\});"#,
+            #"window\.jobData\s*=\s*(\{[^}]*\});"#,
             #"window\.editxJobs\s*=\s*(\[.*?\]);"#,
             #"<script[^>]*type\s*=\s*["']application/json["'][^>]*>(.*?)</script>"#,
             #"data-jobs\s*=\s*["']([^"']*)["']"#
@@ -270,11 +280,11 @@ class EditxScraper: JobScraperProtocol {
     private func cleanJSONString(_ string: String) -> String {
         var cleaned = string
         
-        cleaned = cleaned.replacingOccurrences(of: #"window\.__INITIAL_STATE__\s*="#, with: "", options: .regularExpression)
-        cleaned = cleaned.replacingOccurrences(of: #"window\.jobData\s*="#, with: "", options: .regularExpression)
-        cleaned = cleaned.replacingOccurrences(of: #"window\.editxJobs\s*="#, with: "", options: .regularExpression)
-        cleaned = cleaned.replacingOccurrences(of: #";$"#, with: "", options: .regularExpression)
-        cleaned = cleaned.replacingOccurrences(of: #"$"#, with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: "window.__INITIAL_STATE__", with: "", options: .caseInsensitive)
+        cleaned = cleaned.replacingOccurrences(of: "window.jobData", with: "", options: .caseInsensitive)
+        cleaned = cleaned.replacingOccurrences(of: "data-jobs=", with: "", options: .caseInsensitive)
+        cleaned = cleaned.replacingOccurrences(of: ";", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "$", with: "")
         
         return cleaned
     }

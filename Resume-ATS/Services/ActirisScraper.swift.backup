@@ -8,15 +8,17 @@ class ActirisScraper: JobScraperProtocol {
     
     init() {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
         config.httpAdditionalHeaders = [
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
             "Accept-Language": "fr-BE,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1"
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-User": "?1",
+            "Sec-Fetch-Dest": "document"
         ]
+        config.timeoutIntervalForRequest = 30
         self.session = URLSession(configuration: config)
     }
     
@@ -39,12 +41,8 @@ class ActirisScraper: JobScraperProtocol {
     }
     
     func isAvailable() async -> Bool {
-        guard let url = URL(string: baseURL) else {
-            return false
-        }
-        
         do {
-            let (_, response) = try await session.data(from: url)
+            let (_, response) = try await session.data(from: URL(string: baseURL)!)
             return (response as? HTTPURLResponse)?.statusCode == 200
         } catch {
             return false
@@ -56,6 +54,22 @@ class ActirisScraper: JobScraperProtocol {
         guard var components = URLComponents(string: "\(baseURL)/fr/citoyens/offres-d-emploi") else {
             fatalError("Invalid Actiris base URL: \(baseURL)")
         }
+        
+        var queryItems: [URLQueryItem] = []
+        queryItems.append(URLQueryItem(name: "keywords", value: keywords))
+        
+        if let location = location, !location.isEmpty {
+            queryItems.append(URLQueryItem(name: "location", value: location))
+        }
+        
+        components.queryItems = queryItems
+        
+        guard let url = components.url else {
+            fatalError("Failed to build Actiris search URL")
+        }
+        
+        return url
+    }
         
         var queryItems: [URLQueryItem] = []
         queryItems.append(URLQueryItem(name: "keywords", value: keywords))
@@ -154,10 +168,9 @@ class ActirisScraper: JobScraperProtocol {
         let fullURL = url.hasPrefix("http") ? url : "\(baseURL)\(url)"
         
         return JobResult(
-            title: title,
-            company: company,
-            location: location ?? "Bruxelles",
-            salary: nil,
+            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+            company: company.trimmingCharacters(in: .whitespacesAndNewlines),
+            location: location?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
             url: fullURL,
             source: sourceName
         )
@@ -169,18 +182,17 @@ class ActirisScraper: JobScraperProtocol {
         // Nettoyer la chaîne JSON
         let cleanedJSON = cleanJSONString(jsonString)
         
-        // Essayer de parser comme JSON
         guard let data = cleanedJSON.data(using: .utf8) else {
             return jobs
         }
         
         do {
-            if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                jobs.append(contentsOf: extractJobsFromDict(json))
-            } else if let jsonArray = try JSONSerialization.jsonObject(with: data, options: []) as? [[String: Any]] {
-                for dict in jsonArray {
-                    jobs.append(contentsOf: extractJobsFromDict(dict))
-                }
+            let json = try JSONSerialization.jsonObject(with: data, options: [])
+            
+            if let dict = json as? [String: Any] {
+                jobs.append(contentsOf: extractJobsFromDict(dict))
+            } else if let array = json as? [[String: Any]] {
+                jobs.append(contentsOf: extractJobsFromArray(array))
             }
         } catch {
             // Ignorer les erreurs de parsing JSON
@@ -192,34 +204,37 @@ class ActirisScraper: JobScraperProtocol {
     private func extractJobsFromDict(_ dict: [String: Any]) -> [JobResult] {
         var jobs: [JobResult] = []
         
-        // Chercher dans différentes structures possibles
-        let possibleJobArrays = [
-            "jobs", "jobList", "results", "data", "items", "offers", "vacancies"
-        ]
+        // Chercher dans les clés communes
+        let possibleKeys = ["jobs", "offers", "results", "data", "items"]
         
-        for key in possibleJobArrays {
-            if let jobArray = dict[key] as? [[String: Any]] {
-                for jobDict in jobArray {
-                    if let job = createJobFromDict(jobDict) {
-                        jobs.append(job)
-                    }
+        for key in possibleKeys {
+            if let value = dict[key] {
+                if let jobArray = value as? [[String: Any]] {
+                    jobs.append(contentsOf: extractJobsFromArray(jobArray))
                 }
             }
         }
         
-        // Si c'est un job unique
-        if let job = createJobFromDict(dict) {
-            jobs.append(job)
+        return jobs
+    }
+    
+    private func extractJobsFromArray(_ array: [[String: Any]]) -> [JobResult] {
+        var jobs: [JobResult] = []
+        
+        for jobDict in array {
+            if let job = createJobFromDict(jobDict) {
+                jobs.append(job)
+            }
         }
         
         return jobs
     }
     
     private func createJobFromDict(_ dict: [String: Any]) -> JobResult? {
-        let title = dict["title"] as? String ?? dict["jobTitle"] as? String ?? dict["position"] as? String ?? ""
+        let title = dict["title"] as? String ?? dict["job_title"] as? String ?? ""
         let company = dict["company"] as? String ?? dict["employer"] as? String ?? ""
         let location = dict["location"] as? String ?? dict["city"] as? String ?? ""
-        let url = dict["url"] as? String ?? dict["link"] as? String ?? dict["applyUrl"] as? String ?? ""
+        let url = dict["url"] as? String ?? dict["link"] as? String ?? ""
         
         guard !title.isEmpty && !company.isEmpty && !url.isEmpty else {
             return nil
@@ -228,8 +243,7 @@ class ActirisScraper: JobScraperProtocol {
         return JobResult(
             title: title,
             company: company,
-            location: location.isEmpty ? "Bruxelles" : location,
-            salary: dict["salary"] as? String,
+            location: location,
             url: url,
             source: sourceName
         )

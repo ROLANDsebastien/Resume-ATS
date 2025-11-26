@@ -8,9 +8,9 @@ print("🧪 Test de connectivité des sites d'emploi")
 let sites = [
     ("Jobat", "https://www.jobat.be"),
     ("Actiris", "https://www.actiris.brussels"),
-    ("OptionCarriere", "https://www.optioncariere.be"),
-    ("ICTJobs", "https://www.ictjobs.be"),
-    ("Editx", "https://www.editxjobs.be")
+    ("OptionCarriere", "https://www.optioncarriere.be"),
+    ("ICTJobs", "https://www.ictjob.be"),
+    ("Editx", "https://editx.eu")
 ]
 
 func testSite(name: String, url: String) async -> (String, Bool, Double) {

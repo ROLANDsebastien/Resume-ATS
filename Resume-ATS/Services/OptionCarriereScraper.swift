@@ -41,8 +41,12 @@ class OptionCarriereScraper: JobScraperProtocol {
     }
     
     func isAvailable() async -> Bool {
+        guard let url = URL(string: baseURL) else {
+            return false
+        }
+        
         do {
-            let (_, response) = try await session.data(from: URL(string: baseURL)!)
+            let (_, response) = try await session.data(from: url)
             return (response as? HTTPURLResponse)?.statusCode == 200
         } catch {
             return false
@@ -50,18 +54,24 @@ class OptionCarriereScraper: JobScraperProtocol {
     }
     
     private func buildSearchURL(keywords: String, location: String?) -> URL {
-        var components = URLComponents(string: "\(baseURL)/recherche")!
-        var queryItems: [URLQueryItem] = []
+        guard var components = URLComponents(string: "\(baseURL)/emploi") else {
+            fatalError("Invalid OptionCarriere base URL: \(baseURL)")
+        }
         
-        queryItems.append(URLQueryItem(name: "keywords", value: keywords))
+        var queryItems: [URLQueryItem] = []
+        queryItems.append(URLQueryItem(name: "s", value: keywords))
         
         if let location = location, !location.isEmpty {
-            queryItems.append(URLQueryItem(name: "location", value: location))
+            queryItems.append(URLQueryItem(name: "l", value: location))
         }
         
         components.queryItems = queryItems
         
-        return components.url!
+        guard let url = components.url else {
+            fatalError("Failed to build OptionCarriere search URL")
+        }
+        
+        return url
     }
     
     private func parseJobResults(_ html: String) throws -> [JobResult] {
@@ -81,12 +91,11 @@ class OptionCarriereScraper: JobScraperProtocol {
         
         // Patterns pour trouver les données JSON (patterns améliorés)
         let jsonPatterns = [
-            #"window\.__INITIAL_STATE__\s*=\s*({.*?});"#,
-            #"window\.__INITIAL_STATE__\s*=\s*({.*?})\s*$"#,
-            #"window\.jobData\s*=\s*({.*?});"#,
-            #"window\.jobList\s*=\s*(\[.*?\]);"#,
-            #"window\.JOBS\s*=\s*({.*?});"#,
-            #"window\.APP_STATE\s*=\s*({.*?});"#,
+            #"window\.__INITIAL_STATE__\s*=\s*(\{[^}]*\});"#,
+            #"window\.__INITIAL_STATE__\s*=\s*(\{[^}]*\})\s*$"#,
+            #"window\.jobData\s*=\s*(\{[^}]*\});"#,
+            #"window\.JOBS\s*=\s*(\{[^}]*\});"#,
+            #"window\.APP_STATE\s*=\s*(\{[^}]*\});"#,
             #"<script[^>]*type\s*=\s*["']application/json["'][^>]*>(.*?)</script>"#,
             #"<script[^>]*type\s*=\s*["']application/ld\+json["'][^>]*>(.*?)</script>"#,
             #"data-job-list\s*=\s*["']([^"']*)["']"#,
@@ -287,12 +296,12 @@ class OptionCarriereScraper: JobScraperProtocol {
     private func cleanJSONString(_ string: String) -> String {
         var cleaned = string
         
-        // Enlever les assignations JavaScript
-        cleaned = cleaned.replacingOccurrences(of: #"window\.__INITIAL_STATE__\s*="#, with: "", options: .regularExpression)
-        cleaned = cleaned.replacingOccurrences(of: #"window\.jobData\s*="#, with: "", options: .regularExpression)
-        cleaned = cleaned.replacingOccurrences(of: #"window\.jobList\s*="#, with: "", options: .regularExpression)
-        cleaned = cleaned.replacingOccurrences(of: #";$"#, with: "", options: .regularExpression)
-        cleaned = cleaned.replacingOccurrences(of: #"$"#, with: "", options: .regularExpression)
+        // Enlever les assignations JavaScript - patterns simplifiés
+        cleaned = cleaned.replacingOccurrences(of: "window.__INITIAL_STATE__", with: "", options: .caseInsensitive)
+        cleaned = cleaned.replacingOccurrences(of: "window.jobList", with: "", options: .caseInsensitive)
+        cleaned = cleaned.replacingOccurrences(of: "data-jobs=", with: "", options: .caseInsensitive)
+        cleaned = cleaned.replacingOccurrences(of: ";", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "$", with: "")
         
         return cleaned
     }

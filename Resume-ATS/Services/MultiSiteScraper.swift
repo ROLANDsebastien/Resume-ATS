@@ -5,13 +5,20 @@ class MultiSiteScraper {
     private let session: URLSession
     
     init() {
-        self.scrapers = [
+        let allScrapers: [JobScraperProtocol] = [
             JobatScraper(),
-            ActirisScraper(),           // Réactivé pour test
-            OptionCarriereScraper(),    // Réactivé pour test
-            ICTJobsScraper()            // Réactivé pour test
-            // EditxScraper()              // ❌ DNS error - domaine inexistant
+            ActirisScraper(),           // ✅ Disponible
+            OptionCarriereScraper(),    // ✅ Disponible  
+            ICTJobsScraper(),           // ✅ Disponible (ictjob.be)
+            EditxScraper()              // ✅ Disponible (editx.eu)
         ]
+        
+        print("🔧 MultiSiteScraper initialized with \(allScrapers.count) scrapers:")
+        for scraper in allScrapers {
+            print("   - \(scraper.sourceName)")
+        }
+        
+        self.scrapers = allScrapers
         
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
@@ -30,12 +37,14 @@ class MultiSiteScraper {
         try await withThrowingTaskGroup(of: [JobResult].self) { group in
             for scraper in scrapers {
                 let sourceName = scraper.sourceName
+                print("🔍 [\(sourceName)] Starting search for '\(keywords)'")
                 group.addTask {
                     do {
                         let results = try await scraper.search(keywords: keywords, location: location)
+                        print("✅ [\(sourceName)] Found \(results.count) results")
                         return Array(results.prefix(maxResultsPerSite))
                     } catch {
-                        print("Erreur avec \(sourceName): \(error.localizedDescription)")
+                        print("❌ [\(sourceName)] Error: \(error.localizedDescription)")
                         return [] // Retourner tableau vide en cas d'erreur
                     }
                 }
