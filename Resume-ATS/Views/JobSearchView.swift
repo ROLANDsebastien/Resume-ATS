@@ -475,7 +475,7 @@ struct ModernJobCard: View {
             }
         }
         .padding(16)
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(Color.clear)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
