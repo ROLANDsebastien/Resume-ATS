@@ -120,10 +120,19 @@ class JobatScraper: JobScraperProtocol {
         
         let fullURL = url.hasPrefix("http") ? url : "\(baseURL)\(url)"
         
-        // For now, use placeholders for company/location - we can extract these later if needed
+        // Try to extract company from the HTML content
+        let companyPatterns = [
+            #"class=["']jobCard-company["'][^>]*>\s*<a[^>]*>([^<]+)</a>"#,
+            #"<li[^>]*class=["']jobCard-company["'][^>]*>\s*<a[^>]*>([^<]+)</a>"#,
+            #"class=["']jobCard-company["'][^>]*>([^<]+)"#,
+            #"<li[^>]*class=["']jobCard-company["'][^>]*>([^<]+)"#
+        ]
+        
+        let company = extractFirstMatch(html, patterns: companyPatterns)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Company"
+        
         return JobResult(
             title: title,
-            company: "Company", // TODO: Extract from HTML if needed
+            company: company,
             location: "Brussels", // Already filtered by location in search
             salary: nil,
             url: fullURL,
@@ -142,9 +151,10 @@ class JobatScraper: JobScraperProtocol {
         
         // Extraire l'entreprise
         let companyPatterns = [
-            #"(?:company|entreprise|firm)[^>]*>([^<]+)"#,
-            #"class[^>]*company[^>]*>([^<]+)"#,
-            #"<span[^>]*itemprop[^>]*hiringOrganization[^>]*>([^<]+)</span>"#
+            #"class=["']jobCard-company["'][^>]*>\s*<a[^>]*>([^<]+)</a>"#,
+            #"<li[^>]*class=["']jobCard-company["'][^>]*>\s*<a[^>]*>([^<]+)</a>"#,
+            #"class=["']jobCard-company["'][^>]*>([^<]+)"#,
+            #"<li[^>]*class=["']jobCard-company["'][^>]*>([^<]+)"#
         ]
         
         // Extraire la localisation

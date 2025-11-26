@@ -99,11 +99,17 @@ class ActirisScraper: JobScraperProtocol {
     private func parseFromJSONScripts(_ html: String) throws -> [JobResult] {
         var jobs: [JobResult] = []
         
-        // Chercher les données JSON dans les scripts
+        // Chercher les données JSON dans les scripts (patterns améliorés)
         let jsonPatterns = [
             #"window\.__INITIAL_STATE__\s*=\s*({.*?});"#,
+            #"window\.__INITIAL_STATE__\s*=\s*({.*?})\s*$"#,
             #"window\.jobData\s*=\s*({.*?});"#,
-            #"data-jobs\s*=\s*["']([^"']*)["']"#
+            #"window\.JOBS\s*=\s*({.*?});"#,
+            #"window\.APP_STATE\s*=\s*({.*?});"#,
+            #"data-jobs\s*=\s*["']([^"']*)["']"#,
+            #"data-job-list\s*=\s*["']([^"']*)["']"#,
+            #"<script[^>]*type\s*=\s*["']application/json["'][^>]*>(.*?)</script>"#,
+            #"<script[^>]*type\s*=\s*["']application/ld\+json["'][^>]*>(.*?)</script>"#
         ]
         
         for pattern in jsonPatterns {

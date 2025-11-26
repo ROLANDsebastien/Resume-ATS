@@ -523,6 +523,7 @@ struct ModernJobCard: View {
                 for: job.title,
                 company: job.company,
                 location: job.location,
+                url: job.url,
                 profile: selectedProfile,
                 coverLetter: coverLetter
             ) { result in

@@ -15,6 +15,7 @@ class ApplicationPackageService {
         for jobTitle: String,
         company: String,
         location: String,
+        url: String,
         profile: Profile,
         coverLetter: String,
         completion: @escaping (Result<URL, PackageError>) -> Void
@@ -76,6 +77,7 @@ class ApplicationPackageService {
                     Job Title: \(jobTitle)
                     Company: \(company)
                     Location: \(location)
+                    URL: \(url)
                     """
                 try linkContent.write(to: linkFile, atomically: true, encoding: .utf8)
                 print("✅ [Package] Link file created")

@@ -79,12 +79,18 @@ class OptionCarriereScraper: JobScraperProtocol {
     private func parseFromJSONScripts(_ html: String) throws -> [JobResult] {
         var jobs: [JobResult] = []
         
-        // Patterns pour trouver les données JSON
+        // Patterns pour trouver les données JSON (patterns améliorés)
         let jsonPatterns = [
             #"window\.__INITIAL_STATE__\s*=\s*({.*?});"#,
+            #"window\.__INITIAL_STATE__\s*=\s*({.*?})\s*$"#,
             #"window\.jobData\s*=\s*({.*?});"#,
             #"window\.jobList\s*=\s*(\[.*?\]);"#,
-            #"<script[^>]*type\s*=\s*["']application/json["'][^>]*>(.*?)</script>"#
+            #"window\.JOBS\s*=\s*({.*?});"#,
+            #"window\.APP_STATE\s*=\s*({.*?});"#,
+            #"<script[^>]*type\s*=\s*["']application/json["'][^>]*>(.*?)</script>"#,
+            #"<script[^>]*type\s*=\s*["']application/ld\+json["'][^>]*>(.*?)</script>"#,
+            #"data-job-list\s*=\s*["']([^"']*)["']"#,
+            #"data-jobs\s*=\s*["']([^"']*)["']"#
         ]
         
         for pattern in jsonPatterns {
