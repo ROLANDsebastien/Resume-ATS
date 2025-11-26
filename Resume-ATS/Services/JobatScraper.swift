@@ -19,15 +19,27 @@ class JobatScraper: JobScraperProtocol {
     
     func search(keywords: String, location: String?) async throws -> [JobResult] {
         let searchURL = buildSearchURL(keywords: keywords, location: location)
+        print("🔍 [JobatScraper] Searching: \(searchURL)")
         
         do {
-            let (data, _) = try await session.data(from: searchURL)
+            let (data, response) = try await session.data(from: searchURL)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("🔍 [JobatScraper] Status Code: \(httpResponse.statusCode)")
+            }
+            
             guard let html = String(data: data, encoding: .utf8) else {
+                print("❌ [JobatScraper] Failed to decode HTML")
                 throw ScrapingError.parsingError("Impossible de décoder le HTML")
             }
             
-            return try parseJobResults(html)
+            // print("🔍 [JobatScraper] HTML Preview: \(html.prefix(500))")
+            
+            let results = try parseJobResults(html)
+            print("✅ [JobatScraper] Found \(results.count) results")
+            return results
         } catch {
+            print("❌ [JobatScraper] Error: \(error)")
             if error is ScrapingError {
                 throw error
             }
@@ -62,36 +74,70 @@ class JobatScraper: JobScraperProtocol {
     private func parseJobResults(_ html: String) throws -> [JobResult] {
         var jobs: [JobResult] = []
         
-        // Parser avec des expressions régulières simples
-        let jobPatterns = [
-            #"<div[^>]*class[^>]*["'][^"']*job[^"']*["'][^>]*>.*?</div>"#,
-            #"<article[^>]*class[^>]*["'][^"']*job[^"']*["'][^>]*>.*?</article>"#,
-            #"<li[^>]*class[^>]*["'][^"']*vacancy[^"']*["'][^>]*>.*?</li>"#
-        ]
+        // NEW APPROACH: Extract job IDs first, then extract data for each job
+        // Pattern to find all job card IDs: <div id="article_XXXXXX" class="jobResults-card
+        let idPattern = #"<div\s+id="article_(\d+)"\s+class="jobResults-card"#
+        guard let idRegex = try? NSRegularExpression(pattern: idPattern, options: []) else {
+            return []
+        }
         
-        for pattern in jobPatterns {
-            let regex = try NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators])
-            let matches = regex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+        let idMatches = idRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+        print("🔍 [JobatScraper] Found \(idMatches.count) job IDs in HTML")
+        
+        for idMatch in idMatches {
+            guard let idRange = Range(idMatch.range(at: 1), in: html) else { continue }
+            let jobId = String(html[idRange])
             
-            for match in matches {
-                if let range = Range(match.range, in: html) {
-                    let jobHTML = String(html[range])
-                    if let job = parseJobHTML(jobHTML) {
-                        jobs.append(job)
-                    }
-                }
+            // Now extract the job data for this specific job ID
+            if let job = parseJobById(jobId, from: html) {
+                jobs.append(job)
             }
         }
         
         return jobs
     }
     
+    private func parseJobById(_ jobId: String, from html: String) -> JobResult? {
+        // Find the  section for this specific job - look for data-id and title
+        let sectionPattern = #"id="article_\#(jobId)"[^>]*>.*?data-id\s*=\s*["']([^"']+)["'].*?<h2[^>]*>\s*<a[^>]*>([^<]+)</a>"#
+        
+        guard let regex = try? NSRegularExpression(pattern: sectionPattern, options: [.dotMatchesLineSeparators]),
+              let match = regex.firstMatch(in: html, options: [], range: NSRange(html.startIndex..., in: html)) else {
+            return nil
+        }
+        
+        guard let urlRange = Range(match.range(at: 1), in: html),
+              let titleRange = Range(match.range(at: 2), in: html) else {
+            return nil
+        }
+        
+        let url = String(html[urlRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let title = String(html[titleRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !url.isEmpty, !title.isEmpty else {
+            return nil
+        }
+        
+        let fullURL = url.hasPrefix("http") ? url : "\(baseURL)\(url)"
+        
+        // For now, use placeholders for company/location - we can extract these later if needed
+        return JobResult(
+            title: title,
+            company: "Company", // TODO: Extract from HTML if needed
+            location: "Brussels", // Already filtered by location in search
+            salary: nil,
+            url: fullURL,
+            source: sourceName
+        )
+    }
+    
     private func parseJobHTML(_ html: String) -> JobResult? {
         // Extraire le titre
         let titlePatterns = [
-            #"<h[1-6][^>]*>([^<]+)</h[1-6]>"#,
+            #"<h[1-6][^>]*>\s*<a[^>]*>([^<]+)</a>"#,
+            #"class=["']jobTitle["'][^>]*>\s*<a[^>]*>([^<]+)</a>"#,
             #"<a[^>]*title\s*=\s*["']([^"']+)["']"#,
-            #"class[^>]*title[^>]*>([^<]+)"#
+            #">([^<]+)</a>"#
         ]
         
         // Extraire l'entreprise
@@ -110,6 +156,8 @@ class JobatScraper: JobScraperProtocol {
         
         // Extraire le lien
         let linkPatterns = [
+            #"data-id\s*=\s*["']([^"']+)["']"#,
+            #"<a[^>]*href\s*=\s*["']([^"']+)["'][^>]*onclick"#,
             #"<a[^>]*href\s*=\s*["']([^"']+)["'][^>]*title[^>]*>"#,
             #"<a[^>]*class[^>]*["'][^"']*job[^"']*["'][^>]*href\s*=\s*["']([^"']+)["']"#
         ]

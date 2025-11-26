@@ -434,8 +434,11 @@ struct ModernJobCard: View {
                 }
                 
                 Button(action: {
+                    print("🔗 Opening URL: \(job.url)")
                     if let url = URL(string: job.url) {
                         NSWorkspace.shared.open(url)
+                    } else {
+                        print("❌ Invalid URL: \(job.url)")
                     }
                 }) {
                     Image(systemName: "arrow.up.forward.square")

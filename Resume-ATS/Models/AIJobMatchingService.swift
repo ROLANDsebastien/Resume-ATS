@@ -127,7 +127,8 @@ class AIJobMatchingService {
         let dispatchGroup = DispatchGroup()
         
         // Limit concurrent AI calls to avoid overwhelming the system
-        let maxConcurrent = 1
+        // Increased to 5 for M3 Mac performance - reduces analysis time significantly
+        let maxConcurrent = 5
         let semaphore = DispatchSemaphore(value: maxConcurrent)
         
         // Move the loop to a background thread to avoid blocking the main thread with semaphore.wait()
