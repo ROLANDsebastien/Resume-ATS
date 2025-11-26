@@ -37,184 +37,55 @@ class JobSearchService {
     
     
     // Generate search keywords based on profile
+    // Generate search keywords based on profile
     private func generateSearchKeywords(from profile: Profile?) -> [String] {
         guard let profile = profile else {
             return ["DevOps", "QA", "IT Support"]
         }
         
         var keywords: Set<String> = []
-        var hasDevOpsExperience = false
-        var hasQAExperience = false
-        var hasSupportExperience = false
         
-        // Analyze all experiences to build comprehensive keyword set
-        for experience in profile.experiences {
-            guard let position = experience.position, !position.isEmpty else { continue }
-            let positionLower = position.lowercased()
-            
-            // DevOps related keywords
-            if positionLower.contains("devops") || positionLower.contains("cloud") || 
-               positionLower.contains("infrastructure") || positionLower.contains("deployment") ||
-               positionLower.contains("ci/cd") || positionLower.contains("cicd") ||
-               positionLower.contains("kubernetes") || positionLower.contains("docker") ||
-               positionLower.contains("aws") || positionLower.contains("azure") {
-                hasDevOpsExperience = true
-                keywords.insert("DevOps")
-                keywords.insert("Cloud Engineer")
-                keywords.insert("Infrastructure Engineer")
-                keywords.insert("Cloud")
-                keywords.insert("AWS")
-                keywords.insert("Azure")
-            }
-            
-            // QA / Testing related keywords
-            if positionLower.contains("qa") || positionLower.contains("test") || 
-               positionLower.contains("quality") || positionLower.contains("testing") ||
-               positionLower.contains("assurance") || positionLower.contains("validation") ||
-               positionLower.contains("automatisation") || positionLower.contains("automation") {
-                hasQAExperience = true
-                keywords.insert("QA")
-                keywords.insert("Testeur")
-                keywords.insert("Tester")
-                keywords.insert("Quality Assurance")
-                keywords.insert("Testing")
-                keywords.insert("Test Analyst")
-                keywords.insert("QA Engineer")
-                keywords.insert("Test Automation")
-                keywords.insert("Automation Engineer")
-                keywords.insert("Automatisation")
-                keywords.insert("QA Automation")
-            }
-            
-            // IT Support related keywords
-            if positionLower.contains("support") || positionLower.contains("help") ||
-               positionLower.contains("technician") || positionLower.contains("desktop") ||
-               positionLower.contains("service desk") || positionLower.contains("it support") {
-                hasSupportExperience = true
-                keywords.insert("IT Support")
-                keywords.insert("Support Informatique")
-                keywords.insert("IT Technician")
-                keywords.insert("Helpdesk")
-                keywords.insert("Service Desk")
-                keywords.insert("Technicien IT")
-                keywords.insert("Support Technique")
-            }
-            
-            // General IT keywords
-            if positionLower.contains("develop") || positionLower.contains("programmer") || 
-               positionLower.contains("software") || positionLower.contains("application") {
-                keywords.insert("Developer")
-                keywords.insert("Développeur")
-            }
-            
-            if positionLower.contains("admin") || positionLower.contains("system") {
-                keywords.insert("System Administrator")
-                keywords.insert("Administrateur Système")
-                keywords.insert("SysAdmin")
-            }
-            
-            if positionLower.contains("junior") || positionLower.contains("stagiaire") || 
-               positionLower.contains("stage") || positionLower.contains("intern") {
-                keywords.insert("Junior")
-                keywords.insert("Stagiaire")
-                keywords.insert("Stage")
-                keywords.insert("Intern")
-            }
-        }
-        
-        // Add education-based keywords if no experience found
-        if keywords.isEmpty && !profile.educations.isEmpty {
-            for education in profile.educations {
-                let degree = education.degree
-        guard !degree.isEmpty else { continue }
-                let degreeLower = degree.lowercased()
+        // 1. Add Job Titles from Experience (most recent first)
+        // We prioritize recent roles as they likely reflect current career path
+        for experience in profile.experiences.sorted(by: { $0.startDate > $1.startDate }) {
+            if let position = experience.position, !position.isEmpty {
+                // Clean up position to get core role, but also keep original if it's distinct
+                let corePosition = position
+                    .replacingOccurrences(of: "(?i)junior", with: "", options: .regularExpression)
+                    .replacingOccurrences(of: "(?i)senior", with: "", options: .regularExpression)
+                    .replacingOccurrences(of: "(?i)intern", with: "", options: .regularExpression)
+                    .replacingOccurrences(of: "(?i)stagiaire", with: "", options: .regularExpression)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
                 
-                if degreeLower.contains("support") || degreeLower.contains("informatique") {
-                    keywords.insert("IT Support")
-                    keywords.insert("Support Informatique")
-                    hasSupportExperience = true
+                if !corePosition.isEmpty {
+                    keywords.insert(corePosition)
                 }
-                if degreeLower.contains("devops") || degreeLower.contains("cloud") {
-                    keywords.insert("DevOps")
-                    keywords.insert("Cloud")
-                    hasDevOpsExperience = true
-                }
+                keywords.insert(position)
             }
         }
         
-        // Ensure we have core keywords based on profile
-        if hasDevOpsExperience {
-            keywords.insert("DevOps")
-            keywords.insert("Cloud Engineer")
-        }
-        if hasQAExperience {
-            keywords.insert("QA")
-            keywords.insert("Testeur")
-        }
-        if hasSupportExperience {
-            keywords.insert("IT Support")
+        // 2. Add Top Skills
+        // Flatten all skills and take the first few (assuming user ordered them by importance)
+        let allSkills = profile.skills.flatMap { $0.skillsArray }
+        for skill in allSkills.prefix(8) {
+            keywords.insert(skill)
         }
         
-        // Add experience level indicators (junior to 2 years)
-        keywords.insert("Junior")
-        keywords.insert("Stagiaire")
-        keywords.insert("Entry Level")
-        keywords.insert("Débutant")
-        keywords.insert("0-2 ans")
-        keywords.insert("1-2 years")
-        keywords.insert("Junior/Intermediate")
+        // 3. Add Education Degrees if keywords are sparse
+        if keywords.count < 3 {
+            for education in profile.educations {
+                keywords.insert(education.degree)
+            }
+        }
         
-        // Add general IT keywords if we still don't have enough
+        // 4. Fallback if still empty
         if keywords.isEmpty {
-            keywords.insert("DevOps")
-            keywords.insert("QA")
-            keywords.insert("IT Support")
+            return ["DevOps", "QA", "IT Support"]
         }
         
-        // Prioritize most relevant keywords for junior profile
-        let prioritizedKeywords = Array(keywords).sorted { word1, word2 in
-            // Priority order: DevOps > QA > Support > General IT
-            let priority1 = getKeywordPriority(word1)
-            let priority2 = getKeywordPriority(word2)
-            if priority1 != priority2 {
-                return priority1 < priority2
-            }
-            return word1.count < word2.count // Shorter keywords first
-        }
-        
-        // Return top 5-6 keywords for better coverage
-        return Array(prioritizedKeywords.prefix(6))
-    }
-    
-    // Helper function to prioritize keywords
-    private func getKeywordPriority(_ keyword: String) -> Int {
-        let keywordLower = keyword.lowercased()
-        
-        // Highest priority: Core DevOps and QA terms
-        if keywordLower.contains("devops") || keywordLower.contains("cloud engineer") {
-            return 1
-        }
-        if keywordLower.contains("qa") || keywordLower.contains("test") {
-            return 2
-        }
-        
-        // High priority: Support and infrastructure
-        if keywordLower.contains("support") || keywordLower.contains("infrastructure") {
-            return 3
-        }
-        
-        // Medium priority: Specific technologies
-        if keywordLower.contains("aws") || keywordLower.contains("azure") || 
-           keywordLower.contains("kubernetes") || keywordLower.contains("docker") {
-            return 4
-        }
-        
-        // Lower priority: General terms
-        if keywordLower.contains("junior") || keywordLower.contains("stagiaire") {
-            return 5
-        }
-        
-        return 6 // Default priority
+        // 5. Return top unique keywords
+        // We limit to 8 to avoid spamming the search APIs too much, but enough to get variety
+        return Array(keywords).prefix(8).map { String($0) }
     }
     
     

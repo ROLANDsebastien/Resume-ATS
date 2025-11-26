@@ -27,13 +27,14 @@ let prompt = """
             Skills: \(profile?.skills.flatMap { $0.skillsArray }.joined(separator: ", ") ?? "No skills listed")
             Experience: \(profile?.experiences.map { "\($0.position ?? "") at \($0.company) (\($0.startDate.formatted(date: .abbreviated, time: .omitted)) - \($0.endDate?.formatted(date: .abbreviated, time: .omitted) ?? "Present")" }.joined(separator: "; ") ?? "No experience listed")
             Education: \(profile?.educations.map { "\($0.degree) from \($0.institution)" }.joined(separator: "; ") ?? "No education listed")
-            Languages: French (native), English (fluent) - Does NOT speak Dutch/Flemish
+            Languages: \(profile?.languages.map { "\($0.name) (\($0.level ?? "Unknown"))" }.joined(separator: ", ") ?? "No languages listed")
             
             CANDIDATE SPECIALIZATIONS:
-            - DevOps & Cloud Engineering (AWS, Azure, CI/CD, Kubernetes, Docker)
-            - QA & Testing (Manual, Automation, Test Automation, Quality Assurance)
-            - IT Support & Technical Support (Helpdesk, Service Desk, Technical Assistance)
-            - Experience Level: Junior to 2 years experience (Entry Level to Junior/Intermediate)
+            \(profile?.skills.map { "- \($0.title): \($0.skillsArray.joined(separator: ", "))" }.joined(separator: "\n") ?? "No skills listed")
+            
+            EXPERIENCE SUMMARY:
+            - Total Years of Experience: \(AIJobMatchingService.calculateTotalExperienceYears(profile: profile)) years
+            - Key Roles: \(profile?.experiences.compactMap { $0.position }.prefix(3).joined(separator: ", ") ?? "None")
             
             TASK:
             1. Score match from 0-100 (100 = perfect match)
@@ -189,6 +190,26 @@ let prompt = """
                 completion(finalJobs)
             }
         }
+    }
+
+    
+    // Helper to calculate total years of experience
+    static func calculateTotalExperienceYears(profile: Profile?) -> Int {
+        guard let profile = profile else { return 0 }
+        
+        var totalMonths = 0
+        
+        for experience in profile.experiences {
+            let start = experience.startDate
+            let end = experience.endDate ?? Date()
+            
+            let components = Calendar.current.dateComponents([.month], from: start, to: end)
+            if let months = components.month {
+                totalMonths += max(0, months)
+            }
+        }
+        
+        return max(0, totalMonths / 12)
     }
 }
 
