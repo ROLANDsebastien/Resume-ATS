@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import SwiftData
 
 /// Service for creating application package folders with all necessary documents
 class ApplicationPackageService {
@@ -11,7 +12,9 @@ class ApplicationPackageService {
     }
     
     static func createApplicationPackage(
-        for job: Job,
+        for jobTitle: String,
+        company: String,
+        location: String,
         profile: Profile,
         coverLetter: String,
         completion: @escaping (Result<URL, PackageError>) -> Void
@@ -19,7 +22,11 @@ class ApplicationPackageService {
         DispatchQueue.global(qos: .userInitiated).async {
             do {
                 // Detect language
-                let language = LanguageDetector.detectLanguage(from: job)
+                let language = LanguageDetector.detectLanguage(
+                    title: jobTitle,
+                    company: company,
+                    location: location
+                )
                 
                 // Create folder structure
                 let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask)[0]
@@ -29,8 +36,8 @@ class ApplicationPackageService {
                 try? FileManager.default.createDirectory(at: applicationsFolder, withIntermediateDirectories: true)
                 
                 // Sanitize folder name
-                let sanitizedCompany = job.company.replacingOccurrences(of: "/", with: "-")
-                let sanitizedTitle = job.title.replacingOccurrences(of: "/", with: "-")
+                let sanitizedCompany = company.replacingOccurrences(of: "/", with: "-")
+                let sanitizedTitle = jobTitle.replacingOccurrences(of: "/", with: "-")
                 let folderName = "\(sanitizedCompany)_\(sanitizedTitle)"
                 let packageFolder = applicationsFolder.appendingPathComponent(folderName, isDirectory: true)
                 
@@ -66,11 +73,9 @@ class ApplicationPackageService {
                 // 2. Write job link
                 let linkFile = packageFolder.appendingPathComponent("link.txt")
                 let linkContent = """
-                    Job Title: \(job.title)
-                    Company: \(job.company)
-                    Source: \(job.source)
-                    
-                    Link: \(job.url)
+                    Job Title: \(jobTitle)
+                    Company: \(company)
+                    Location: \(location)
                     """
                 try linkContent.write(to: linkFile, atomically: true, encoding: .utf8)
                 print("✅ [Package] Link file created")

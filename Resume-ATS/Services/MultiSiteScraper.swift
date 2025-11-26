@@ -6,12 +6,10 @@ class MultiSiteScraper {
     
     init() {
         self.scrapers = [
-            JobatScraper()
-            // Scrapers temporairement désactivés en raison d'erreurs réseau/parsing
-            // Réactiver après correction individuelle de chaque scraper
-            // ActirisScraper(),           // ❌ Parsing error - structure HTML changée
-            // OptionCarriereScraper(),    // ❌ Parsing error - structure HTML changée
-            // ICTJobsScraper(),           // ❌ TLS error - protection anti-bot
+            JobatScraper(),
+            ActirisScraper(),           // Réactivé pour test
+            OptionCarriereScraper(),    // Réactivé pour test
+            ICTJobsScraper()            // Réactivé pour test
             // EditxScraper()              // ❌ DNS error - domaine inexistant
         ]
         

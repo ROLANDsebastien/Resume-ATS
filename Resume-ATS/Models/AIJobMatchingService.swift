@@ -11,8 +11,8 @@ class AIJobMatchingService {
         profile: Profile?,
         completion: @escaping (_ aiScore: Int?, _ matchReason: String?, _ missingRequirements: [String]) -> Void
     ) {
-        let prompt = """
-            Analyze this job posting against the candidate's profile and provide a match assessment.
+let prompt = """
+            Analyze this job posting against the candidate's profile and provide a comprehensive match assessment.
             
             JOB POSTING:
             Title: \(jobResult.title)
@@ -25,18 +25,34 @@ class AIJobMatchingService {
             Name: \(profile?.firstName ?? "") \(profile?.lastName ?? "")
             Summary: \(profile?.summaryString ?? "No summary available")
             Skills: \(profile?.skills.flatMap { $0.skillsArray }.joined(separator: ", ") ?? "No skills listed")
-            Experience: \(profile?.experiences.map { "\($0.position ?? "") at \($0.company)" }.joined(separator: "; ") ?? "No experience listed")
+            Experience: \(profile?.experiences.map { "\($0.position ?? "") at \($0.company) (\($0.startDate.formatted(date: .abbreviated, time: .omitted)) - \($0.endDate?.formatted(date: .abbreviated, time: .omitted) ?? "Present")" }.joined(separator: "; ") ?? "No experience listed")
+            Education: \(profile?.educations.map { "\($0.degree) from \($0.institution)" }.joined(separator: "; ") ?? "No education listed")
+            Languages: French (native), English (fluent) - Does NOT speak Dutch/Flemish
+            
+            CANDIDATE SPECIALIZATIONS:
+            - DevOps & Cloud Engineering (AWS, Azure, CI/CD, Kubernetes, Docker)
+            - QA & Testing (Manual, Automation, Test Automation, Quality Assurance)
+            - IT Support & Technical Support (Helpdesk, Service Desk, Technical Assistance)
+            - Experience Level: Junior to 2 years experience (Entry Level to Junior/Intermediate)
             
             TASK:
-            1. Score the match from 0-100 (100 = perfect match)
-            2. Explain why this is a good match (2-3 sentences max)
-            3. List missing key requirements (max 5 items, be specific)
+            1. Score match from 0-100 (100 = perfect match)
+            2. **IMPORTANT**: If job title or description appears to be in Dutch/Flemish (not French or English), reduce the score by at least 50 points
+            3. **EXPERIENCE LEVEL**: Consider that candidate is suitable for Junior to 2+ years experience positions. Don't penalize for "2+ years" or "Junior/Intermediate" requirements.
+            4. **SKILLS MATCHING**: Give extra points for:
+               - DevOps/Cloud roles (AWS, Azure, Kubernetes, Docker, CI/CD)
+               - QA/Automation roles (Test Automation, QA Automation, Automation tools)
+               - IT Support roles (Helpdesk, Service Desk, Technical Support)
+               - Entry-level to 2 years experience positions
+            5. Explain why this is a good match (2-3 sentences max)
+            6. List missing key requirements (max 5 items, be specific)
+            7. If job is in Dutch/Flemish, add "Language barrier: Job requires Dutch/Flemish" to missing requirements
             
             RESPONSE FORMAT (JSON only):
             {
                 "score": 85,
-                "reason": "Strong match due to iOS experience and Swift skills",
-                "missing": ["React Native experience", "5+ years experience"]
+                "reason": "Strong match due to DevOps experience with AWS and cloud technologies",
+                "missing": ["3+ years experience", "Advanced Kubernetes"]
             }
             """
         

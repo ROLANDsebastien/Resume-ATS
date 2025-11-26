@@ -38,7 +38,7 @@ struct JobSearchView: View {
             } else {
                 List {
                     ForEach(jobs) { job in
-                        ModernJobCard(job: job, profile: selectedProfile)
+                        ModernJobCard(job: job, profile: selectedProfile, profiles: profiles)
                             .listRowSeparator(.hidden)
                             .listRowInsets(EdgeInsets())
                             .onTapGesture {
@@ -369,6 +369,7 @@ struct JobSearchView: View {
 struct ModernJobCard: View {
     let job: Job
     let profile: Profile?
+    let profiles: [Profile]  // Add profiles array for smart profile selection
     @State private var isHovered = false
     @State private var isGenerating = false
     @State private var showAlert = false
@@ -501,8 +502,16 @@ struct ModernJobCard: View {
         
         isGenerating = true
         
-        let language = LanguageDetector.detectLanguage(from: job)
-        CoverLetterService.generateCoverLetter(for: job, profile: profile, language: language) { coverLetter in
+        let language = LanguageDetector.detectLanguage(
+            title: job.title,
+            company: job.company,
+            location: job.location
+        )
+        
+        // Select the appropriate profile based on job language
+        let selectedProfile = selectProfileForLanguage(language, currentProfile: profile, availableProfiles: profiles)
+        
+        CoverLetterService.generateCoverLetter(for: job, profile: selectedProfile, language: language) { coverLetter in
             guard let coverLetter = coverLetter else {
                 isGenerating = false
                 alertMessage = "Échec de la génération de la lettre de motivation"
@@ -511,8 +520,10 @@ struct ModernJobCard: View {
             }
             
             ApplicationPackageService.createApplicationPackage(
-                for: job,
-                profile: profile,
+                for: job.title,
+                company: job.company,
+                location: job.location,
+                profile: selectedProfile,
                 coverLetter: coverLetter
             ) { result in
                 isGenerating = false
@@ -527,6 +538,32 @@ struct ModernJobCard: View {
                 }
             }
         }
+    }
+    
+    
+    /// Select the appropriate profile based on the detected job language
+    /// Falls back to current profile if no matching language profile is found
+    private func selectProfileForLanguage(_ language: LanguageDetector.Language, currentProfile: Profile, availableProfiles: [Profile]) -> Profile {
+        let targetLanguage: String
+        switch language {
+        case .french:
+            targetLanguage = "fr"
+        case .english:
+            targetLanguage = "en"
+        case .dutch:
+            // User doesn't speak Dutch, prefer French
+            targetLanguage = "fr"
+        }
+        
+        // Try to find a profile with matching language
+        if let matchingProfile = availableProfiles.first(where: { $0.language == targetLanguage }) {
+            print("📋 [Profile] Selected \(targetLanguage.uppercased()) profile for \(language.rawValue) job")
+            return matchingProfile
+        }
+        
+        // Fallback to current profile if no match found
+        print("⚠️ [Profile] No matching profile for language \(targetLanguage), using current profile")
+        return currentProfile
     }
 }
 

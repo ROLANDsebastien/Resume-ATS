@@ -25,25 +25,44 @@ class LanguageDetector {
         }
     }
     
-    static func detectLanguage(from job: Job) -> Language {
-        let text = "\(job.title) \(job.company) \(job.location)".lowercased()
+    static func detectLanguage(title: String, company: String, location: String) -> Language {
+        let text = "\(title) \(company) \(location)".lowercased()
         
         // French indicators
         let frenchKeywords = ["bruxelles", "liège", "namur", "développeur", "ingénieur", 
-                             "société", "équipe", "emploi", "wallonie"]
+                             "société", "équipe", "emploi", "wallonie", "h/f", "stage", "stagiaire"]
         let frenchCount = frenchKeywords.filter { text.contains($0) }.count
         
-        // Dutch indicators
-        let dutchKeywords = ["brussel", "antwerpen", "gent", "ontwikkelaar", 
-                            "bedrijf", "vlaanderen", "werken"]
+        // Dutch indicators - more specific to avoid false positives
+        let dutchKeywords = ["brussel", "antwerpen", "gent", "ontwikkelaar", "ontwikkelaar", 
+                            "bedrijf", "vlaanderen", "werken", "medewerker", "m/v", "m/v/x"]
         let dutchCount = dutchKeywords.filter { text.contains($0) }.count
         
-        // English indicators (or neutral Belgian cities)
-        let englishKeywords = ["developer", "engineer", "company", "team", "brussels"]
-        _ = englishKeywords.filter { text.contains($0) }.count
+        // English indicators - include tech terms that are commonly English
+        let englishKeywords = ["developer", "engineer", "company", "team", "brussels", 
+                              "devops", "it", "support", "analyst", "coordinator", "specialist",
+                              "manager", "lead", "senior", "junior", "backend", "frontend",
+                              "full-stack", "aws", "azure", "cloud", "infrastructure", "java",
+                              ".net", "dotnet", "web", "erp", "datawarehouse", "bi"]
+        let englishCount = englishKeywords.filter { text.contains($0) }.count
         
-        // Determine language based on keyword matches
-        if frenchCount > dutchCount && frenchCount > 0 {
+        // Strong Dutch indicators (override English)
+        let strongDutchIndicators = ["medewerker", "m/v", "m/v/x", "vacature", "solliciteer"]
+        let hasStrongDutch = strongDutchIndicators.contains { text.contains($0) }
+        
+        // Strong French indicators (override English)
+        let strongFrenchIndicators = ["h/f", "postulez", "candidature"]
+        let hasStrongFrench = strongFrenchIndicators.contains { text.contains($0) }
+        
+        // Determine language with priority rules
+        if hasStrongDutch {
+            return .dutch
+        } else if hasStrongFrench {
+            return .french
+        } else if englishCount > 0 {
+            // Prioritize English for tech positions - this should catch most IT jobs
+            return .english
+        } else if frenchCount > dutchCount && frenchCount > 0 {
             return .french
         } else if dutchCount > frenchCount && dutchCount > 0 {
             return .dutch
