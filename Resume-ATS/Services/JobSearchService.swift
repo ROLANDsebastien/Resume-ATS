@@ -157,7 +157,8 @@ class JobSearchService {
                     location: jobResult.location,
                     salary: jobResult.salary,
                     url: jobResult.url,
-                    source: jobResult.source
+                    source: jobResult.source,
+                    contractType: jobResult.contractType
                 )
             }
             completion(jobs)

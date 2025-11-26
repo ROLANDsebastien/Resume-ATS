@@ -15,6 +15,7 @@ final class Job {
     var missingRequirements: [String]
     var isFavorite: Bool
     var isApplied: Bool
+    var contractType: String?
     var notes: String
     var createdAt: Date
     
@@ -26,6 +27,7 @@ final class Job {
         salary: String? = nil,
         url: String,
         source: String,
+        contractType: String? = nil,
         aiScore: Int? = nil,
         matchReason: String? = nil,
         missingRequirements: [String] = [],
@@ -41,6 +43,7 @@ final class Job {
         self.salary = salary
         self.url = url
         self.source = source
+        self.contractType = contractType
         self.aiScore = aiScore
         self.matchReason = matchReason
         self.missingRequirements = missingRequirements

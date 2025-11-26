@@ -22,43 +22,58 @@ struct JobSearchView: View {
     @State private var minScore: Int = 0
     @State private var showingFilters = false
     
+    // Location (City/Region) Selection
+    @State private var selectedLocations: Set<CityService.LocationOption> = []
+    @State private var locationSuggestions: [CityService.LocationOption] = []
+    @State private var showingLocationSuggestions = false
+    @State private var isLocationFieldFocused = false
+    
+    // Contract Filters
+    @State private var selectedContractTypes: Set<String> = []
+    let contractTypes = ["CDI", "CDD", "Freelance", "Stage", "Intérim"]
+    
+    // Time Filter
+    enum TimeFilter: String, CaseIterable, Identifiable {
+        case all = "Tout"
+        case last24h = "24 heures"
+        case last7days = "7 jours"
+        
+        var id: String { rawValue }
+    }
+    @State private var selectedTimeFilter: TimeFilter = .all
+    
     var body: some View {
         VStack(spacing: 0) {
-            // Header moderne
-            modernHeaderView
-            
-            // Filtres
-            if showingFilters {
-                filtersView
-            }
-            
-            // Liste des résultats ou état vide
-            if jobs.isEmpty {
-                emptyStateView
-            } else {
-                List {
-                    ForEach(jobs) { job in
-                        ModernJobCard(job: job, profile: selectedProfile, profiles: profiles)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets())
-                            .onTapGesture {
-                                selectedJob = job
-                                showingJobDetail = true
-                            }
+            // Header moderne et filtres dans un ScrollView
+            ScrollView {
+                VStack(spacing: 0) {
+                    modernHeaderView
+                    
+                    // Filtres
+                    if showingFilters {
+                        filtersView
                     }
                 }
-                .listStyle(.plain)
             }
-        }
-        .navigationTitle("Resume-ATS")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { showingFilters.toggle() }) {
-                    Image(systemName: showingFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                        .foregroundColor(.accentColor)
+            .frame(minHeight: 400)
+            .layoutPriority(1)
+            
+            
+            // Liste des résultats
+            List {
+                ForEach(jobs) { job in
+                    ModernJobCard(job: job, profile: selectedProfile, profiles: profiles)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets())
+                        .onTapGesture {
+                            selectedJob = job
+                            showingJobDetail = true
+                        }
                 }
             }
+            .listStyle(.plain)
         }
+        .navigationTitle("Resume-ATS")
         .alert("Erreur", isPresented: $showingError) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -79,209 +94,421 @@ struct JobSearchView: View {
     // MARK: - Modern Header View
     
     private var modernHeaderView: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 24) {
             // Titre principal
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Recherche Intelligente d'Emploi")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
                     .foregroundColor(.primary)
                 
                 Text("Sélectionnez votre profil pour trouver des emplois compatibles avec vos expériences et compétences.")
-                    .font(.system(size: 14))
+                    .font(.subheadline)
                     .foregroundColor(.secondary)
             }
             .padding(.horizontal, 24)
             .padding(.top, 24)
             
-            // Barre de recherche
-            HStack(spacing: 12) {
+            // Search Controls in a clean card
+            VStack(spacing: 16) {
                 // Profile Selector
-                Menu {
-                    if profiles.isEmpty {
-                        Text("Aucun profil disponible")
-                    } else {
-                        ForEach(profiles) { profile in
-                            Button(action: {
-                                selectedProfile = profile
-                            }) {
-                                HStack {
-                                    Text(profile.name.isEmpty ? "Profil sans nom" : profile.name)
-                                    if selectedProfile?.id == profile.id {
-                                        Image(systemName: "checkmark")
+                VStack(alignment: .leading, spacing: 8) {
+                    Label {
+                        Text("Profil")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                    } icon: {
+                        Image(systemName: "person.circle.fill")
+                            .foregroundColor(.blue)
+                    }
+                    
+                    Menu {
+                        if profiles.isEmpty {
+                            Text("Aucun profil disponible")
+                        } else {
+                            ForEach(profiles) { profile in
+                                Button(action: {
+                                    selectedProfile = profile
+                                }) {
+                                    HStack {
+                                        Text(profile.name.isEmpty ? "Profil sans nom" : profile.name)
+                                        if selectedProfile?.id == profile.id {
+                                            Image(systemName: "checkmark")
+                                        }
                                     }
                                 }
                             }
                         }
+                    } label: {
+                        HStack {
+                            Text(selectedProfile?.name.isEmpty == false ? selectedProfile!.name : "Choisir un profil")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(12)
+                        .background(.regularMaterial)
+                        .cornerRadius(10)
                     }
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "person.circle")
-                            .font(.system(size: 16))
-                            .foregroundColor(.secondary)
-                        
-                        Text(selectedProfile?.name.isEmpty == false ? selectedProfile!.name : "Choisir un profil")
-                            .font(.system(size: 14))
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .frame(width: 220)
-                    .background(Color(NSColor.controlBackgroundColor))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                    )
+                    .menuStyle(BorderlessButtonMenuStyle())
                 }
-                .menuStyle(BorderlessButtonMenuStyle())
                 
-                // City Input
-                HStack(spacing: 8) {
-                    Image(systemName: "mappin.circle")
-                        .font(.system(size: 16))
-                        .foregroundColor(.secondary)
-                    
-                    TextField("Ville (ex: Brussels)", text: $locationText)
-                        .font(.system(size: 14))
-                        .textFieldStyle(PlainTextFieldStyle())
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .frame(width: 220)
-                .background(Color(NSColor.controlBackgroundColor))
-                .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                )
-                
-                // Distance Selector
-                Menu {
-                    ForEach([10, 25, 50, 75, 100], id: \.self) { distance in
-                        Button(action: {
-                            distanceKm = distance
-                        }) {
-                            HStack {
-                                Text("\(distance) km")
-                                if distanceKm == distance {
-                                    Image(systemName: "checkmark")
+                HStack(spacing: 16) {
+                    // Location Selection (Cities/Regions)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label {
+                            Text("Localisation")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                        } icon: {
+                            Image(systemName: "mappin.circle.fill")
+                                .foregroundColor(.green)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            // Selected locations chips
+                            if !selectedLocations.isEmpty {
+                                FlowLayout(spacing: 6) {
+                                    ForEach(Array(selectedLocations), id: \.id) { location in
+                                        HStack(spacing: 4) {
+                                            Image(systemName: location.type == .region ? "mappin.circle.fill" : "mappin")
+                                                .font(.caption2)
+                                            Text(location.name)
+                                                .font(.caption)
+                                            Button(action: {
+                                                selectedLocations.remove(location)
+                                            }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.caption2)
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.blue.opacity(0.15))
+                                        .foregroundColor(.blue)
+                                        .cornerRadius(6)
+                                    }
+                                }
+                            }
+                            
+                            // Input field
+                            ZStack(alignment: .topLeading) {
+                                TextField("Ex: Bruxelles, Région Flamande...", text: $locationText)
+                                    .textFieldStyle(.plain)
+                                    .padding(12)
+                                    .background(.regularMaterial)
+                                    .cornerRadius(10)
+                                    .onChange(of: locationText) {
+                                        locationSuggestions = CityService.shared.searchLocations(query: locationText)
+                                        showingLocationSuggestions = !locationSuggestions.isEmpty || isLocationFieldFocused
+                                    }
+                                    .onSubmit {
+                                        if let firstSuggestion = locationSuggestions.first {
+                                            selectedLocations.insert(firstSuggestion)
+                                            locationText = ""
+                                            showingLocationSuggestions = false
+                                        }
+                                    }
+                                
+                                if showingLocationSuggestions && (!locationSuggestions.isEmpty || locationText.isEmpty) {
+                                    VStack(spacing: 0) {
+                                        ScrollView {
+                                            VStack(spacing: 0) {
+                                                ForEach(locationSuggestions) { location in
+                                                    Button(action: {
+                                                        selectedLocations.insert(location)
+                                                        locationText = ""
+                                                        showingLocationSuggestions = false
+                                                    }) {
+                                                        HStack {
+                                                            Image(systemName: location.type == .region ? "location.circle.fill" : "mappin")
+                                                                .foregroundColor(location.type == .region ? .blue : .secondary)
+                                                                .font(.caption)
+                                                            VStack(alignment: .leading, spacing: 2) {
+                                                                Text(location.name)
+                                                                    .foregroundColor(.primary)
+                                                                    .font(.subheadline)
+                                                                if let alt = location.alternativeName {
+                                                                    Text(alt)
+                                                                        .foregroundColor(.secondary)
+                                                                        .font(.caption)
+                                                                }
+                                                            }
+                                                            Spacer()
+                                                        }
+                                                        .padding(.horizontal, 12)
+                                                        .padding(.vertical, 8)
+                                                        .background(Color.clear)
+                                                    }
+                                                    .buttonStyle(.plain)
+                                                    .onHover { isHovered in
+                                                        if isHovered {
+                                                            NSCursor.pointingHand.push()
+                                                        } else {
+                                                            NSCursor.pop()
+                                                        }
+                                                    }
+                                                    
+                                                    if location.id != locationSuggestions.last?.id {
+                                                        Divider()
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        .frame(maxHeight: 200)
+                                    }
+                                    .background(.regularMaterial)
+                                    .cornerRadius(10)
+                                    .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+                                    .padding(.top, selectedLocations.isEmpty ? 52 : 80)
+                                    .zIndex(100)
                                 }
                             }
                         }
                     }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "circle.dashed")
-                            .font(.system(size: 16))
-                            .foregroundColor(.secondary)
+                    
+                    // Distance Selector
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label {
+                            Text("Rayon")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                        } icon: {
+                            Image(systemName: "circle.dashed")
+                                .foregroundColor(.orange)
+                        }
                         
-                        Text("\(distanceKm)")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.primary)
-                        
-                        Text("km")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-                            
-                        Spacer()
+                        Menu {
+                            ForEach([10, 25, 50, 75, 100], id: \.self) { distance in
+                                Button(action: {
+                                    distanceKm = distance
+                                }) {
+                                    HStack {
+                                        Text("\(distance) km")
+                                        if distanceKm == distance {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                Text("\(distanceKm) km")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(12)
+                            .frame(width: 120)
+                            .background(.regularMaterial)
+                            .cornerRadius(10)
+                        }
+                        .menuStyle(BorderlessButtonMenuStyle())
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .frame(width: 100)
-                    .background(Color(NSColor.controlBackgroundColor))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                    )
                 }
-                .menuStyle(BorderlessButtonMenuStyle())
                 
                 // Search Button
                 Button(action: performSearch) {
                     HStack(spacing: 8) {
                         if isSearching {
                             ProgressView()
-                                .scaleEffect(0.6)
+                                .scaleEffect(0.8)
                                 .frame(width: 16, height: 16)
                         } else {
                             Image(systemName: "sparkles")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 16, weight: .semibold))
                         }
                         Text("Rechercher")
-                            .font(.system(size: 14, weight: .semibold))
+                            .fontWeight(.semibold)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 8)
-                    .background(Color.blue)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.blue, Color.blue.opacity(0.8)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                     .foregroundColor(.white)
-                    .cornerRadius(8)
+                    .cornerRadius(10)
                 }
                 .buttonStyle(.plain)
                 .disabled(selectedProfile == nil || isSearching)
                 
-                Spacer()
+                // Filters toggle button
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showingFilters.toggle()
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: showingFilters ? "chevron.up" : "chevron.down")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text(showingFilters ? "Masquer les filtres" : "Plus d'options")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(.plain)
             }
+            .padding(20)
+            .background(.ultraThinMaterial)
+            .cornerRadius(16)
             .padding(.horizontal, 24)
-            .padding(.bottom, 24)
+            .padding(.bottom, 16)
         }
     }
     
     // MARK: - Filters View
     
     private var filtersView: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Filtres")
-                .font(.headline)
-                .padding(.horizontal, 24)
-            
-            // Score minimum
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Score de compatibilité minimum: \(minScore)%")
-                    .font(.subheadline)
+        VStack(alignment: .leading, spacing: 20) {
+            // Filters in clean card
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Filtres")
+                    .font(.headline)
                 
-                Slider(value: Binding(
-                    get: { Double(minScore) },
-                    set: { minScore = Int($0) }
-                ), in: 0...100, step: 5)
-                .tint(.blue)
-            }
-            .padding(.horizontal, 24)
-            
-            // Sources
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Sources:")
-                    .font(.subheadline)
+                // Score minimum
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Label {
+                            Text("Score de compatibilité")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        } icon: {
+                            Image(systemName: "sparkles")
+                                .foregroundColor(.purple)
+                        }
+                        Spacer()
+                        Text("\(minScore)%")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.blue)
+                    }
+                    
+                    Slider(value: Binding(
+                        get: { Double(minScore) },
+                        set: { minScore = Int($0) }
+                    ), in: 0...100, step: 5)
+                    .tint(.blue)
+                }
                 
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: 12) {
-                    ForEach(jobSearchService.getAvailableSources(), id: \.self) { source in
-                        Toggle(source, isOn: Binding(
-                            get: { selectedSources.contains(source) },
-                            set: { isSelected in
-                                if isSelected {
-                                    selectedSources.insert(source)
-                                } else {
-                                    selectedSources.remove(source)
-                                }
+                
+                Divider()
+                
+                // Time Filter
+                VStack(alignment: .leading, spacing: 12) {
+                    Label {
+                        Text("Date de publication")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    } icon: {
+                        Image(systemName: "clock.fill")
+                            .foregroundColor(.orange)
+                    }
+                    
+                    HStack(spacing: 10) {
+                        ForEach(TimeFilter.allCases) { filter in
+                            Button(action: {
+                                selectedTimeFilter = filter
+                            }) {
+                                Text(filter.rawValue)
+                                    .font(.subheadline)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(selectedTimeFilter == filter ? Color.blue : Color.gray.opacity(0.15))
+                                    .foregroundColor(selectedTimeFilter == filter ? .white : .primary)
+                                    .cornerRadius(8)
                             }
-                        ))
-                        .toggleStyle(CheckboxToggleStyle())
+                            .buttonStyle(.plain)
+                        }
                     }
                 }
-                .padding(.horizontal, 24)
+                
+                Divider()
+                
+                // Type de contrat
+                VStack(alignment: .leading, spacing: 12) {
+                    Label {
+                        Text("Type de contrat")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    } icon: {
+                        Image(systemName: "doc.text.fill")
+                            .foregroundColor(.indigo)
+                    }
+                    
+                    LazyVGrid(columns: [
+                        GridItem(.flexible(), alignment: .leading),
+                        GridItem(.flexible(), alignment: .leading),
+                        GridItem(.flexible(), alignment: .leading)
+                    ], spacing: 12) {
+                        ForEach(contractTypes, id: \.self) { type in
+                            Toggle(type, isOn: Binding(
+                                get: { selectedContractTypes.contains(type) },
+                                set: { isSelected in
+                                    if isSelected {
+                                        selectedContractTypes.insert(type)
+                                    } else {
+                                        selectedContractTypes.remove(type)
+                                    }
+                                }
+                            ))
+                            .toggleStyle(CheckboxToggleStyle())
+                        }
+                    }
+                }
+                
+                Divider()
+                
+                // Sources
+                VStack(alignment: .leading, spacing: 12) {
+                    Label {
+                        Text("Sources")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    } icon: {
+                        Image(systemName: "globe")
+                            .foregroundColor(.cyan)
+                    }
+                    
+                    LazyVGrid(columns: [
+                        GridItem(.flexible(), alignment: .leading),
+                        GridItem(.flexible(), alignment: .leading),
+                        GridItem(.flexible(), alignment: .leading)
+                    ], spacing: 12) {
+                        ForEach(jobSearchService.getAvailableSources(), id: \.self) { source in
+                            Toggle(source, isOn: Binding(
+                                get: { selectedSources.contains(source) },
+                                set: { isSelected in
+                                    if isSelected {
+                                        selectedSources.insert(source)
+                                    } else {
+                                        selectedSources.remove(source)
+                                    }
+                                }
+                            ))
+                            .toggleStyle(CheckboxToggleStyle())
+                        }
+                    }
+                }
             }
-            .padding(.vertical, 16)
+            .padding(20)
+            .background(.ultraThinMaterial)
+            .cornerRadius(16)
+            .padding(.horizontal, 24)
         }
     }
     
@@ -289,8 +516,6 @@ struct JobSearchView: View {
     
     private var emptyStateView: some View {
         VStack(spacing: 16) {
-            Spacer()
-            
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 48))
                 .foregroundColor(.secondary.opacity(0.4))
@@ -298,10 +523,9 @@ struct JobSearchView: View {
             Text("Sélectionnez votre profil et lancez la recherche")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.secondary)
-            
-            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, 60)
+        .frame(maxWidth: .infinity)
     }
     
     // MARK: - Search Logic
@@ -357,6 +581,36 @@ struct JobSearchView: View {
             
             if !selectedSources.isEmpty && !selectedSources.contains(job.source) {
                 return false
+            }
+            
+            if !selectedContractTypes.isEmpty {
+                // Si le job n'a pas de type de contrat, on l'affiche quand même si on est indulgent,
+                // ou on le masque. Ici, on va supposer que si contractType est nil, ça ne matche pas.
+                // Ou alors on peut décider d'afficher les "Inconnu" si l'utilisateur ne filtre pas strictement.
+                // Pour l'instant, filtrage strict si le type est connu.
+                if let type = job.contractType {
+                    // Simple contains check. In real app, might need mapping (e.g. "Full-time" -> "CDI")
+                    // Pour l'instant on suppose que le scraping normalise les types.
+                    if !selectedContractTypes.contains(where: { type.contains($0) }) {
+                        return false
+                    }
+                }
+            }
+            
+            // Time filter
+            switch selectedTimeFilter {
+            case .last24h:
+                let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date())!
+                if job.createdAt < yesterday {
+                    return false
+                }
+            case .last7days:
+                let lastWeek = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
+                if job.createdAt < lastWeek {
+                    return false
+                }
+            case .all:
+                break
             }
             
             return true
