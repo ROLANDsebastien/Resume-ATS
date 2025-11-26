@@ -55,23 +55,27 @@ struct JobSearchView: View {
                     }
                 }
             }
-            .frame(minHeight: 400)
-            .layoutPriority(1)
+            // Removed fixed minHeight and layoutPriority to allow List to take available space
             
             
             // Liste des résultats
-            List {
-                ForEach(jobs) { job in
-                    ModernJobCard(job: job, profile: selectedProfile, profiles: profiles)
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets())
-                        .onTapGesture {
-                            selectedJob = job
-                            showingJobDetail = true
-                        }
+            if jobs.isEmpty && !isSearching {
+                emptyStateView
+                Spacer()
+            } else {
+                List {
+                    ForEach(jobs) { job in
+                        ModernJobCard(job: job, profile: selectedProfile, profiles: profiles)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets())
+                            .onTapGesture {
+                                selectedJob = job
+                                showingJobDetail = true
+                            }
+                    }
                 }
+                .listStyle(.plain)
             }
-            .listStyle(.plain)
         }
         .navigationTitle("Resume-ATS")
         .alert("Erreur", isPresented: $showingError) {
@@ -87,6 +91,10 @@ struct JobSearchView: View {
         .onAppear {
             if selectedProfile == nil && !profiles.isEmpty {
                 selectedProfile = profiles.first
+            }
+            // Initialize selectedSources with all available sources
+            if selectedSources.isEmpty {
+                selectedSources = Set(jobSearchService.getAvailableSources())
             }
         }
     }
@@ -203,19 +211,20 @@ struct JobSearchView: View {
                                     .padding(12)
                                     .background(.regularMaterial)
                                     .cornerRadius(10)
-                                    .onChange(of: locationText) {
-                                        locationSuggestions = CityService.shared.searchLocations(query: locationText)
-                                        showingLocationSuggestions = !locationSuggestions.isEmpty || isLocationFieldFocused
+                                    .onChange(of: locationText) { newValue in
+                                        locationSuggestions = CityService.shared.searchLocations(query: newValue)
+                                        showingLocationSuggestions = !locationSuggestions.isEmpty
                                     }
                                     .onSubmit {
                                         if let firstSuggestion = locationSuggestions.first {
                                             selectedLocations.insert(firstSuggestion)
                                             locationText = ""
                                             showingLocationSuggestions = false
+                                            locationSuggestions = [] // Clear suggestions
                                         }
                                     }
                                 
-                                if showingLocationSuggestions && (!locationSuggestions.isEmpty || locationText.isEmpty) {
+                                if showingLocationSuggestions && !locationSuggestions.isEmpty {
                                     VStack(spacing: 0) {
                                         ScrollView {
                                             VStack(spacing: 0) {
@@ -224,6 +233,7 @@ struct JobSearchView: View {
                                                         selectedLocations.insert(location)
                                                         locationText = ""
                                                         showingLocationSuggestions = false
+                                                        locationSuggestions = [] // Clear suggestions
                                                     }) {
                                                         HStack {
                                                             Image(systemName: location.type == .region ? "location.circle.fill" : "mappin")
@@ -516,13 +526,19 @@ struct JobSearchView: View {
     
     private var emptyStateView: some View {
         VStack(spacing: 16) {
-            Image(systemName: "magnifyingglass")
+            Image(systemName: searchProgress == 1.0 ? "magnifyingglass.circle" : "magnifyingglass")
                 .font(.system(size: 48))
                 .foregroundColor(.secondary.opacity(0.4))
             
-            Text("Sélectionnez votre profil et lancez la recherche")
+            Text(searchProgress == 1.0 ? "Aucun résultat trouvé pour cette recherche." : "Sélectionnez votre profil et lancez la recherche")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.secondary)
+            
+            if searchProgress == 1.0 {
+                Text("Essayez d'élargir vos critères ou de changer de localisation.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
         }
         .padding(.top, 60)
         .frame(maxWidth: .infinity)
@@ -554,12 +570,14 @@ struct JobSearchView: View {
         }
         
         print("🔍 Starting job search with keywords: \(keywords)")
+        print("🔍 Selected sources: \(selectedSources)")
         
         await jobSearchService.searchJobsWithAI(
             keywords: keywords,
             location: locationText.isEmpty ? nil : locationText,
             maxResults: 50,
-            profile: selectedProfile
+            profile: selectedProfile,
+            selectedSources: selectedSources
         ) { [self] searchResults in
             print("✅ Received \(searchResults.count) job results")
             
@@ -574,12 +592,19 @@ struct JobSearchView: View {
     }
     
     private func filterResults(_ jobs: [Job]) -> [Job] {
-        return jobs.filter { job in
+        print("🔍 Filtering \(jobs.count) jobs with selectedSources: \(selectedSources)")
+        let filtered = jobs.filter { job in
             if let score = job.aiScore, score < minScore {
                 return false
             }
             
             if !selectedSources.isEmpty && !selectedSources.contains(job.source) {
+                print("🚫 Filtering out job from \(job.source): \(job.title)")
+                return false
+            }
+            
+            if !selectedSources.isEmpty && !selectedSources.contains(job.source) {
+                print("🚫 Filtering out job from \(job.source): \(job.title)")
                 return false
             }
             
@@ -614,6 +639,20 @@ struct JobSearchView: View {
             }
             
             return true
+        }
+        
+        // Sort by AI score (highest first) with priority order: green (80+) > orange (50-79) > red (<50)
+        return filtered.sorted { job1, job2 in
+            let score1 = job1.aiScore ?? 0
+            let score2 = job2.aiScore ?? 0
+            
+            // First sort by score descending
+            if score1 != score2 {
+                return score1 > score2
+            }
+            
+            // If scores are equal, maintain original order or sort by other criteria
+            return job1.createdAt > job2.createdAt // Most recent first if scores equal
         }
     }
 }

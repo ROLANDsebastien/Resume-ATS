@@ -16,6 +16,7 @@ final class Job {
     var isFavorite: Bool
     var isApplied: Bool
     var contractType: String?
+    var isLastSearchResult: Bool
     var notes: String
     var createdAt: Date
     
@@ -33,6 +34,7 @@ final class Job {
         missingRequirements: [String] = [],
         isFavorite: Bool = false,
         isApplied: Bool = false,
+        isLastSearchResult: Bool = false,
         notes: String = "",
         createdAt: Date = Date()
     ) {
@@ -49,6 +51,7 @@ final class Job {
         self.missingRequirements = missingRequirements
         self.isFavorite = isFavorite
         self.isApplied = isApplied
+        self.isLastSearchResult = isLastSearchResult
         self.notes = notes
         self.createdAt = createdAt
     }

@@ -9,11 +9,12 @@ class JobSearchService {
         self.multiScraper = MultiSiteScraper()
     }
     
-    func searchJobs(keywords: String, location: String? = nil, maxResults: Int = 50) async throws -> [JobResult] {
+    func searchJobs(keywords: String, location: String? = nil, maxResults: Int = 50, selectedSources: Set<String> = []) async throws -> [JobResult] {
         let results = try await multiScraper.searchAllSites(
             keywords: keywords,
             location: location,
-            maxResultsPerSite: maxResults
+            maxResultsPerSite: maxResults,
+            selectedSources: selectedSources
         )
         
         // Fallback to mock data if no results found (for demo/testing purposes)
@@ -94,6 +95,7 @@ class JobSearchService {
         location: String? = nil, 
         maxResults: Int = 50,
         profile: Profile? = nil,
+        selectedSources: Set<String> = [],
         completion: @escaping ([Job]) -> Void
     ) async {
         // Generate multiple search keywords based on profile
@@ -105,7 +107,7 @@ class JobSearchService {
         // Search with each keyword
         for keyword in searchKeywords {
             do {
-                let results = try await searchJobs(keywords: keyword, location: location, maxResults: maxResults / searchKeywords.count)
+                let results = try await searchJobs(keywords: keyword, location: location, maxResults: maxResults / searchKeywords.count, selectedSources: selectedSources)
                 allJobResults.append(contentsOf: results)
                 print("🔍 Found \(results.count) results for '\(keyword)'")
             } catch {

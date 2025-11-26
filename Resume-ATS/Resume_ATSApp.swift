@@ -164,7 +164,8 @@ struct Resume_ATSApp: App {
                 Profile.self,
                 Application.self,
                 CoverLetter.self,
-                CVDocument.self
+                CVDocument.self,
+                Job.self
             ])
 
             let config = ModelConfiguration(

@@ -29,13 +29,21 @@ class MultiSiteScraper {
     func searchAllSites(
         keywords: String,
         location: String? = nil,
-        maxResultsPerSite: Int = 20
+        maxResultsPerSite: Int = 20,
+        selectedSources: Set<String> = []
     ) async throws -> [JobResult] {
         var allResults: [JobResult] = []
         
-        // Exécuter tous les scrapers en parallèle
+        // Filtrer les scrapers selon les sources sélectionnées
+        let activeScrapers = selectedSources.isEmpty ? scrapers : scrapers.filter { scraper in
+            selectedSources.contains(scraper.sourceName)
+        }
+        
+        print("🔍 Using scrapers: \(activeScrapers.map { $0.sourceName }.joined(separator: ", "))")
+        
+        // Exécuter les scrapers sélectionnés en parallèle
         try await withThrowingTaskGroup(of: [JobResult].self) { group in
-            for scraper in scrapers {
+            for scraper in activeScrapers {
                 let sourceName = scraper.sourceName
                 print("🔍 [\(sourceName)] Starting search for '\(keywords)'")
                 group.addTask {
