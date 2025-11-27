@@ -9,6 +9,7 @@ struct SettingsView: View {
     @AppStorage("colorScheme") private var colorScheme: Int = 2
     @AppStorage("autoSave") private var autoSave = true
     @AppStorage("appLanguage") private var appLanguage: String = "fr"
+    @AppStorage("selectedAIModel") private var selectedAIModel: String = "gemini"
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [Profile]
     @Query private var applications: [Application]
@@ -306,9 +307,50 @@ struct SettingsView: View {
                 .padding(.vertical, 6)
                 .background(smallButtonBackgroundColor)
                 .cornerRadius(6)
+}
+    }
+    
+    private var aiModelMenu: some View {
+        let aiModelTitle = selectedAIModel == "gemini" 
+            ? (appLanguage == "fr" ? "Google Gemini" : "Google Gemini")
+            : (appLanguage == "fr" ? "Qwen Code" : "Qwen Code")
+
+        return Menu {
+            Button(
+                action: { selectedAIModel = "gemini" },
+                label: {
+                    HStack {
+                        Text("Google Gemini")
+                        if selectedAIModel == "gemini" {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.accentColor)
+                        }
+                    }
+                }
+            )
+            Button(
+                action: { selectedAIModel = "qwen" },
+                label: {
+                    HStack {
+                        Text("Qwen Code")
+                        if selectedAIModel == "qwen" {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.accentColor)
+                        }
+                    }
+                }
+            )
+        } label: {
+            Text(aiModelTitle)
+                .font(.callout)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(smallButtonBackgroundColor)
+                .cornerRadius(6)
         }
     }
-
+    
     private var preferencesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(appLanguage == "fr" ? "Préférences" : "Preferences")
@@ -335,6 +377,18 @@ struct SettingsView: View {
                 subtitle: appLanguage == "fr" ? "Toutes les heures" : "Every hour"
             ) {
                 Image(systemName: "checkmark").foregroundColor(.secondary)
+            }
+            
+            let aiModelSubtitle = selectedAIModel == "gemini" 
+                ? (appLanguage == "fr" ? "Google Gemini" : "Google Gemini")
+                : (appLanguage == "fr" ? "Qwen Code" : "Qwen Code")
+            
+            SettingCard(
+                icon: "brain",
+                title: appLanguage == "fr" ? "Modèle IA" : "AI Model",
+                subtitle: aiModelSubtitle
+            ) {
+                aiModelMenu
             }
         }
     }

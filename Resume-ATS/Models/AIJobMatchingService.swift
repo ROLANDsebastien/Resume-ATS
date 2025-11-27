@@ -11,9 +11,47 @@ class AIJobMatchingService {
         profile: Profile?,
         completion: @escaping (_ aiScore: Int?, _ matchReason: String?, _ missingRequirements: [String]) -> Void
     ) {
-let prompt = """
-            Analyze this job posting against the candidate's profile and provide a comprehensive match assessment.
+// Create model-specific prompts
+        let geminiPrompt = """
+            Analyze this job posting against the candidate's profile and provide a match assessment.
             
+            JOB POSTING:
+            Title: \(jobResult.title)
+            Company: \(jobResult.company)
+            Location: \(jobResult.location)
+            \(jobResult.salary != nil ? "Salary: \(jobResult.salary!)" : "")
+            Source: \(jobResult.source)
+            
+            CANDIDATE PROFILE:
+            Name: \(profile?.firstName ?? "") \(profile?.lastName ?? "")
+            Summary: \(profile?.summaryString ?? "No summary available")
+            Skills: \(profile?.skills.flatMap { $0.skillsArray }.joined(separator: ", ") ?? "No skills listed")
+            Experience: \(profile?.experiences.map { "\($0.position ?? "") at \($0.company)" }.joined(separator: "; ") ?? "No experience listed")
+            
+            TASK:
+            1. Score the match from 0-100 (100 = perfect match)
+            2. **IMPORTANT**: If job title or description appears to be in Dutch/Flemish (not French or English), reduce the score by at least 50 points
+            3. **EXPERIENCE LEVEL**: Consider that the candidate is suitable for Junior to 2+ years experience positions. Don't penalize for "2+ years" or "Junior/Intermediate" requirements.
+            4. **SKILLS MATCHING**: Give extra points for:
+               - DevOps/Cloud roles (AWS, Azure, Kubernetes, Docker, CI/CD)
+               - QA/Automation roles (Test Automation, QA Automation, Automation tools)
+               - IT Support roles (Helpdesk, Service Desk, Technical Support)
+               - Entry-level to 2 years experience positions
+            5. Explain why this is a good match (2-3 sentences max)
+            6. List missing key requirements (max 5 items, be specific)
+            7. If job is in Dutch/Flemish, add "Language barrier: Job requires Dutch/Flemish" to missing requirements
+            
+            RESPONSE FORMAT (JSON only):
+            {
+                "score": 85,
+                "reason": "Strong match due to DevOps experience with AWS and cloud technologies",
+                "missing": ["3+ years experience", "Advanced Kubernetes"]
+            }
+            """
+        
+        let qwenPrompt = """
+            You are an AI assistant for Resume-ATS. Analyze this job posting against the candidate's profile and provide ONLY a JSON response.
+
             JOB POSTING:
             Title: \(jobResult.title)
             Company: \(jobResult.company)
@@ -36,51 +74,79 @@ let prompt = """
             - Total Years of Experience: \(AIJobMatchingService.calculateTotalExperienceYears(profile: profile)) years
             - Key Roles: \(profile?.experiences.compactMap { $0.position }.prefix(3).joined(separator: ", ") ?? "None")
             
-            TASK:
-            1. Score match from 0-100 (100 = perfect match)
-            2. **IMPORTANT**: If job title or description appears to be in Dutch/Flemish (not French or English), reduce the score by at least 50 points
-            3. **EXPERIENCE LEVEL**: Consider that candidate is suitable for Junior to 2+ years experience positions. Don't penalize for "2+ years" or "Junior/Intermediate" requirements.
-            4. **SKILLS MATCHING**: Give extra points for:
-               - DevOps/Cloud roles (AWS, Azure, Kubernetes, Docker, CI/CD)
-               - QA/Automation roles (Test Automation, QA Automation, Automation tools)
-               - IT Support roles (Helpdesk, Service Desk, Technical Support)
-               - Entry-level to 2 years experience positions
-            5. Explain why this is a good match (2-3 sentences max)
-            6. List missing key requirements (max 5 items, be specific)
-            7. If job is in Dutch/Flemish, add "Language barrier: Job requires Dutch/Flemish" to missing requirements
+            SCORING RULES:
+            1. Score the match from 0-100 (100 = perfect match)
+            2. If job title appears to be in Dutch/Flemish, reduce score by at least 50 points
+            3. Candidate is suitable for Junior to 2+ years experience positions
+            4. Give extra points for: DevOps/Cloud, QA/Automation, IT Support roles
+            5. Explain match in 2-3 sentences max
+            6. List missing requirements (max 5 items)
             
-            RESPONSE FORMAT (JSON only):
-            {
-                "score": 85,
-                "reason": "Strong match due to DevOps experience with AWS and cloud technologies",
-                "missing": ["3+ years experience", "Advanced Kubernetes"]
-            }
+            RESPOND ONLY WITH THIS JSON FORMAT:
+            {"score": 85, "reason": "Strong match due to relevant experience", "missing": ["requirement1", "requirement2"]}
             """
         
+// Use model-specific prompt
+        let selectedModel = AIService.getSelectedAIModel()
+        let prompt = selectedModel == .gemini ? geminiPrompt : qwenPrompt
+        
         DispatchQueue.global(qos: .userInitiated).async {
-            print("🤖 [AI] Starting Gemini CLI for job: \(jobResult.title)")
+            print("🤖 [AI] Starting \(selectedModel.displayName) CLI for job: \(jobResult.title)")
             
             let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/gemini")
-            process.arguments = ["-m", "flash", prompt]
+            process.executableURL = URL(fileURLWithPath: selectedModel.executablePath)
+            process.arguments = selectedModel.arguments
+            
+            // Add prompt to arguments for both models (Qwen supports positional args)
+            process.arguments = (process.arguments ?? []) + [prompt]
             
             let outputPipe = Pipe()
-            let errorPipe = Pipe()
             process.standardOutput = outputPipe
-            process.standardError = errorPipe
+            
+            // Handle stderr
+            let errorPipe: Pipe?
+            if selectedModel == .qwen {
+                // Suppress stderr for Qwen to avoid pollution
+                process.standardError = FileHandle.nullDevice
+                errorPipe = nil
+            } else {
+                let pipe = Pipe()
+                process.standardError = pipe
+                errorPipe = pipe
+            }
             
             do {
+                print("🤖 [AI] \(selectedModel.displayName) starting process with args: \(process.arguments ?? [])")
                 try process.run()
+                print("🤖 [AI] \(selectedModel.displayName) process started, waiting for exit...")
+                
+                // Add timeout mechanism
+                let timeoutTask = DispatchWorkItem {
+                    if process.isRunning {
+                        print("⚠️ [AI] \(selectedModel.displayName) process timed out, terminating...")
+                        process.terminate()
+                    }
+                }
+                DispatchQueue.global().asyncAfter(deadline: .now() + 10.0, execute: timeoutTask)
+                
                 process.waitUntilExit()
+                timeoutTask.cancel() // Cancel timeout if process finishes in time
+                print("🤖 [AI] \(selectedModel.displayName) process finished")
                 
                 let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-                let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
                 let output = String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-                let errorOutput = String(data: errorData, encoding: .utf8)
                 
-                print("🤖 [AI] Gemini exit code: \(process.terminationStatus)")
+                let errorOutput: String?
+                if let pipe = errorPipe {
+                    let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
+                    errorOutput = String(data: errorData, encoding: .utf8)
+                } else {
+                    errorOutput = nil
+                }
+                
+                print("🤖 [AI] \(selectedModel.displayName) exit code: \(process.terminationStatus)")
                 if let output = output {
-                    print("🤖 [AI] Gemini output: \(output.prefix(200))...")
+                    print("🤖 [AI] \(selectedModel.displayName) output: \(output.prefix(200))...")
                 }
                 if let errorOutput = errorOutput, !errorOutput.isEmpty {
                     // Filter out benign warnings to keep logs clean
@@ -89,7 +155,7 @@ let prompt = """
                         .joined(separator: "\n")
                     
                     if !filteredError.isEmpty {
-                        print("⚠️ [AI] Gemini stderr: \(filteredError)")
+                        print("⚠️ [AI] \(selectedModel.displayName) stderr: \(filteredError)")
                     }
                 }
                 
@@ -127,7 +193,7 @@ let prompt = """
                 }
             } catch {
                 DispatchQueue.main.async {
-                    print("❌ [AI] Error running Gemini CLI: \(error)")
+                    print("❌ [AI] Error running \(selectedModel.displayName) CLI: \(error)")
                     completion(nil, nil, [])
                 }
             }
@@ -144,8 +210,9 @@ let prompt = """
         let dispatchGroup = DispatchGroup()
         
         // Limit concurrent AI calls to avoid overwhelming the system
-        // Increased to 5 for M3 Mac performance - reduces analysis time significantly
-        let maxConcurrent = 5
+        // Limit concurrent AI calls to avoid overwhelming the system
+        // Reduced to 1 to prevent resource contention and timeouts on standard hardware
+        let maxConcurrent = 1
         let semaphore = DispatchSemaphore(value: maxConcurrent)
         
         // Move the loop to a background thread to avoid blocking the main thread with semaphore.wait()

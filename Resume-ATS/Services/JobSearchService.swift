@@ -147,8 +147,74 @@ class JobSearchService {
         
         // Process with AI if profile is available
         if let profile = profile {
-            AIJobMatchingService.processBatchJobs(jobResults: languageFilteredResults, profile: profile) { jobs in
-                completion(jobs)
+            // Create a safeguard timeout for the entire batch
+            let aiProcessingGroup = DispatchGroup()
+            aiProcessingGroup.enter()
+            
+            var processedJobs: [Job] = []
+            var aiFinished = false
+            
+            // Limit AI analysis to top 5 jobs (safe with sequential processing)
+            let jobsToAnalyze = Array(languageFilteredResults.prefix(5))
+            let remainingJobs = Array(languageFilteredResults.dropFirst(5))
+            
+            print("🔍 Analyzing top \(jobsToAnalyze.count) jobs with AI, skipping \(remainingJobs.count) jobs")
+            
+            AIJobMatchingService.processBatchJobs(jobResults: jobsToAnalyze, profile: profile) { analyzedJobs in
+                if !aiFinished {
+                    // Convert remaining jobs to Job objects without scores
+                    let remainingJobsConverted = remainingJobs.map { jobResult in
+                        Job(
+                            title: jobResult.title,
+                            company: jobResult.company,
+                            location: jobResult.location,
+                            salary: jobResult.salary,
+                            url: jobResult.url,
+                            source: jobResult.source,
+                            contractType: jobResult.contractType
+                        )
+                    }
+                    
+                    // Combine analyzed jobs with remaining jobs
+                    processedJobs = analyzedJobs + remainingJobsConverted
+                    aiFinished = true
+                    aiProcessingGroup.leave()
+                }
+            }
+            
+            // Wait for AI with a global timeout (e.g. 30 seconds max for the whole batch to start showing something)
+            // Note: This blocks the underlying task, but since we are in an async function called by Task {}, it's okay-ish,
+            // but better to use async/await pattern properly. However, processBatchJobs is callback-based.
+            // Let's use a simple async delay race.
+            
+            let timeoutResult = await withCheckedContinuation { continuation in
+                DispatchQueue.global().async {
+                    let result = aiProcessingGroup.wait(timeout: .now() + 30.0)
+                    if result == .timedOut {
+                        continuation.resume(returning: true) // Timed out
+                    } else {
+                        continuation.resume(returning: false) // Finished
+                    }
+                }
+            }
+            
+            if timeoutResult {
+                print("⚠️ AI processing timed out globally. Returning raw jobs.")
+                // Fallback to raw jobs
+                let rawJobs = languageFilteredResults.map { jobResult in
+                    Job(
+                        title: jobResult.title,
+                        company: jobResult.company,
+                        location: jobResult.location,
+                        salary: jobResult.salary,
+                        url: jobResult.url,
+                        source: jobResult.source,
+                        contractType: jobResult.contractType
+                    )
+                }
+                completion(rawJobs)
+            } else {
+                completion(processedJobs)
             }
         } else {
             // Convert to Job objects without AI scoring
