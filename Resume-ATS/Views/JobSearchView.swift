@@ -553,10 +553,13 @@ struct ModernJobCard: View {
                 Text(job.title)
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .lineLimit(2)
                 
                 Text(job.company)
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 
                 HStack(spacing: 8) {
                     Label(job.location, systemImage: "mappin.circle.fill")

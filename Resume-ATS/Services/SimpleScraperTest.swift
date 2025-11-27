@@ -9,7 +9,6 @@ class SimpleScraperTest {
         
         let scrapers = [
             ("Jobat", "https://www.jobat.be"),
-            ("Actiris", "https://www.actiris.brussels"),
             ("OptionCarriere", "https://www.optioncariere.be"),
             ("ICTJobs", "https://www.ictjobs.be"),
             ("Editx", "https://www.editxjobs.be")

@@ -7,7 +7,6 @@ class MultiSiteScraper {
     init() {
         let allScrapers: [JobScraperProtocol] = [
             JobatScraper(),
-            ActirisScraper(),           // ✅ Disponible
             OptionCarriereScraper(),    // ✅ Disponible  
             ICTJobsScraper(),           // ✅ Disponible (ictjob.be)
             EditxScraper()              // ✅ Disponible (editx.eu)
