@@ -131,7 +131,7 @@ struct ContentView: View {
             case "Profile":
                 ProfileView(selectedSection: $selectedSection)
             case "JobSearch":
-                JobSearchView()
+                JobSearchView(selectedSection: $selectedSection)
             case "Candidatures":
                 CandidaturesView(selectedSection: $selectedSection, language: appLanguage)
             case "Lettres":

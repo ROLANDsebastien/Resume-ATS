@@ -57,11 +57,14 @@ class ApplicationPackageService {
                 case .english: coverLetterTitle = "Cover Letter"
                 }
                 
-                let pdfSuccess = PDFGeneratorService.generatePDF(
-                    from: coverLetter,
-                    title: coverLetterTitle,
-                    outputURL: coverLetterFile
-                )
+                var pdfSuccess = false
+                DispatchQueue.main.sync {
+                    pdfSuccess = PDFGeneratorService.generatePDF(
+                        from: coverLetter,
+                        title: coverLetterTitle,
+                        outputURL: coverLetterFile
+                    )
+                }
                 
                 if pdfSuccess {
                     print("✅ [Package] Cover letter PDF created")

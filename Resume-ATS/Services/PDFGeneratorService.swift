@@ -6,6 +6,7 @@ import PDFKit
 class PDFGeneratorService {
     
     // Generate a PDF from text content with basic formatting
+    @MainActor
     static func generatePDF(
         from text: String,
         title: String,
@@ -14,10 +15,10 @@ class PDFGeneratorService {
         // Create a print info for PDF generation
         let printInfo = NSPrintInfo.shared
         printInfo.paperSize = NSSize(width: 595, height: 842) // A4 size in points
-        printInfo.topMargin = 50
-        printInfo.bottomMargin = 50
-        printInfo.leftMargin = 50
-        printInfo.rightMargin = 50
+        printInfo.topMargin = 60
+        printInfo.bottomMargin = 60
+        printInfo.leftMargin = 80
+        printInfo.rightMargin = 80
         
         // Create attributed string with formatting
         let paragraphStyle = NSMutableParagraphStyle()
@@ -33,7 +34,9 @@ class PDFGeneratorService {
         let attributedString = NSAttributedString(string: text, attributes: attributes)
         
         // Create a text view for rendering
-        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 495, height: 742))
+        // Width = 595 - 80 - 80 = 435
+        // Height = 842 - 60 - 60 = 722
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 435, height: 722))
         textView.textStorage?.setAttributedString(attributedString)
         
         // Generate PDF
