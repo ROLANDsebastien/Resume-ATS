@@ -189,7 +189,8 @@ class JobSearchService {
             
             let timeoutResult = await withCheckedContinuation { continuation in
                 DispatchQueue.global().async {
-                    let result = aiProcessingGroup.wait(timeout: .now() + 150.0)
+                    // Increase timeout to 180s to accommodate slower models (e.g. Qwen)
+                    let result = aiProcessingGroup.wait(timeout: .now() + 180.0)
                     if result == .timedOut {
                         continuation.resume(returning: true) // Timed out
                     } else {

@@ -102,8 +102,20 @@ class AIService {
             process.executableURL = URL(fileURLWithPath: selectedModel.executablePath)
             process.arguments = selectedModel.arguments
             
-            // Add prompt to arguments for both models (Qwen supports positional args)
-            process.arguments = (process.arguments ?? []) + [prompt]
+            // Add prompt to arguments for Gemini only
+            if selectedModel == .gemini {
+                process.arguments = (process.arguments ?? []) + [prompt]
+            }
+            
+            // For Qwen, write prompt to stdin
+            if selectedModel == .qwen {
+                let stdinPipe = Pipe()
+                process.standardInput = stdinPipe
+                if let data = prompt.data(using: String.Encoding.utf8) {
+                    try? stdinPipe.fileHandleForWriting.write(contentsOf: data)
+                    try? stdinPipe.fileHandleForWriting.close()
+                }
+            }
             
             let outputPipe = Pipe()
             process.standardOutput = outputPipe
@@ -198,8 +210,20 @@ static func extractCompanyAndPosition(
             process.executableURL = URL(fileURLWithPath: selectedModel.executablePath)
             process.arguments = selectedModel.arguments
             
-            // Add prompt to arguments for both models (Qwen supports positional args)
-            process.arguments = (process.arguments ?? []) + [prompt]
+            // Add prompt to arguments for Gemini only
+            if selectedModel == .gemini {
+                process.arguments = (process.arguments ?? []) + [prompt]
+            }
+            
+            // For Qwen, write prompt to stdin
+            if selectedModel == .qwen {
+                let stdinPipe = Pipe()
+                process.standardInput = stdinPipe
+                if let data = prompt.data(using: String.Encoding.utf8) {
+                    try? stdinPipe.fileHandleForWriting.write(contentsOf: data)
+                    try? stdinPipe.fileHandleForWriting.close()
+                }
+            }
             
             let outputPipe = Pipe()
             process.standardOutput = outputPipe

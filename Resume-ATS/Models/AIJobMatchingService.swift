@@ -12,7 +12,7 @@ class AIJobMatchingService {
         completion: @escaping (_ aiScore: Int?, _ matchReason: String?, _ missingRequirements: [String]) -> Void
     ) {
 // Create model-specific prompts
-        // Create unified prompt for both models (using the precise Gemini configuration)
+            // Create unified prompt for both models (using the precise Gemini configuration)
         let prompt = """
             Analyze this job posting against the candidate's profile and provide a match assessment.
             
@@ -51,7 +51,8 @@ class AIJobMatchingService {
             6. List missing key requirements (max 5 items, be specific)
             7. If job is in Dutch/Flemish, add "Language barrier: Job requires Dutch/Flemish" to missing requirements
             
-            RESPONSE FORMAT (JSON only):
+            RESPONSE FORMAT:
+            You MUST return ONLY valid JSON. Do not include any other text, explanations, or markdown formatting.
             {
                 "score": 85,
                 "reason": "Strong match due to DevOps experience with AWS and cloud technologies",
@@ -68,8 +69,22 @@ class AIJobMatchingService {
             process.executableURL = URL(fileURLWithPath: selectedModel.executablePath)
             process.arguments = selectedModel.arguments
             
-            // Add prompt to arguments for both models (Qwen supports positional args)
-            process.arguments = (process.arguments ?? []) + [prompt]
+            // Add prompt to arguments for Gemini only
+            if selectedModel == .gemini {
+                process.arguments = (process.arguments ?? []) + [prompt]
+            }
+            
+            // For Qwen, write prompt to stdin
+            if selectedModel == .qwen {
+                let stdinPipe = Pipe()
+                process.standardInput = stdinPipe
+                if let data = prompt.data(using: String.Encoding.utf8) {
+                    // Write asynchronously to avoid blocking if the pipe buffer fills up
+                    // although for a single prompt it's usually fine, but good practice
+                    try? stdinPipe.fileHandleForWriting.write(contentsOf: data)
+                    try? stdinPipe.fileHandleForWriting.close()
+                }
+            }
             
             let outputPipe = Pipe()
             process.standardOutput = outputPipe
@@ -98,7 +113,8 @@ class AIJobMatchingService {
                         process.terminate()
                     }
                 }
-                DispatchQueue.global().asyncAfter(deadline: .now() + 30.0, execute: timeoutTask)
+                // Reduce timeout to 25s to avoid hitting global timeout
+                DispatchQueue.global().asyncAfter(deadline: .now() + 25.0, execute: timeoutTask)
                 
                 process.waitUntilExit()
                 timeoutTask.cancel() // Cancel timeout if process finishes in time
@@ -131,31 +147,36 @@ class AIJobMatchingService {
                 }
                 
                 DispatchQueue.main.async {
-                    if process.terminationStatus == 0, var output = output, !output.isEmpty {
-                        // Sanitize output: remove markdown code blocks if present
-                        if output.contains("```json") {
-                            output = output.replacingOccurrences(of: "```json", with: "")
-                        }
-                        if output.contains("```") {
-                            output = output.replacingOccurrences(of: "```", with: "")
-                        }
-                        output = output.trimmingCharacters(in: .whitespacesAndNewlines)
-                        
-                        // Parse JSON response
-                        if let data = output.data(using: .utf8) {
-                            do {
-                                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                                    let score = json["score"] as? Int
-                                    let reason = json["reason"] as? String
-                                    let missing = json["missing"] as? [String] ?? []
-                                    print("✅ [AI] Successfully parsed: score=\(score ?? -1), reason=\(reason ?? "none")")
-                                    completion(score, reason, missing)
-                                    return
+                    if process.terminationStatus == 0, let output = output, !output.isEmpty {
+                        // Robust JSON extraction: find first '{' and last '}'
+                        if let startRange = output.range(of: "{"), let endRange = output.range(of: "}", options: .backwards) {
+                            // Ensure valid range order
+                            if startRange.lowerBound < endRange.upperBound {
+                                let jsonRange = startRange.lowerBound..<endRange.upperBound
+                                let jsonString = String(output[jsonRange])
+                                
+                                // Parse JSON response
+                                if let data = jsonString.data(using: .utf8) {
+                                    do {
+                                        if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                                            let score = json["score"] as? Int
+                                            let reason = json["reason"] as? String
+                                            let missing = json["missing"] as? [String] ?? []
+                                            print("✅ [AI] Successfully parsed: score=\(score ?? -1), reason=\(reason ?? "none")")
+                                            completion(score, reason, missing)
+                                            return
+                                        }
+                                    } catch {
+                                        print("❌ [AI] Failed to parse AI response JSON: \(error)")
+                                        print("   Raw output was: \(output)")
+                                    }
                                 }
-                            } catch {
-                                print("❌ [AI] Failed to parse AI response JSON: \(error)")
-                                print("   Raw output was: \(output)")
+                            } else {
+                                print("❌ [AI] Invalid JSON structure (braces in wrong order)")
                             }
+                        } else {
+                            print("❌ [AI] No JSON object found in output")
+                            print("   Raw output was: \(output)")
                         }
                     }
                     

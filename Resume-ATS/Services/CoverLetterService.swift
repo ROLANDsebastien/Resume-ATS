@@ -149,32 +149,6 @@ private static func createPrompt(job: Job, profile: Profile, language: LanguageD
             """
         }
         
-        return """
-            \(languageInstruction) pour le poste suivant.
-            
-            JOB POSTING:
-            Title: \(job.title)
-            Company: \(job.company)
-            Location: \(job.location)
-            \(job.salary != nil ? "Salary: \(job.salary!)" : "")
-            
-            CANDIDATE PROFILE:
-            Name: \(profile.firstName ?? "") \(profile.lastName ?? "")
-            Email: \(profile.email ?? "")
-            Phone: \(profile.phone ?? "")
-            Summary: \(profile.summaryString)
-            Skills: \(profile.skills.flatMap { $0.skillsArray }.joined(separator: ", "))
-            Experience: \(profile.experiences.map { "\($0.position ?? "") at \($0.company) (\($0.startDate.formatted(.dateTime.year()))-\($0.endDate?.formatted(.dateTime.year()) ?? "Present"))" }.joined(separator: "; "))
-            
-            REQUIREMENTS:
-            1. Professional tone and structure
-            2. Highlight relevant skills and experience
-            3. Show enthusiasm for the role
-            4. Keep it concise (250-300 words)
-            5. Include proper greeting and closing
-            6. NO placeholder text like [Your Name] - use actual profile data
-            
-            Write ONLY the cover letter text, no explanations or metadata.
-            """
+
     }
 }
