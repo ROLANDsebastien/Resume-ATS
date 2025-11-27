@@ -3,43 +3,59 @@ import Foundation
 class EditxScraper: JobScraperProtocol {
     let sourceName = "Editx"
     let baseURL = "https://editx.eu"
+    let sitemapURL = "https://editx.eu/sitemap.xml"
     
     private let session: URLSession
     
     init() {
         let config = URLSessionConfiguration.default
         config.httpAdditionalHeaders = [
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "fr-BE,fr;q=0.8,en-US;q=0.5,en;q=0.3"
+            "Accept-Language": "en-US,en;q=0.9"
         ]
         config.timeoutIntervalForRequest = 30
         self.session = URLSession(configuration: config)
     }
     
     func search(keywords: String, location: String?) async throws -> [JobResult] {
-        let searchURL = buildSearchURL(keywords: keywords, location: location)
+        // 1. Fetch Sitemap
+        print("🔍 Editx: Fetching sitemap...")
+        guard let sitemapData = try? await fetchData(from: URL(string: sitemapURL)!) else {
+            throw ScrapingError.networkError(NSError(domain: "EditxScraper", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to fetch sitemap"]))
+        }
         
-        do {
-            let (data, _) = try await session.data(from: searchURL)
-            guard let html = String(data: data, encoding: .utf8) else {
-                throw ScrapingError.parsingError("Impossible de décoder le HTML")
+        guard let sitemapString = String(data: sitemapData, encoding: .utf8) else {
+            throw ScrapingError.parsingError("Failed to decode sitemap")
+        }
+        
+        // 2. Filter URLs from Sitemap
+        let jobURLs = parseAndFilterSitemap(sitemapString, keywords: keywords)
+        print("🔍 Editx: Found \(jobURLs.count) matching URLs in sitemap")
+        
+        // 3. Fetch Details for each URL (Limit to top 15 to avoid timeout)
+        var results: [JobResult] = []
+        
+        // Use TaskGroup for concurrent fetching
+        await withTaskGroup(of: JobResult?.self) { group in
+            for urlString in jobURLs.prefix(15) {
+                group.addTask {
+                    return await self.fetchJobDetails(urlString: urlString)
+                }
             }
             
-            return try parseJobResults(html)
-        } catch {
-            if error is ScrapingError {
-                throw error
+            for await job in group {
+                if let job = job {
+                    results.append(job)
+                }
             }
-            throw ScrapingError.networkError(error)
         }
+        
+        return results
     }
     
     func isAvailable() async -> Bool {
-        guard let url = URL(string: baseURL) else {
-            return false
-        }
-        
+        guard let url = URL(string: baseURL) else { return false }
         do {
             let (_, response) = try await session.data(from: url)
             return (response as? HTTPURLResponse)?.statusCode == 200
@@ -48,255 +64,177 @@ class EditxScraper: JobScraperProtocol {
         }
     }
     
-    private func buildSearchURL(keywords: String, location: String?) -> URL {
-        guard var components = URLComponents(string: "\(baseURL)/en/it-jobs/search") else {
-            fatalError("Invalid Editx base URL: \(baseURL)")
+    // MARK: - Private Methods
+    
+    private func fetchData(from url: URL) async throws -> Data {
+        let (data, response) = try await session.data(from: url)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw ScrapingError.networkError(NSError(domain: "EditxScraper", code: -1, userInfo: [NSLocalizedDescriptionKey: "HTTP Error"]))
         }
-        
-        var queryItems: [URLQueryItem] = []
-        queryItems.append(URLQueryItem(name: "keywords", value: keywords))
-        
-        if let location = location, !location.isEmpty {
-            queryItems.append(URLQueryItem(name: "location", value: location))
-        }
-        
-        components.queryItems = queryItems
-        
-        guard let url = components.url else {
-            fatalError("Failed to build Editx search URL")
-        }
-        
-        return url
+        return data
     }
     
-    private func parseJobResults(_ html: String) throws -> [JobResult] {
-        var jobs: [JobResult] = []
+    private func parseAndFilterSitemap(_ xml: String, keywords: String) -> [String] {
+        // Regex to extract <loc> URLs
+        // Format: <loc>https://editx.eu/en/it-jobs/...</loc>
+        let pattern = #"<loc>(https:\/\/editx\.eu\/en\/it-jobs\/[^<]+)<\/loc>"#
         
-        jobs.append(contentsOf: try parseFromJSONScripts(html))
-        jobs.append(contentsOf: try parseFromHTML(html))
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            return []
+        }
         
-        return jobs
-    }
-    
-    private func parseFromJSONScripts(_ html: String) throws -> [JobResult] {
-        var jobs: [JobResult] = []
+        let nsString = xml as NSString
+        let matches = regex.matches(in: xml, options: [], range: NSRange(location: 0, length: nsString.length))
         
-        let jsonPatterns = [
-            #"window\.__INITIAL_STATE__\s*=\s*(\{[^}]*\});"#,
-            #"window\.jobData\s*=\s*(\{[^}]*\});"#,
-            #"window\.editxJobs\s*=\s*(\[.*?\]);"#,
-            #"<script[^>]*type\s*=\s*["']application/json["'][^>]*>(.*?)</script>"#,
-            #"data-jobs\s*=\s*["']([^"']*)["']"#
-        ]
+        let keywordTokens = keywords.lowercased().components(separatedBy: " ").filter { !$0.isEmpty }
         
-        for pattern in jsonPatterns {
-            let regex = try NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators])
-            let matches = regex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-            
-            for match in matches {
-                if let range = Range(match.range, in: html) {
-                    let jsonString = String(html[range])
-                    jobs.append(contentsOf: try parseJSONJobs(jsonString))
+        var matchingURLs: [String] = []
+        
+        for match in matches {
+            if let range = Range(match.range(at: 1), in: xml) {
+                let url = String(xml[range])
+                let urlLower = url.lowercased()
+                
+                // Check if URL contains ALL keywords
+                let matchesAll = keywordTokens.allSatisfy { token in
+                    urlLower.contains(token)
+                }
+                
+                if matchesAll {
+                    matchingURLs.append(url)
                 }
             }
         }
         
-        return jobs
+        // Ideally we should sort by <lastmod> if available, but the regex above is simple.
+        // Sitemaps are often ordered by date. We'll take the order as is or reverse if needed.
+        // Let's assume top of file = older? Actually standard sitemaps often have newest last or first.
+        // We'll return as is.
+        return matchingURLs
     }
     
-    private func parseFromHTML(_ html: String) throws -> [JobResult] {
-        var jobs: [JobResult] = []
-        
-        let jobPatterns = [
-            #"<div[^>]*class[^>]*["'][^"']*job[^"']*["'][^>]*>.*?</div>"#,
-            #"<article[^>]*class[^>]*["'][^"']*job[^"']*["'][^>]*>.*?</article>"#,
-            #"<li[^>]*class[^>]*["'][^"']*job[^"']*["'][^>]*>.*?</li>"#
-        ]
-        
-        for pattern in jobPatterns {
-            let regex = try NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators])
-            let matches = regex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-            
-            for match in matches {
-                if let range = Range(match.range, in: html) {
-                    let jobHTML = String(html[range])
-                    if let job = parseJobHTML(jobHTML) {
-                        jobs.append(job)
-                    }
-                }
-            }
-        }
-        
-        return jobs
-    }
-    
-    private func parseJobHTML(_ html: String) -> JobResult? {
-        let titlePatterns = [
-            #"<h[1-6][^>]*>([^<]+)</h[1-6]>"#,
-            #"<a[^>]*title\s*=\s*["']([^"']+)["']"#,
-            #"class[^>]*title[^>]*>([^<]+)"#
-        ]
-        
-        let companyPatterns = [
-            #"(?:company|entreprise|firm|organization)[^>]*>([^<]+)"#,
-            #"class[^>]*company[^>]*>([^<]+)"#,
-            #"<span[^>]*itemprop[^>]*hiringOrganization[^>]*>([^<]+)</span>"#
-        ]
-        
-        let locationPatterns = [
-            #"(?:location|lieu|city|ville)[^>]*>([^<]+)"#,
-            #"class[^>]*location[^>]*>([^<]+)"#,
-            #"<span[^>]*itemprop[^>]*jobLocation[^>]*>([^<]+)</span>"#
-        ]
-        
-        let linkPatterns = [
-            #"<a[^>]*href\s*=\s*["']([^"']+)["'][^>]*title[^>]*>"#,
-            #"<a[^>]*class[^>]*["'][^"']*job[^"']*["'][^>]*href\s*=\s*["']([^"']+)["']"#
-        ]
-        
-        let salaryPatterns = [
-            #"(?:salary|salaire|rémunération|rate)[^>]*>([^<]+)"#,
-            #"class[^>]*salary[^>]*>([^<]+)"#,
-            #"<span[^>]*itemprop[^>]*baseSalary[^>]*>([^<]+)</span>"#
-        ]
-        
-        let title = extractFirstMatch(html, patterns: titlePatterns)
-        let company = extractFirstMatch(html, patterns: companyPatterns)
-        let location = extractFirstMatch(html, patterns: locationPatterns)
-        let url = extractFirstMatch(html, patterns: linkPatterns)
-        let salary = extractFirstMatch(html, patterns: salaryPatterns)
-        
-        guard let title = title?.trimmingCharacters(in: .whitespacesAndNewlines),
-              let company = company?.trimmingCharacters(in: .whitespacesAndNewlines),
-              let url = url?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !title.isEmpty, !company.isEmpty, !url.isEmpty else {
-            return nil
-        }
-        
-        let fullURL = url.hasPrefix("http") ? url : "\(baseURL)\(url)"
-        
-        return JobResult(
-            title: title,
-            company: company,
-            location: location?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
-            salary: salary?.trimmingCharacters(in: .whitespacesAndNewlines),
-            url: fullURL,
-            source: sourceName
-        )
-    }
-    
-    private func parseJSONJobs(_ jsonString: String) throws -> [JobResult] {
-        var jobs: [JobResult] = []
-        
-        let cleanedJSON = cleanJSONString(jsonString)
-        
-        guard let data = cleanedJSON.data(using: .utf8) else {
-            return jobs
-        }
+    private func fetchJobDetails(urlString: String) async -> JobResult? {
+        guard let url = URL(string: urlString) else { return nil }
         
         do {
-            let json = try JSONSerialization.jsonObject(with: data, options: [])
+            let data = try await fetchData(from: url)
+            guard let html = String(data: data, encoding: .utf8) else { return nil }
             
-            if let dict = json as? [String: Any] {
-                jobs.append(contentsOf: extractJobsFromDict(dict))
-            } else if let array = json as? [[String: Any]] {
-                jobs.append(contentsOf: extractJobsFromArray(array))
-            }
+            return parseJobPage(html, url: urlString)
         } catch {
-            // Ignorer les erreurs de parsing JSON
+            print("⚠️ Editx: Failed to fetch details for \(urlString)")
+            return nil
         }
-        
-        return jobs
     }
     
-    private func extractJobsFromDict(_ dict: [String: Any]) -> [JobResult] {
-        var jobs: [JobResult] = []
+    private func parseJobPage(_ html: String, url: String) -> JobResult? {
+        // Extract Title
+        var title = extractMetaContent(html, property: "og:title")
         
-        let possibleKeys = ["jobs", "offers", "results", "data", "items", "listings", "vacancies", "editxJobs"]
+        // Fallback to <title> tag if og:title is missing or empty
+        if title == nil || title?.isEmpty == true {
+            title = extractTitleTag(html)
+        }
         
-        for key in possibleKeys {
-            if let value = dict[key] {
-                if let jobArray = value as? [[String: Any]] {
-                    jobs.append(contentsOf: extractJobsFromArray(jobArray))
+        // Final fallback
+        let finalTitle = title?.replacingOccurrences(of: " | Editx", with: "") ?? "Unknown Title"
+        
+        // Extract Description for Company/Location
+        let description = extractMetaContent(html, property: "og:description") ?? ""
+        
+        // Description format: "Acensi Belgium SRL is looking for test / validation engineer in Brussels with software testing skills."
+        // Regex to extract Company and Location
+        
+        var company = "Editx"
+        var location = "Belgium"
+        
+        // Regex to match: [Company] is looking for [Title] in [Location] with...
+        // We use a loose regex to catch "is looking for" and "in"
+        let descPattern = #"^(.*?) is looking for .*? in (.*?) (?:with|at)"#
+        
+        if let regex = try? NSRegularExpression(pattern: descPattern, options: [.caseInsensitive]) {
+            let nsDesc = description as NSString
+            if let match = regex.firstMatch(in: description, options: [], range: NSRange(location: 0, length: nsDesc.length)) {
+                if match.numberOfRanges >= 3 {
+                    company = nsDesc.substring(with: match.range(at: 1))
+                    location = nsDesc.substring(with: match.range(at: 2))
                 }
             }
         }
         
-        return jobs
-    }
-    
-    private func extractJobsFromArray(_ array: [[String: Any]]) -> [JobResult] {
-        var jobs: [JobResult] = []
-        
-        for jobDict in array {
-            if let job = createJobFromDict(jobDict) {
-                jobs.append(job)
+        // Fallback: If regex fails, try to just get the company (text before "is looking for")
+        if company == "Editx" && !description.isEmpty {
+            let parts = description.components(separatedBy: " is looking for")
+            if let first = parts.first, !first.isEmpty {
+                company = first
             }
         }
         
-        return jobs
-    }
-    
-    private func createJobFromDict(_ dict: [String: Any]) -> JobResult? {
-        let title = dict["title"] as? String ??
-                   dict["job_title"] as? String ??
-                   dict["position"] as? String ??
-                   dict["vacancy_title"] as? String ?? ""
+        // Clean up
+        company = company.trimmingCharacters(in: .whitespacesAndNewlines)
+        location = location.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        let company = dict["company"] as? String ??
-                     dict["employer"] as? String ??
-                     dict["organization"] as? String ??
-                     dict["company_name"] as? String ?? ""
-        
-        let location = dict["location"] as? String ??
-                       dict["city"] as? String ??
-                       dict["address"] as? String ??
-                       dict["job_location"] as? String ?? ""
-        
-        let url = dict["url"] as? String ??
-                  dict["link"] as? String ??
-                  dict["apply_url"] as? String ??
-                  dict["detail_url"] as? String ?? ""
-        
-        let salary = dict["salary"] as? String ??
-                    dict["remuneration"] as? String ??
-                    dict["wage"] as? String ??
-                    dict["rate"] as? String
-        
-        guard !title.isEmpty && !company.isEmpty && !url.isEmpty else {
-            return nil
+        // Remove trailing punctuation from location if present (e.g. "Brussels.")
+        if location.hasSuffix(".") {
+            location = String(location.dropLast())
         }
         
         return JobResult(
-            title: title,
+            title: finalTitle.trimmingCharacters(in: .whitespacesAndNewlines),
             company: company,
             location: location,
-            salary: salary,
+            salary: nil,
             url: url,
             source: sourceName
         )
     }
     
-    private func cleanJSONString(_ string: String) -> String {
-        var cleaned = string
+    private func extractMetaContent(_ html: String, property: String) -> String? {
+        // This regex handles:
+        // 1. <meta property="og:title" content="..." />
+        // 2. <meta content="..." property="og:title" />
+        // 3. Whitespace variations
+        // 4. property vs name attribute
         
-        cleaned = cleaned.replacingOccurrences(of: "window.__INITIAL_STATE__", with: "", options: .caseInsensitive)
-        cleaned = cleaned.replacingOccurrences(of: "window.jobData", with: "", options: .caseInsensitive)
-        cleaned = cleaned.replacingOccurrences(of: "data-jobs=", with: "", options: .caseInsensitive)
-        cleaned = cleaned.replacingOccurrences(of: ";", with: "")
-        cleaned = cleaned.replacingOccurrences(of: "$", with: "")
+        // Strategy: Find the whole meta tag that contains the property/name, then extract content
         
-        return cleaned
+        let pattern = #"<meta[^>]+(?:property|name)\s*=\s*["']\#(property)["'][^>]*>"#
+        
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else { return nil }
+        
+        let nsString = html as NSString
+        let matches = regex.matches(in: html, options: [], range: NSRange(location: 0, length: nsString.length))
+        
+        for match in matches {
+            let metaTag = nsString.substring(with: match.range)
+            
+            // Now extract content="..." from this specific tag
+            if let content = extractAttribute(from: metaTag, attribute: "content") {
+                return content
+            }
+        }
+        
+        return nil
     }
     
-    private func extractFirstMatch(_ text: String, patterns: [String]) -> String? {
-        for pattern in patterns {
-            guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
-                  let match = regex.firstMatch(in: text, options: [], range: NSRange(text.startIndex..., in: text)),
-                  let range = Range(match.range(at: 1), in: text) else {
-                continue
-            }
-            return String(text[range])
+    private func extractTitleTag(_ html: String) -> String? {
+        let pattern = #"<title[^>]*>(.*?)</title>"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else { return nil }
+        
+        let nsString = html as NSString
+        if let match = regex.firstMatch(in: html, options: [], range: NSRange(location: 0, length: nsString.length)) {
+            return nsString.substring(with: match.range(at: 1))
+        }
+        return nil
+    }
+    
+    private func extractAttribute(from tag: String, attribute: String) -> String? {
+        let pattern = #"content\s*=\s*["']([^"']*)["']"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else { return nil }
+        
+        let nsString = tag as NSString
+        if let match = regex.firstMatch(in: tag, options: [], range: NSRange(location: 0, length: nsString.length)) {
+            return nsString.substring(with: match.range(at: 1))
         }
         return nil
     }
