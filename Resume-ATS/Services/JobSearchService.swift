@@ -91,7 +91,6 @@ class JobSearchService {
     
     
     func searchJobsWithAI(
-        keywords: String, 
         location: String? = nil, 
         maxResults: Int = 50,
         profile: Profile? = nil,
@@ -154,9 +153,9 @@ class JobSearchService {
             var processedJobs: [Job] = []
             var aiFinished = false
             
-            // Limit AI analysis to top 5 jobs (safe with sequential processing)
-            let jobsToAnalyze = Array(languageFilteredResults.prefix(5))
-            let remainingJobs = Array(languageFilteredResults.dropFirst(5))
+            // Limit AI analysis to top 15 jobs (increased for better results)
+            let jobsToAnalyze = Array(languageFilteredResults.prefix(15))
+            let remainingJobs = Array(languageFilteredResults.dropFirst(15))
             
             print("🔍 Analyzing top \(jobsToAnalyze.count) jobs with AI, skipping \(remainingJobs.count) jobs")
             

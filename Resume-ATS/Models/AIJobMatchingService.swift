@@ -45,18 +45,20 @@ class AIJobMatchingService {
             4. **SKILLS MATCHING**: Give extra points for:
                - DevOps/Cloud roles (AWS, Azure, Kubernetes, Docker, CI/CD)
                - QA/Automation roles (Test Automation, QA Automation, Automation tools)
-               - IT Support roles (Helpdesk, Service Desk, Technical Support)
-               - Entry-level to 2 years experience positions
             5. Explain why this is a good match (2-3 sentences max)
             6. List missing key requirements (max 5 items, be specific)
             7. If job is in Dutch/Flemish, add "Language barrier: Job requires Dutch/Flemish" to missing requirements
+            
+            LANGUAGE INSTRUCTION:
+            The user's application is in \(Locale.current.identifier.hasPrefix("fr") ? "FRENCH" : "ENGLISH").
+            You MUST provide the "reason" and "missing" fields in \(Locale.current.identifier.hasPrefix("fr") ? "FRENCH" : "ENGLISH").
             
             RESPONSE FORMAT:
             You MUST return ONLY valid JSON. Do not include any other text, explanations, or markdown formatting.
             {
                 "score": 85,
-                "reason": "Strong match due to DevOps experience with AWS and cloud technologies",
-                "missing": ["3+ years experience", "Advanced Kubernetes"]
+                "reason": "\(Locale.current.identifier.hasPrefix("fr") ? "Correspondance forte grâce à l'expérience DevOps" : "Strong match due to DevOps experience")",
+                "missing": ["\(Locale.current.identifier.hasPrefix("fr") ? "3+ ans d'expérience" : "3+ years experience")"]
             }
             """
         

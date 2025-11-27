@@ -429,20 +429,10 @@ struct JobSearchView: View {
     
     @MainActor
     private func performSearchAsync() async {
-        let keywords: String
-        if let profile = selectedProfile,
-           let mostRecentExperience = profile.experiences.sorted(by: { $0.startDate > $1.startDate }).first,
-           let position = mostRecentExperience.position, !position.isEmpty {
-            keywords = position
-        } else {
-            keywords = selectedProfile?.name ?? "Emploi"
-        }
-        
-        print("🔍 Starting job search with keywords: \(keywords)")
+        print("🔍 Starting job search")
         print("🔍 Selected sources: \(selectedSources)")
         
         await jobSearchService.searchJobsWithAI(
-            keywords: keywords,
             location: locationText.isEmpty ? nil : locationText,
             maxResults: 50,
             profile: selectedProfile,
@@ -462,7 +452,16 @@ struct JobSearchView: View {
     
     private func filterResults(_ jobs: [Job]) -> [Job] {
         print("🔍 Filtering \(jobs.count) jobs with selectedSources: \(selectedSources)")
+        
+        // Check if we have any AI scores in the batch
+        let hasAnyScores = jobs.contains { $0.aiScore != nil }
+        
         let filtered = jobs.filter { job in
+            // If we have AI results, hide jobs that weren't analyzed (usually because they were beyond the top N)
+            if hasAnyScores && job.aiScore == nil {
+                return false
+            }
+            
             if let score = job.aiScore, score < minScore {
                 return false
             }
@@ -578,6 +577,14 @@ struct ModernJobCard: View {
                         .foregroundColor(.secondary)
                 }
                 .padding(.top, 2)
+                
+                if let reason = job.matchReason, !reason.isEmpty {
+                    Text(reason)
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                        .padding(.top, 4)
+                }
             }
             
             Spacer()
