@@ -21,7 +21,7 @@ class EditxScraper: JobScraperProtocol {
     func search(keywords: String, location: String?) async throws -> [JobResult] {
         var allJobs: [JobResult] = []
         var page = 1
-        let maxPages = 3 // Limit pages
+        let maxPages = 10 // Limit pages
         
         // Keep track of visited URLs to avoid duplicates
         var visitedURLs = Set<String>()

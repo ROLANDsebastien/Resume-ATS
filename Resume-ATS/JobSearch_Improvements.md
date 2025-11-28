@@ -1,5 +1,10 @@
 # Job Search Improvements - Resume-ATS Application
 
+## Recent Updates (Nov 28, 2025)
+- **Increased Pagination Depth**: All scrapers (ICTJobs, OptionCarriere, Editx, Jobat) now scrape up to 10 pages instead of 3-5.
+- **Expanded Search Results**: Increased default search results limit from 50 to 100.
+- **Enhanced AI Processing**: Increased AI analysis limit from 50 to 100 jobs per batch.
+
 ## Current Issues Analysis
 
 The current job search functionality in the Resume-ATS app has several limitations that explain why you're not getting the expected volume of job listings:

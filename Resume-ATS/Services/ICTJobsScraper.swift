@@ -22,7 +22,7 @@ class ICTJobsScraper: JobScraperProtocol {
     func search(keywords: String, location: String?) async throws -> [JobResult] {
         var allJobs: [JobResult] = []
         var page = 1
-        let maxPages = 5 // Limit to 5 pages to avoid taking too long
+        let maxPages = 10 // Limit to 10 pages to avoid taking too long
         
         while page <= maxPages {
             let searchURL = buildSearchURL(keywords: keywords, location: location, page: page)
@@ -183,7 +183,18 @@ class ICTJobsScraper: JobScraperProtocol {
         // Validate
         guard !title.isEmpty, !partialUrl.isEmpty else { return nil }
         
-        let fullURL = partialUrl.hasPrefix("http") ? partialUrl : "\(baseURL)\(partialUrl)"
+        // Fix potential URL issues
+        var cleanUrl = partialUrl
+        if cleanUrl.hasPrefix("//") {
+            cleanUrl = "https:" + cleanUrl
+        } else if !cleanUrl.hasPrefix("http") {
+            if !cleanUrl.hasPrefix("/") {
+                cleanUrl = "/" + cleanUrl
+            }
+            cleanUrl = baseURL + cleanUrl
+        }
+        
+        let fullURL = cleanUrl
         
         return JobResult(
             title: title,

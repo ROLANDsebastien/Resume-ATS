@@ -22,7 +22,7 @@ class OptionCarriereScraper: JobScraperProtocol {
     func search(keywords: String, location: String?) async throws -> [JobResult] {
         var allJobs: [JobResult] = []
         var page = 1
-        let maxPages = 5
+        let maxPages = 10
         
         while page <= maxPages {
             // Use the search endpoint that redirects (URLSession follows redirects automatically)

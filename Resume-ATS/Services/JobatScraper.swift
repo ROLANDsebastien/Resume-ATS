@@ -20,7 +20,7 @@ class JobatScraper: JobScraperProtocol {
     func search(keywords: String, location: String?) async throws -> [JobResult] {
         var allJobs: [JobResult] = []
         var page = 1
-        let maxPages = 5
+        let maxPages = 10
         
         while page <= maxPages {
             let searchURL = buildSearchURL(keywords: keywords, location: location, page: page)

@@ -10,6 +10,20 @@ class AIService {
         var executablePath: String {
             switch self {
             case .gemini:
+                let fileManager = FileManager.default
+                let candidatePaths = [
+                    "/opt/homebrew/bin/gemini",
+                    "/usr/local/bin/gemini",
+                    "/usr/bin/gemini",
+                    "\(fileManager.homeDirectoryForCurrentUser.path)/.npm-global/bin/gemini"
+                ]
+                
+                for path in candidatePaths {
+                    if fileManager.fileExists(atPath: path) {
+                        return path
+                    }
+                }
+                
                 return "/opt/homebrew/bin/gemini"
             case .qwen:
                 return "/opt/homebrew/bin/qwen"

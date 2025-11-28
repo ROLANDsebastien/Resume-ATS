@@ -9,7 +9,7 @@ class JobSearchService {
         self.multiScraper = MultiSiteScraper()
     }
     
-    func searchJobs(keywords: String, location: String? = nil, maxResults: Int = 50, selectedSources: Set<String> = []) async throws -> [JobResult] {
+    func searchJobs(keywords: String, location: String? = nil, maxResults: Int = 100, selectedSources: Set<String> = []) async throws -> [JobResult] {
         let results = try await multiScraper.searchAllSites(
             keywords: keywords,
             location: location,
@@ -110,7 +110,7 @@ class JobSearchService {
     
     func searchJobsWithAI(
         location: String? = nil, 
-        maxResults: Int = 50,
+        maxResults: Int = 100,
         profile: Profile? = nil,
         selectedSources: Set<String> = [],
         completion: @escaping ([Job]) -> Void
@@ -162,6 +162,30 @@ class JobSearchService {
         
         print("📊 After language filter: \(languageFilteredResults.count) jobs (removed \(uniqueResults.count - languageFilteredResults.count) Flemish jobs)")
         
+        // NEW: Hardcoded geographic filter for Brussels and surrounding Brabants (30km radius approximation)
+        let allowedLocations: Set<String> = [
+            // Brussels Capital Region
+            "bruxelles", "brussels", "anderlecht", "auderghem", "berchem-sainte-agathe", "etterbeek", "evere", "forest", "ganshoren", "ixelles", "jette", "koekelberg", "molenbeek-saint-jean", "saint-gilles", "saint-josse-ten-noode", "schaerbeek", "uccle", "watermael-boitsfort", "woluwe-saint-lambert", "woluwe-saint-pierre",
+            // Walloon Brabant (Brabant Wallon) - within ~30km radius
+            "wavre", "braine-l'alleud", "nivelles", "waterloo", "ottignies-louvain-la-neuve", "jodoigne", "perwez", "chastre", "grez-doiceau", "genappe", "court-saint-etienne", "rixensart", "tubize", "ittre", "rebecq", "lasne", "la hulpe", "rozières", "mont-saint-guibert", "villers-la-ville", "walhain",
+            // Flemish Brabant (Vlaams-Brabant) - within ~30km radius
+            "leuven", "vilvoorde", "zaventem", "halle", "asse", "dilbeek", "grimbergen", "tervuren", "overijse", "sint-pieters-leeuw", "beersel", "ternat", "merchtem", "opwijk", "gooik", "pepingen", "roosdaal", "lennik", "drogenbos", "kraainem", "linkebeek", "loezen", "meise", "oostkamp", "sint-genesius-rode", "wemmel", "wezembeek-oppem",
+            // General terms
+            "brabant wallon", "walloon brabant", "vlaams-brabant", "flemish brabant", "brussels capital region", "region de bruxelles-capitale", "belgique", "belgium", "belgië" // Added belgië for dutch variant
+        ]
+
+        let geographicFilteredResults = languageFilteredResults.filter { jobResult in
+            let lowercasedLocation = jobResult.location.lowercased()
+            let isAllowed = allowedLocations.contains { allowedLoc in
+                lowercasedLocation.contains(allowedLoc)
+            }
+            if !isAllowed {
+                print("🚫 [Filter] Removed job outside geographic zone: '\(jobResult.title)' in '\(jobResult.location)'")
+            }
+            return isAllowed
+        }
+        print("📊 After geographic filter: \(geographicFilteredResults.count) jobs (removed \(languageFilteredResults.count - geographicFilteredResults.count) jobs outside geographic zone)")
+        
         // Process with AI if profile is available
         if let profile = profile {
             // Create a safeguard timeout for the entire batch
@@ -172,10 +196,10 @@ class JobSearchService {
             var aiFinished = false
             
             // Limit AI analysis based on model performance
-            // Both Gemini and Qwen are API-based/fast -> 50 jobs
-            let analysisLimit = 50
+            // Both Gemini and Qwen are API-based/fast -> 100 jobs
+            let analysisLimit = 100
             
-            let jobsToAnalyze = Array(languageFilteredResults.prefix(analysisLimit))
+            let jobsToAnalyze = Array(geographicFilteredResults.prefix(analysisLimit))
             let remainingJobs = Array(languageFilteredResults.dropFirst(analysisLimit))
             
             print("🔍 Analyzing top \(jobsToAnalyze.count) jobs with AI, skipping \(remainingJobs.count) jobs")
