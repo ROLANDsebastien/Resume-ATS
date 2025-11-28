@@ -18,33 +18,50 @@ class JobatScraper: JobScraperProtocol {
     }
     
     func search(keywords: String, location: String?) async throws -> [JobResult] {
-        let searchURL = buildSearchURL(keywords: keywords, location: location)
-        print("🔍 [JobatScraper] Searching: \(searchURL)")
+        var allJobs: [JobResult] = []
+        var page = 1
+        let maxPages = 5
         
-        do {
-            let (data, response) = try await session.data(from: searchURL)
+        while page <= maxPages {
+            let searchURL = buildSearchURL(keywords: keywords, location: location, page: page)
+            print("🔍 [JobatScraper] Searching page \(page): \(searchURL)")
             
-            if let httpResponse = response as? HTTPURLResponse {
-                print("🔍 [JobatScraper] Status Code: \(httpResponse.statusCode)")
+            do {
+                let (data, response) = try await session.data(from: searchURL)
+                
+                if let httpResponse = response as? HTTPURLResponse {
+                    // print("🔍 [JobatScraper] Status Code: \(httpResponse.statusCode)")
+                    if httpResponse.statusCode != 200 {
+                        print("⚠️ [JobatScraper] Status code \(httpResponse.statusCode) for page \(page)")
+                        break
+                    }
+                }
+                
+                guard let html = String(data: data, encoding: .utf8) else {
+                    print("❌ [JobatScraper] Failed to decode HTML for page \(page)")
+                    break
+                }
+                
+                let jobs = try parseJobResults(html)
+                if jobs.isEmpty {
+                    print("🔍 [JobatScraper] No more jobs found on page \(page). Stopping.")
+                    break
+                }
+                
+                allJobs.append(contentsOf: jobs)
+                print("✅ [JobatScraper] Found \(jobs.count) results on page \(page)")
+                
+                // Polite delay
+                try await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+                
+                page += 1
+            } catch {
+                print("❌ [JobatScraper] Error on page \(page): \(error)")
+                break
             }
-            
-            guard let html = String(data: data, encoding: .utf8) else {
-                print("❌ [JobatScraper] Failed to decode HTML")
-                throw ScrapingError.parsingError("Impossible de décoder le HTML")
-            }
-            
-            // print("🔍 [JobatScraper] HTML Preview: \(html.prefix(500))")
-            
-            let results = try parseJobResults(html)
-            print("✅ [JobatScraper] Found \(results.count) results")
-            return results
-        } catch {
-            print("❌ [JobatScraper] Error: \(error)")
-            if error is ScrapingError {
-                throw error
-            }
-            throw ScrapingError.networkError(error)
         }
+        
+        return allJobs
     }
     
     func isAvailable() async -> Bool {
@@ -56,7 +73,7 @@ class JobatScraper: JobScraperProtocol {
         }
     }
     
-    private func buildSearchURL(keywords: String, location: String?) -> URL {
+    private func buildSearchURL(keywords: String, location: String?, page: Int) -> URL {
         var components = URLComponents(string: "\(baseURL)/fr/jobs/results")!
         var queryItems: [URLQueryItem] = []
         
@@ -64,6 +81,11 @@ class JobatScraper: JobScraperProtocol {
         
         if let location = location, !location.isEmpty {
             queryItems.append(URLQueryItem(name: "l", value: location))
+        }
+        
+        // Add pagination parameter
+        if page > 1 {
+            queryItems.append(URLQueryItem(name: "p", value: String(page)))
         }
         
         components.queryItems = queryItems

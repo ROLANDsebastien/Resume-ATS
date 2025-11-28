@@ -19,39 +19,100 @@ class EditxScraper: JobScraperProtocol {
     }
     
     func search(keywords: String, location: String?) async throws -> [JobResult] {
-        // 1. Fetch Sitemap
-        print("🔍 Editx: Fetching sitemap...")
-        guard let sitemapData = try? await fetchData(from: URL(string: sitemapURL)!) else {
-            throw ScrapingError.networkError(NSError(domain: "EditxScraper", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to fetch sitemap"]))
-        }
+        var allJobs: [JobResult] = []
+        var page = 1
+        let maxPages = 3 // Limit pages
         
-        guard let sitemapString = String(data: sitemapData, encoding: .utf8) else {
-            throw ScrapingError.parsingError("Failed to decode sitemap")
-        }
+        // Keep track of visited URLs to avoid duplicates
+        var visitedURLs = Set<String>()
         
-        // 2. Filter URLs from Sitemap
-        let jobURLs = parseAndFilterSitemap(sitemapString, keywords: keywords)
-        print("🔍 Editx: Found \(jobURLs.count) matching URLs in sitemap")
-        
-        // 3. Fetch Details for each URL (Limit to top 15 to avoid timeout)
-        var results: [JobResult] = []
-        
-        // Use TaskGroup for concurrent fetching
-        await withTaskGroup(of: JobResult?.self) { group in
-            for urlString in jobURLs.prefix(15) {
-                group.addTask {
-                    return await self.fetchJobDetails(urlString: urlString)
-                }
-            }
+        while page <= maxPages {
+            let searchURL = buildSearchURL(keywords: keywords, page: page)
+            print("🔍 Editx: Scraping page \(page)...")
             
-            for await job in group {
-                if let job = job {
-                    results.append(job)
+            do {
+                let data = try await fetchData(from: searchURL)
+                
+                guard let html = String(data: data, encoding: .utf8) else { break }
+                
+                let jobURLs = parseJobLinks(html)
+                if jobURLs.isEmpty {
+                    print("🔍 Editx: No job links found on page \(page). Stopping.")
+                    break
                 }
+                
+                // Filter duplicates
+                let newURLs = jobURLs.filter { !visitedURLs.contains($0) }
+                if newURLs.isEmpty { break }
+                newURLs.forEach { visitedURLs.insert($0) }
+                
+                print("🔍 Editx: Found \(newURLs.count) new job links on page \(page)")
+                
+                // Fetch details for these URLs in parallel
+                await withTaskGroup(of: JobResult?.self) { group in
+                    for urlString in newURLs {
+                        group.addTask {
+                            return await self.fetchJobDetails(urlString: urlString)
+                        }
+                    }
+                    
+                    for await job in group {
+                        if let job = job {
+                            allJobs.append(job)
+                        }
+                    }
+                }
+                
+                try await Task.sleep(nanoseconds: 500_000_000)
+                page += 1
+            } catch {
+                print("❌ Editx Error on page \(page): \(error)")
+                break
             }
         }
         
-        return results
+        return allJobs
+    }
+    
+    private func buildSearchURL(keywords: String, page: Int) -> URL {
+        // https://www.editx.eu/en/jobs/?q=devops&page=1
+        // Note: I'm assuming 'q' and 'page' parameters based on common practices.
+        // If this is incorrect, we might need to adjust.
+        // Checking the sitemap URLs, they are under /en/it-jobs/
+        // The search page might be /en/jobs/ or /en/search/
+        // Let's try /en/jobs/ first.
+        
+        var components = URLComponents(string: "\(baseURL)/en/jobs/")!
+        var queryItems: [URLQueryItem] = []
+        
+        queryItems.append(URLQueryItem(name: "q", value: keywords))
+        if page > 1 {
+            queryItems.append(URLQueryItem(name: "page", value: String(page)))
+        }
+        
+        components.queryItems = queryItems
+        return components.url!
+    }
+    
+    private func parseJobLinks(_ html: String) -> [String] {
+        // Extract links to /it-jobs/
+        // href="https://editx.eu/en/it-jobs/..." or href="/en/it-jobs/..."
+        let pattern = #"href=["']((?:https:\/\/www\.editx\.eu)?\/en\/it-jobs\/[^"']+)["']"#
+        
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else { return [] }
+        
+        let matches = regex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+        var urls: [String] = []
+        
+        for match in matches {
+            if let range = Range(match.range(at: 1), in: html) {
+                let urlPath = String(html[range])
+                let fullURL = urlPath.hasPrefix("http") ? urlPath : "\(baseURL)\(urlPath)"
+                urls.append(fullURL)
+            }
+        }
+        
+        return Array(Set(urls)) // Unique URLs
     }
     
     func isAvailable() async -> Bool {
@@ -64,8 +125,6 @@ class EditxScraper: JobScraperProtocol {
         }
     }
     
-    // MARK: - Private Methods
-    
     private func fetchData(from url: URL) async throws -> Data {
         let (data, response) = try await session.data(from: url)
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
@@ -73,46 +132,7 @@ class EditxScraper: JobScraperProtocol {
         }
         return data
     }
-    
-    private func parseAndFilterSitemap(_ xml: String, keywords: String) -> [String] {
-        // Regex to extract <loc> URLs
-        // Format: <loc>https://editx.eu/en/it-jobs/...</loc>
-        let pattern = #"<loc>(https:\/\/editx\.eu\/en\/it-jobs\/[^<]+)<\/loc>"#
-        
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-            return []
-        }
-        
-        let nsString = xml as NSString
-        let matches = regex.matches(in: xml, options: [], range: NSRange(location: 0, length: nsString.length))
-        
-        let keywordTokens = keywords.lowercased().components(separatedBy: " ").filter { !$0.isEmpty }
-        
-        var matchingURLs: [String] = []
-        
-        for match in matches {
-            if let range = Range(match.range(at: 1), in: xml) {
-                let url = String(xml[range])
-                let urlLower = url.lowercased()
-                
-                // Check if URL contains ALL keywords
-                let matchesAll = keywordTokens.allSatisfy { token in
-                    urlLower.contains(token)
-                }
-                
-                if matchesAll {
-                    matchingURLs.append(url)
-                }
-            }
-        }
-        
-        // Ideally we should sort by <lastmod> if available, but the regex above is simple.
-        // Sitemaps are often ordered by date. We'll take the order as is or reverse if needed.
-        // Let's assume top of file = older? Actually standard sitemaps often have newest last or first.
-        // We'll return as is.
-        return matchingURLs
-    }
-    
+
     private func fetchJobDetails(urlString: String) async -> JobResult? {
         guard let url = URL(string: urlString) else { return nil }
         

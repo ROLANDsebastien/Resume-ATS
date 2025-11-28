@@ -20,30 +20,48 @@ class OptionCarriereScraper: JobScraperProtocol {
     }
     
     func search(keywords: String, location: String?) async throws -> [JobResult] {
-        // Use the search endpoint that redirects (URLSession follows redirects automatically)
-        let searchURL = buildSearchURL(keywords: keywords, location: location)
+        var allJobs: [JobResult] = []
+        var page = 1
+        let maxPages = 5
         
-        do {
-            let (data, response) = try await session.data(from: searchURL)
+        while page <= maxPages {
+            // Use the search endpoint that redirects (URLSession follows redirects automatically)
+            let searchURL = buildSearchURL(keywords: keywords, location: location, page: page)
+            print("🔍 OptionCarriere: Scraping page \(page)...")
             
-            // Check for valid response
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 404 {
-                print("⚠️ OptionCarriere: 404 for URL \(searchURL.absoluteString)")
-                return []
+            do {
+                let (data, response) = try await session.data(from: searchURL)
+                
+                // Check for valid response
+                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 404 {
+                    print("⚠️ OptionCarriere: 404 for page \(page)")
+                    break
+                }
+                
+                guard let html = String(data: data, encoding: .utf8) else {
+                    print("⚠️ OptionCarriere: Failed to decode HTML for page \(page)")
+                    break
+                }
+                
+                let jobs = try parseJobResults(html)
+                if jobs.isEmpty {
+                    print("🔍 OptionCarriere: No more jobs found on page \(page). Stopping.")
+                    break
+                }
+                
+                allJobs.append(contentsOf: jobs)
+                
+                // Polite delay
+                try await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+                
+                page += 1
+            } catch {
+                print("❌ OptionCarriere Error on page \(page): \(error)")
+                break
             }
-            
-            guard let html = String(data: data, encoding: .utf8) else {
-                throw ScrapingError.parsingError("Impossible de décoder le HTML")
-            }
-            
-            return try parseJobResults(html)
-        } catch {
-            print("❌ OptionCarriere Error: \(error)")
-            if error is ScrapingError {
-                throw error
-            }
-            throw ScrapingError.networkError(error)
         }
+        
+        return allJobs
     }
     
     func isAvailable() async -> Bool {
@@ -56,7 +74,7 @@ class OptionCarriereScraper: JobScraperProtocol {
         }
     }
     
-    private func buildSearchURL(keywords: String, location: String?) -> URL {
+    private func buildSearchURL(keywords: String, location: String?, page: Int) -> URL {
         // Using /recherche/emplois endpoint which handles redirections correctly
         guard var components = URLComponents(string: "\(baseURL)/recherche/emplois") else {
             fatalError("Invalid OptionCarriere base URL")
@@ -67,6 +85,11 @@ class OptionCarriereScraper: JobScraperProtocol {
         
         if let location = location, !location.isEmpty {
             queryItems.append(URLQueryItem(name: "l", value: location))
+        }
+        
+        // Add pagination parameter
+        if page > 1 {
+            queryItems.append(URLQueryItem(name: "p", value: String(page)))
         }
         
         components.queryItems = queryItems

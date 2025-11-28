@@ -204,9 +204,8 @@ class AIJobMatchingService {
         let dispatchGroup = DispatchGroup()
         
         // Limit concurrent AI calls to avoid overwhelming the system
-        // Limit concurrent AI calls to avoid overwhelming the system
-        // Reduced to 1 to prevent resource contention and timeouts on standard hardware
-        let maxConcurrent = 1
+        // Both Gemini and Qwen are API-based, so 5 concurrent requests is safe
+        let maxConcurrent = 5
         let semaphore = DispatchSemaphore(value: maxConcurrent)
         
         // Move the loop to a background thread to avoid blocking the main thread with semaphore.wait()

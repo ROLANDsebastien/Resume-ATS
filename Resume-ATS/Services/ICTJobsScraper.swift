@@ -20,28 +20,46 @@ class ICTJobsScraper: JobScraperProtocol {
     }
     
     func search(keywords: String, location: String?) async throws -> [JobResult] {
-        let searchURL = buildSearchURL(keywords: keywords, location: location)
+        var allJobs: [JobResult] = []
+        var page = 1
+        let maxPages = 5 // Limit to 5 pages to avoid taking too long
         
-        do {
-            let (data, response) = try await session.data(from: searchURL)
+        while page <= maxPages {
+            let searchURL = buildSearchURL(keywords: keywords, location: location, page: page)
+            print("🔍 ICTJobs: Scraping page \(page)...")
             
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-                print("⚠️ ICTJobs: Status code \(httpResponse.statusCode) for URL \(searchURL.absoluteString)")
-                return []
+            do {
+                let (data, response) = try await session.data(from: searchURL)
+                
+                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                    print("⚠️ ICTJobs: Status code \(httpResponse.statusCode) for URL \(searchURL.absoluteString)")
+                    break
+                }
+                
+                guard let html = String(data: data, encoding: .utf8) else {
+                    print("⚠️ ICTJobs: Failed to decode HTML for page \(page)")
+                    break
+                }
+                
+                let jobs = try parseJobResults(html)
+                if jobs.isEmpty {
+                    print("🔍 ICTJobs: No more jobs found on page \(page). Stopping.")
+                    break
+                }
+                
+                allJobs.append(contentsOf: jobs)
+                
+                // Polite delay between pages
+                try await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+                
+                page += 1
+            } catch {
+                print("❌ ICTJobs Error on page \(page): \(error)")
+                break
             }
-            
-            guard let html = String(data: data, encoding: .utf8) else {
-                throw ScrapingError.parsingError("Impossible de décoder le HTML")
-            }
-            
-            return try parseJobResults(html)
-        } catch {
-            print("❌ ICTJobs Error: \(error)")
-            if error is ScrapingError {
-                throw error
-            }
-            throw ScrapingError.networkError(error)
         }
+        
+        return allJobs
     }
     
     func isAvailable() async -> Bool {
@@ -54,8 +72,8 @@ class ICTJobsScraper: JobScraperProtocol {
         }
     }
     
-    private func buildSearchURL(keywords: String, location: String?) -> URL {
-        // https://www.ictjob.be/fr/chercher-emplois-it?keywords=tester
+    private func buildSearchURL(keywords: String, location: String?, page: Int) -> URL {
+        // https://www.ictjob.be/fr/chercher-emplois-it?keywords=tester&p=1
         guard var components = URLComponents(string: "\(baseURL)/fr/chercher-emplois-it") else {
             fatalError("Invalid ICTJobs base URL")
         }
@@ -65,6 +83,11 @@ class ICTJobsScraper: JobScraperProtocol {
         
         if let location = location, !location.isEmpty {
             queryItems.append(URLQueryItem(name: "location", value: location))
+        }
+        
+        // Add pagination parameter
+        if page > 1 {
+            queryItems.append(URLQueryItem(name: "p", value: String(page)))
         }
         
         components.queryItems = queryItems

@@ -39,6 +39,7 @@ class JobSearchService {
     
     // Generate search keywords based on profile
     // Generate search keywords based on profile
+    // Generate search keywords based on profile
     private func generateSearchKeywords(from profile: Profile?) -> [String] {
         guard let profile = profile else {
             return ["DevOps", "QA", "IT Support"]
@@ -46,11 +47,33 @@ class JobSearchService {
         
         var keywords: Set<String> = []
         
+        // 0. High-Priority Domain Scanning
+        // Scan the entire profile string representation for these high-value keywords
+        let profileText = (
+            (profile.summaryString ?? "") + " " +
+            profile.experiences.map { $0.position ?? "" }.joined(separator: " ") + " " +
+            profile.skills.flatMap { $0.skillsArray }.joined(separator: " ")
+        ).lowercased()
+        
+        let domainKeywords = [
+            "qa": ["QA", "Quality Assurance", "Testeur", "Tester"],
+            "test": ["Test Automation", "Test Automatisation", "Software Tester"],
+            "devops": ["DevOps", "SRE", "Cloud Engineer"],
+            "support": ["IT Support", "Helpdesk"]
+        ]
+        
+        for (domain, terms) in domainKeywords {
+            if profileText.contains(domain) || terms.contains(where: { profileText.contains($0.lowercased()) }) {
+                // If the domain is relevant, add its primary terms
+                for term in terms.prefix(2) { // Add top 2 terms for this domain
+                    keywords.insert(term)
+                }
+            }
+        }
+        
         // 1. Add Job Titles from Experience (most recent first)
-        // We prioritize recent roles as they likely reflect current career path
-        for experience in profile.experiences.sorted(by: { $0.startDate > $1.startDate }) {
+        for experience in profile.experiences.sorted(by: { $0.startDate > $1.startDate }).prefix(3) {
             if let position = experience.position, !position.isEmpty {
-                // Clean up position to get core role, but also keep original if it's distinct
                 let corePosition = position
                     .replacingOccurrences(of: "(?i)junior", with: "", options: .regularExpression)
                     .replacingOccurrences(of: "(?i)senior", with: "", options: .regularExpression)
@@ -61,32 +84,27 @@ class JobSearchService {
                 if !corePosition.isEmpty {
                     keywords.insert(corePosition)
                 }
-                keywords.insert(position)
             }
         }
         
         // 2. Add Top Skills
-        // Flatten all skills and take the first few (assuming user ordered them by importance)
         let allSkills = profile.skills.flatMap { $0.skillsArray }
-        for skill in allSkills.prefix(8) {
+        for skill in allSkills.prefix(5) {
             keywords.insert(skill)
         }
         
-        // 3. Add Education Degrees if keywords are sparse
-        if keywords.count < 3 {
-            for education in profile.educations {
-                keywords.insert(education.degree)
-            }
-        }
-        
-        // 4. Fallback if still empty
+        // 3. Fallback
         if keywords.isEmpty {
             return ["DevOps", "QA", "IT Support"]
         }
         
-        // 5. Return top unique keywords
-        // We limit to 8 to avoid spamming the search APIs too much, but enough to get variety
-        return Array(keywords).prefix(8).map { String($0) }
+        // 4. Return top unique keywords (limit to 10)
+        // Prioritize domain keywords by putting them first in the set iteration (not guaranteed but Set -> Array is arbitrary)
+        // Better: Sort to ensure stability or prioritize specific ones?
+        // For now, just return them.
+        let finalKeywords = Array(keywords).prefix(10).map { String($0) }
+        print("🔍 [Strategy] Generated Keywords: \(finalKeywords)")
+        return finalKeywords
     }
     
     
@@ -106,7 +124,7 @@ class JobSearchService {
         // Search with each keyword
         for keyword in searchKeywords {
             do {
-                let results = try await searchJobs(keywords: keyword, location: location, maxResults: maxResults / searchKeywords.count, selectedSources: selectedSources)
+                let results = try await searchJobs(keywords: keyword, location: location, maxResults: maxResults, selectedSources: selectedSources)
                 allJobResults.append(contentsOf: results)
                 print("🔍 Found \(results.count) results for '\(keyword)'")
             } catch {
@@ -153,9 +171,12 @@ class JobSearchService {
             var processedJobs: [Job] = []
             var aiFinished = false
             
-            // Limit AI analysis to top 15 jobs (increased for better results)
-            let jobsToAnalyze = Array(languageFilteredResults.prefix(15))
-            let remainingJobs = Array(languageFilteredResults.dropFirst(15))
+            // Limit AI analysis based on model performance
+            // Both Gemini and Qwen are API-based/fast -> 50 jobs
+            let analysisLimit = 50
+            
+            let jobsToAnalyze = Array(languageFilteredResults.prefix(analysisLimit))
+            let remainingJobs = Array(languageFilteredResults.dropFirst(analysisLimit))
             
             print("🔍 Analyzing top \(jobsToAnalyze.count) jobs with AI, skipping \(remainingJobs.count) jobs")
             
