@@ -1,87 +1,102 @@
 name: Release
 
 on:
-    push:
-        tags:
-            - "v*.*.*"
-    workflow_dispatch:
-        inputs:
-            version:
-                description: "Version number (e.g., 1.0.0)"
-                required: true
-                type: string
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number (e.g., 1.0.0)"
+        required: true
+        type: string
 
 jobs:
-    build-and-release:
-        runs-on: macos-latest
-        permissions:
-            contents: write
+  build-and-release:
+    runs-on: macos-latest
+    permissions:
+      contents: write
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-            - name: Setup Xcode
-              uses: maxim-lobanov/setup-xcode@v1
-              with:
-                  xcode-version: latest-stable
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
-            - name: Build App
-              run: |
-                  xcodebuild -scheme Resume-ATS \
-                    -configuration Release \
-                    -derivedDataPath build \
-                    -destination 'platform=macOS' \
-                    CODE_SIGN_IDENTITY="" \
-                    CODE_SIGNING_REQUIRED=NO \
-                    CODE_SIGNING_ALLOWED=NO \
-                    build
+      - name: Build App
+        run: |
+          xcodebuild -scheme Resume-ATS \
+            -configuration Release \
+            -derivedDataPath build \
+            -destination 'platform=macOS' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
 
-            - name: Create ZIP
-              run: |
-                  cd build/Build/Products/Release
-                  zip -r Resume-ATS.zip Resume-ATS.app
-                  mv Resume-ATS.zip $GITHUB_WORKSPACE/
+      - name: Sign App with ad-hoc signature
+        run: |
+          codesign --force --deep --sign - build/Build/Products/Release/Resume-ATS.app
 
-            - name: Get version
-              id: get_version
-              run: |
-                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-                    echo "VERSION=v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-                  else
-                    echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-                  fi
+      - name: Verify signature
+        run: |
+          codesign --verify --verbose build/Build/Products/Release/Resume-ATS.app
+          codesign --display --verbose build/Build/Products/Release/Resume-ATS.app
 
-            - name: Create Release Notes
-              id: create_notes
-              run: |
-                  cat > release_notes.md << 'EOF'
-                  ## Installation
+      - name: Create ZIP
+        run: |
+          cd build/Build/Products/Release
+          zip -r Resume-ATS.zip Resume-ATS.app
+          mv Resume-ATS.zip $GITHUB_WORKSPACE/
 
-                  1. Download `Resume-ATS.zip`
-                  2. Extract the file
-                  3. Move `Resume-ATS.app` to your Applications folder
-                  4. On first launch, right-click > Open (for unsigned apps)
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
 
-                  ## Installation (Francais)
+      - name: Create Release Notes
+        id: create_notes
+        run: |
+          cat > release_notes.md << 'EOF'
+          ## Installation
 
-                  1. Telechargez `Resume-ATS.zip`
-                  2. Extrayez le fichier
-                  3. Deplacez `Resume-ATS.app` dans votre dossier Applications
-                  4. Au premier lancement, faites clic-droit > Ouvrir (pour les apps non signees)
+          1. Download `Resume-ATS.zip`
+          2. Extract the file
+          3. Move `Resume-ATS.app` to your Applications folder
+          4. **First launch**: Right-click on the app > Open (or use `xattr -cr /Applications/Resume-ATS.app` in Terminal)
+          5. Click "Open" in the security dialog
 
-                  ## What's New
-                  EOF
+          > **Note**: This app is signed with an ad-hoc signature. macOS will ask for confirmation on first launch.
 
-            - name: Create Release
-              uses: softprops/action-gh-release@v1
-              with:
-                  tag_name: ${{ steps.get_version.outputs.VERSION }}
-                  name: "Resume-ATS ${{ steps.get_version.outputs.VERSION }}"
-                  body_path: release_notes.md
-                  files: Resume-ATS.zip
-                  generate_release_notes: true
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ## Installation (Français)
+
+          1. Téléchargez `Resume-ATS.zip`
+          2. Extrayez le fichier
+          3. Déplacez `Resume-ATS.app` dans votre dossier Applications
+          4. **Premier lancement**: Clic-droit sur l'app > Ouvrir (ou utilisez `xattr -cr /Applications/Resume-ATS.app` dans le Terminal)
+          5. Cliquez sur "Ouvrir" dans la boîte de dialogue de sécurité
+
+          > **Note**: Cette app est signée avec une signature ad-hoc. macOS demandera confirmation au premier lancement.
+
+          ## What's New
+          EOF
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          name: "Resume-ATS ${{ steps.get_version.outputs.VERSION }}"
+          body_path: release_notes.md
+          files: Resume-ATS.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
