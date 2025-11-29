@@ -55,22 +55,25 @@ class LanguageDetector {
         let hasStrongFrench = strongFrenchIndicators.contains { text.contains($0) }
         
         // Determine language with priority rules
+        // Determine language with priority rules
         if hasStrongDutch {
             return .dutch
         } else if hasStrongFrench {
             return .french
-        } else if englishCount > 0 {
-            // Prioritize English for tech positions - this should catch most IT jobs
-            return .english
-        } else if frenchCount > dutchCount && frenchCount > 0 {
+        }
+        
+        // Compare counts directly to avoid tech terms skewing results to English
+        if frenchCount > englishCount && frenchCount >= dutchCount {
             return .french
-        } else if dutchCount > frenchCount && dutchCount > 0 {
+        } else if dutchCount > englishCount && dutchCount >= frenchCount {
             return .dutch
+        } else if englishCount > frenchCount && englishCount > dutchCount {
+            return .english
         } else if text.contains("brussels") || text.contains("bruxelles") {
             // Default Brussels jobs to French if no clear indicator
             return .french
         } else {
-            // Default to English for international positions
+            // Default to English for international positions if no other strong signal
             return .english
         }
     }

@@ -58,12 +58,35 @@ class ApplicationPackageService {
                 }
                 
                 var pdfSuccess = false
+                
+                // Create a temporary CoverLetter object for PDF generation
+                let tempCoverLetter = CoverLetter(title: coverLetterTitle)
+                
+                // Set content using the string with explicit attributes to ensure formatting
+                let paragraphStyle = NSMutableParagraphStyle()
+                paragraphStyle.lineSpacing = 1.2
+                let attributes: [NSAttributedString.Key: Any] = [
+                    .font: NSFont(name: "Arial", size: 11) ?? NSFont.systemFont(ofSize: 11),
+                    .paragraphStyle: paragraphStyle,
+                    .foregroundColor: NSColor.black
+                ]
+                tempCoverLetter.contentAttributedString = NSAttributedString(string: coverLetter, attributes: attributes)
+                
                 DispatchQueue.main.sync {
-                    pdfSuccess = PDFGeneratorService.generatePDF(
-                        from: coverLetter,
-                        title: coverLetterTitle,
-                        outputURL: coverLetterFile
-                    )
+                    PDFService.generateCoverLetterPDF(for: tempCoverLetter) { tempURL in
+                        if let tempURL = tempURL {
+                            do {
+                                // Move the generated PDF to the package folder
+                                if FileManager.default.fileExists(atPath: coverLetterFile.path) {
+                                    try FileManager.default.removeItem(at: coverLetterFile)
+                                }
+                                try FileManager.default.moveItem(at: tempURL, to: coverLetterFile)
+                                pdfSuccess = true
+                            } catch {
+                                print("❌ [Package] Error moving cover letter PDF: \(error)")
+                            }
+                        }
+                    }
                 }
                 
                 if pdfSuccess {

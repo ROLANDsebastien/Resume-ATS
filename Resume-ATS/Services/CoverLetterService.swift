@@ -53,8 +53,24 @@ class CoverLetterService {
                 
                 DispatchQueue.main.async {
                     if process.terminationStatus == 0, let output = output, !output.isEmpty {
+                        // Post-processing to fix common AI artifacts
+                        var finalOutput = output
+                        
+                        // Fix email anonymization (e.g. "name @---")
+                        if let email = profile.email, !email.isEmpty {
+                            // Replace " @---" or "@---" with the actual email domain part if possible, 
+                            // or just ensure the full email is present if we detect the artifact.
+                            if finalOutput.contains("@---") {
+                                let parts = email.split(separator: "@")
+                                if parts.count == 2 {
+                                    finalOutput = finalOutput.replacingOccurrences(of: " @---", with: "@" + parts[1])
+                                    finalOutput = finalOutput.replacingOccurrences(of: "@---", with: "@" + parts[1])
+                                }
+                            }
+                        }
+                        
                         print("✅ [CoverLetter] Generated successfully")
-                        completion(output)
+                        completion(finalOutput)
                     } else {
                         print("❌ [CoverLetter] Generation failed")
                         completion(nil)
@@ -114,6 +130,7 @@ private static func createPrompt(job: Job, profile: Profile, language: LanguageD
             5. Include proper greeting and closing
             6. NO placeholder text like [Your Name] - use actual profile data
             7. Plain text only, no markdown formatting
+            8. DO NOT anonymize the email address. Use the exact email provided.
             
             Write ONLY cover letter text, no explanations or metadata.
             """
@@ -144,6 +161,7 @@ private static func createPrompt(job: Job, profile: Profile, language: LanguageD
             5. Include proper greeting and closing
             6. Use actual profile data, no placeholders
             7. Plain text only, no markdown formatting
+            8. DO NOT anonymize the email address. Use the exact email provided.
 
             WRITE ONLY THE COVER LETTER TEXT.
             """
