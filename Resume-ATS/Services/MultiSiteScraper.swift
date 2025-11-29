@@ -9,7 +9,8 @@ class MultiSiteScraper {
             JobatScraper(),
             OptionCarriereScraper(),    // ✅ Disponible  
             ICTJobsScraper(),           // ✅ Disponible (ictjob.be)
-            EditxScraper()              // ✅ Disponible (editx.eu)
+            EditxScraper(),             // ✅ Disponible (editx.eu)
+            ActirisScraper()            // ✅ Disponible (actiris.brussels)
         ]
         
         print("🔧 MultiSiteScraper initialized with \(allScrapers.count) scrapers:")

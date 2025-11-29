@@ -10,7 +10,6 @@ struct JobSearchView: View {
     @State private var selectedProfile: Profile?
     @State private var searchText = ""
     @State private var locationText = ""
-    @State private var distanceKm: Int = 50
     @State private var isSearching = false
     @State private var searchProgress: Double = 0
     @State private var currentSearchingSite = ""
@@ -240,29 +239,6 @@ struct JobSearchView: View {
                     }
                     .frame(maxWidth: 150)
                 }
-
-                // Radius
-                Menu {
-                    ForEach([10, 25, 50, 75, 100], id: \.self) { distance in
-                        Button(action: { distanceKm = distance }) {
-                            HStack {
-                                Text("\(distance) km")
-                                if distanceKm == distance { Image(systemName: "checkmark") }
-                            }
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Text("\(distanceKm) km")
-                        // Chevron removed as requested
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(8)
-                }
-                .menuStyle(.borderlessButton)
-                .frame(width: 80)
             }
             .zIndex(10) // Ensure suggestions appear on top
             
